@@ -1,3 +1,10 @@
 # IDE
 .vscode
 .idea
+
+# PYTHON
+venv
+**/__pycache__/**
+
+# PYTHON
+SERVER_RUNNING

@@ -1,0 +1,579 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.loc.gov/standards/alto/ns-v4#" xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-2.xsd" SCHEMAVERSION="4.2">
+  <Description>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <sourceImageInformation>
+      <fileName>MAX/16258167.png</fileName>
+    </sourceImageInformation>
+    <Processing ID="ocrd-olena-binarize-0">
+      <processingStepDescription>preprocessing/optimization/binarization</processingStepDescription>
+      <processingStepSettings>{"impl": "sauvola-ms-split", "k": "0.34", "win-size": "0", "dpi": "300"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-olena-binarize</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-anybaseocr-crop-1">
+      <processingStepDescription>preprocessing/optimization/cropping</processingStepDescription>
+      <processingStepSettings>{"dpi": "300", "rulerRatioMax": "50.0", "rulerRatioMin": "3.0", "rulerAreaMax": "0.3", "rulerAreaMin": "0.01", "rulerWidthMax": "0.95", "columnAreaMin": "0.05", "columnSepWidthMax": "0.04", "marginTop": "0.25", "marginBottom": "0.75", "marginLeft": "0.3", "marginRight": "0.7", "padding": "10"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-anybaseocr-crop</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-cis-ocropy-denoise-2">
+      <processingStepDescription>preprocessing/optimization/despeckling</processingStepDescription>
+      <processingStepSettings>{"level-of-operation": "page", "noise_maxsize": "3.0", "dpi": "300"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-cis-ocropy-denoise</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-tesserocr-recognize-3">
+      <processingStepDescription>layout/segmentation/region</processingStepDescription>
+      <processingStepSettings>{"padding": "5", "find_tables": "False", "dpi": "300", "shrink_polygons": "False", "find_staves": "False", "sparse_text": "False", "overwrite_segments": "True", "segmentation_level": "region", "textequiv_level": "region", "block_polygons": "False", "overwrite_text": "True", "raw_lines": "False", "char_whitelist": "", "char_blacklist": "", "char_unblacklist": "", "tesseract_parameters": "{}", "xpath_parameters": "{}", "xpath_model": "{}", "auto_model": "False", "oem": "DEFAULT"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-tesserocr-recognize</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-segment-repair-4">
+      <processingStepDescription>layout/segmentation/region</processingStepDescription>
+      <processingStepSettings>{"plausibilize": "True", "plausibilize_merge_min_overlap": "0.7", "sanitize": "False"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-segment-repair</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-cis-ocropy-clip-5">
+      <processingStepDescription>layout/segmentation/region</processingStepDescription>
+      <processingStepSettings>{"level-of-operation": "region", "dpi": "0", "min_fraction": "0.7"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-cis-ocropy-clip</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-cis-ocropy-segment-6">
+      <processingStepDescription>layout/segmentation/region</processingStepDescription>
+      <processingStepSettings>{"spread": "2.4", "dpi": "300", "level-of-operation": "region", "maxcolseps": "20", "maxseps": "20", "maximages": "10", "csminheight": "4", "hlminwidth": "10", "gap_height": "0.01", "gap_width": "1.5", "overwrite_order": "True", "overwrite_separators": "True", "overwrite_regions": "True", "overwrite_lines": "True"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-cis-ocropy-segment</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-cis-ocropy-dewarp-7">
+      <processingStepDescription>preprocessing/optimization/dewarping</processingStepDescription>
+      <processingStepSettings>{"dpi": "0", "range": "4.0", "smoothness": "1.0", "max_neighbour": "0.05"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-cis-ocropy-dewarp</softwareName>
+      </processingSoftware>
+    </Processing>
+    <Processing ID="ocrd-tesserocr-recognize-8">
+      <processingStepDescription>layout/segmentation/region</processingStepDescription>
+      <processingStepSettings>{"model": "gt4hist_5000k", "dpi": "0", "padding": "0", "segmentation_level": "word", "textequiv_level": "word", "overwrite_segments": "False", "overwrite_text": "True", "shrink_polygons": "False", "block_polygons": "False", "find_tables": "True", "find_staves": "False", "sparse_text": "False", "raw_lines": "False", "char_whitelist": "", "char_blacklist": "", "char_unblacklist": "", "tesseract_parameters": "{}", "xpath_parameters": "{}", "xpath_model": "{}", "auto_model": "False", "oem": "DEFAULT"}</processingStepSettings>
+      <processingSoftware>
+        <softwareName>ocrd-tesserocr-recognize</softwareName>
+      </processingSoftware>
+    </Processing>
+  </Description>
+  <Styles/>
+  <Tags/>
+  <Layout>
+    <Page ID="PAGE_01" PHYSICAL_IMG_NR="0" PAGECLASS="content" WIDTH="2127" HEIGHT="2655">
+      <PrintSpace HEIGHT="2484" WIDTH="1972" HPOS="73" VPOS="99">
+        <Shape>
+          <Polygon POINTS="109,99 73,2581 2013,2583 2045,112"/>
+        </Shape>
+        <Illustration ID="region0000" HEIGHT="668" WIDTH="1455" HPOS="374" VPOS="201" IDNEXT="region0002">
+          <Shape>
+            <Polygon POINTS="374,201 1829,201 1829,869 374,869"/>
+          </Shape>
+        </Illustration>
+        <GraphicalElement ID="region0001" HEIGHT="28" WIDTH="340" HPOS="1448" VPOS="838">
+          <Shape>
+            <Polygon POINTS="1448,838 1788,838 1788,866 1448,866"/>
+          </Shape>
+        </GraphicalElement>
+        <TextBlock ID="region0002" HEIGHT="948" WIDTH="1474" HPOS="342" VPOS="1404" IDNEXT="region0003">
+          <Shape>
+            <Polygon POINTS="342,1404 1816,1404 1816,2352 342,2352"/>
+          </Shape>
+          <TextLine ID="region0002_line0001" HEIGHT="174" WIDTH="1332" HPOS="484" VPOS="1404">
+            <Shape>
+              <Polygon POINTS="546,1404 536,1411 525,1414 520,1421 510,1423 496,1441 484,1475 484,1498 491,1525 508,1550 523,1560 557,1572 585,1569 607,1559 708,1563 714,1571 723,1571 731,1563 737,1563 743,1573 756,1573 765,1563 793,1561 798,1561 804,1567 814,1567 820,1562 837,1561 1064,1561 1079,1563 1086,1569 1095,1569 1101,1563 1148,1564 1156,1550 1176,1553 1299,1554 1315,1560 1381,1563 1530,1561 1550,1562 1556,1572 1567,1571 1573,1562 1725,1567 1732,1578 1746,1577 1755,1565 1780,1563 1788,1572 1797,1572 1804,1564 1816,1564 1816,1503 1804,1498 1794,1499 1784,1510 1769,1507 1752,1498 1647,1498 1631,1501 1622,1510 1613,1510 1606,1502 1585,1498 1534,1502 1466,1500 1438,1511 1393,1508 1388,1504 1311,1504 1302,1507 1294,1519 1205,1519 1205,1497 1200,1491 1129,1491 1123,1484 1113,1484 1104,1494 1066,1499 1061,1495 1052,1495 1047,1499 1016,1499 990,1508 947,1506 943,1508 887,1508 825,1498 808,1498 793,1503 785,1499 757,1496 680,1495 670,1498 663,1510 636,1510 634,1481 623,1468 608,1456 622,1452 634,1441 638,1422 632,1411 622,1405 611,1405 602,1410 600,1417 589,1405"/>
+            </Shape>
+            <String ID="region0002_line0001_word0000" HEIGHT="154" WIDTH="159" HPOS="491" VPOS="1416" CONTENT="S.">
+              <Shape>
+                <Polygon POINTS="635,1417 523,1416 520,1421 510,1423 496,1441 493,1448 491,1526 508,1550 523,1560 551,1570 570,1570 585,1569 607,1559 649,1560 650,1510 636,1510 634,1481 623,1468 608,1456 622,1452 634,1441 638,1422"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0001_word0001" HEIGHT="67" WIDTH="131" HPOS="715" VPOS="1495" CONTENT="ſchießt">
+              <Shape>
+                <Polygon POINTS="845,1561 846,1501 825,1498 808,1498 793,1503 785,1499 757,1496 716,1495 715,1560 791,1561 793,1561 798,1561 798,1561 825,1562 837,1561"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0001_word0002" HEIGHT="31" WIDTH="82" HPOS="903" VPOS="1506" CONTENT="nun">
+              <Shape>
+                <Polygon POINTS="903,1508 903,1536 985,1537 985,1507 947,1506 943,1508"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0001_word0003" HEIGHT="59" WIDTH="102" HPOS="1045" VPOS="1484" CONTENT="loß!">
+              <Shape>
+                <Polygon POINTS="1045,1499 1045,1541 1147,1543 1147,1491 1129,1491 1123,1484 1113,1484 1104,1494 1066,1499 1061,1495 1052,1495 1047,1499"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0001_word0004" HEIGHT="6" WIDTH="54" HPOS="1214" VPOS="1519" CONTENT="—">
+              <Shape>
+                <Polygon POINTS="1214,1519 1214,1524 1268,1525 1268,1519"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0001_word0005" HEIGHT="36" WIDTH="65" HPOS="1374" VPOS="1504" CONTENT="der">
+              <Shape>
+                <Polygon POINTS="1374,1504 1374,1539 1439,1540 1439,1510 1438,1511 1393,1508 1388,1504"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0001_word0006" HEIGHT="53" WIDTH="116" HPOS="1496" VPOS="1498" CONTENT="beſte">
+              <Shape>
+                <Polygon POINTS="1496,1500 1496,1549 1612,1551 1612,1509 1606,1502 1585,1498 1534,1502"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0001_word0007" HEIGHT="60" WIDTH="143" HPOS="1669" VPOS="1498" CONTENT="Schuß">
+              <Shape>
+                <Polygon POINTS="1669,1498 1669,1556 1812,1558 1812,1501 1804,1498 1794,1499 1784,1510 1769,1507 1752,1498"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0002" HEIGHT="79" WIDTH="1199" HPOS="342" VPOS="1579">
+            <Shape>
+              <Polygon POINTS="988,1579 950,1582 933,1589 915,1593 852,1592 846,1584 826,1582 814,1591 802,1593 768,1585 760,1588 683,1587 674,1592 646,1592 642,1589 596,1590 557,1597 552,1595 550,1586 545,1582 529,1585 512,1584 503,1594 463,1591 435,1585 397,1584 392,1580 384,1580 379,1584 342,1583 342,1646 501,1648 507,1656 518,1656 524,1647 769,1644 810,1644 815,1653 826,1654 834,1644 863,1643 897,1644 932,1649 1077,1648 1087,1658 1100,1658 1114,1649 1349,1649 1357,1645 1360,1634 1379,1639 1475,1641 1535,1641 1541,1636 1541,1612 1536,1607 1414,1605 1412,1593 1405,1589 1333,1588 1290,1597 1268,1596 1259,1587 1237,1589 1215,1586 1138,1589 1120,1586 1114,1591 1092,1593 1087,1582 1074,1581 1066,1592 1052,1592 1042,1590 1032,1580"/>
+            </Shape>
+            <String ID="region0002_line0002_word0000" HEIGHT="52" WIDTH="89" HPOS="360" VPOS="1584" CONTENT="Gilt">
+              <Shape>
+                <Polygon POINTS="438,1585 361,1584 360,1634 449,1636 449,1588"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0002_word0001" HEIGHT="58" WIDTH="63" HPOS="506" VPOS="1587" CONTENT="fuͤr">
+              <Shape>
+                <Polygon POINTS="550,1587 509,1587 506,1589 506,1644 569,1645 569,1594 557,1597 552,1595"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0002_word0002" HEIGHT="43" WIDTH="68" HPOS="629" VPOS="1594" CONTENT="des">
+              <Shape>
+                <Polygon POINTS="630,1594 697,1595 696,1637 629,1636"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0002_word0003" HEIGHT="55" WIDTH="157" HPOS="756" VPOS="1591" CONTENT="beſten">
+              <Shape>
+                <Polygon POINTS="795,1591 757,1591 756,1644 769,1644 810,1644 811,1646 831,1646 834,1644 863,1643 897,1644 912,1646 913,1593 809,1591 802,1593"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0002_word0004" HEIGHT="63" WIDTH="165" HPOS="968" VPOS="1591" CONTENT="Koͤnigs">
+              <Shape>
+                <Polygon POINTS="1092,1592 969,1591 968,1649 1077,1648 1082,1653 1107,1654 1114,1649 1132,1649 1133,1593 1097,1593 1092,1593"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0002_word0005" HEIGHT="49" WIDTH="160" HPOS="1191" VPOS="1598" CONTENT="Leben!">
+              <Shape>
+                <Polygon POINTS="1192,1598 1351,1601 1350,1647 1191,1644"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0002_word0006" HEIGHT="13" WIDTH="55" HPOS="1409" VPOS="1622" CONTENT="—">
+              <Shape>
+                <Polygon POINTS="1409,1622 1464,1623 1464,1635 1409,1634"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0003" HEIGHT="83" WIDTH="1371" HPOS="343" VPOS="1665">
+            <Shape>
+              <Polygon POINTS="1219,1665 1204,1668 1198,1680 1183,1681 1155,1679 1148,1671 1136,1670 1130,1674 1073,1677 1062,1676 1054,1670 1034,1672 1007,1667 959,1668 949,1672 948,1684 944,1688 932,1689 861,1689 861,1675 856,1670 842,1671 838,1682 766,1679 761,1675 747,1674 735,1665 724,1665 717,1670 590,1669 556,1672 549,1677 547,1696 526,1695 515,1700 499,1700 498,1685 489,1680 454,1678 437,1672 420,1673 343,1669 343,1741 366,1741 382,1744 388,1740 412,1737 420,1742 430,1743 436,1737 443,1737 466,1738 472,1744 481,1744 487,1738 561,1739 567,1733 681,1736 685,1744 697,1746 703,1744 709,1736 740,1735 747,1741 760,1742 770,1734 783,1733 821,1735 827,1741 835,1741 842,1735 868,1734 880,1727 900,1724 946,1725 969,1732 985,1732 991,1741 1003,1740 1008,1733 1027,1733 1031,1741 1042,1742 1053,1733 1111,1733 1125,1733 1129,1741 1141,1743 1153,1733 1161,1732 1317,1734 1321,1737 1330,1738 1334,1735 1497,1736 1504,1743 1513,1743 1519,1736 1528,1737 1532,1746 1544,1747 1554,1737 1567,1737 1592,1740 1599,1746 1609,1746 1613,1743 1618,1748 1626,1748 1633,1741 1709,1741 1714,1736 1713,1706 1710,1703 1663,1703 1662,1678 1657,1673 1584,1675 1509,1671 1487,1680 1448,1671 1394,1671 1383,1673 1369,1683 1341,1684 1289,1679 1268,1667"/>
+            </Shape>
+            <String ID="region0002_line0003_word0000" HEIGHT="57" WIDTH="131" HPOS="359" VPOS="1669" CONTENT="Faßt,">
+              <Shape>
+                <Polygon POINTS="359,1669 359,1724 490,1726 490,1681 489,1680 454,1678 437,1672 420,1673"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0003_word0001" HEIGHT="13" WIDTH="57" HPOS="524" VPOS="1695" CONTENT="—">
+              <Shape>
+                <Polygon POINTS="527,1695 526,1695 525,1695 524,1707 580,1708 581,1696 547,1695 547,1696"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0003_word0002" HEIGHT="67" WIDTH="230" HPOS="623" VPOS="1669" CONTENT="Schuͤtzen,">
+              <Shape>
+                <Polygon POINTS="742,1671 675,1670 624,1669 623,1733 769,1735 770,1734 783,1733 821,1735 822,1736 841,1736 842,1735 852,1735 853,1672 842,1672 838,1682 766,1679 761,1675 747,1674"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0003_word0003" HEIGHT="13" WIDTH="55" HPOS="877" VPOS="1699" CONTENT="⸗—">
+              <Shape>
+                <Polygon POINTS="877,1699 932,1700 932,1712 877,1711"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0003_word0004" HEIGHT="58" WIDTH="85" HPOS="989" VPOS="1678" CONTENT="faßt">
+              <Shape>
+                <Polygon POINTS="1073,1733 1074,1680 990,1678 989,1735 1006,1735 1008,1733 1027,1733 1028,1735 1048,1736 1053,1733"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0003_word0005" HEIGHT="61" WIDTH="100" HPOS="1130" VPOS="1676" CONTENT="heut'">
+              <Shape>
+                <Polygon POINTS="1152,1676 1131,1676 1130,1737 1147,1737 1153,1733 1161,1732 1229,1732 1230,1678 1199,1677 1198,1680 1183,1681 1155,1679"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0003_word0006" HEIGHT="43" WIDTH="72" HPOS="1289" VPOS="1692" CONTENT="den">
+              <Shape>
+                <Polygon POINTS="1318,1734 1360,1735 1361,1693 1290,1692 1289,1734 1317,1734"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0003_word0007" HEIGHT="60" WIDTH="220" HPOS="1419" VPOS="1685" CONTENT="Eutſchluß,">
+              <Shape>
+                <Polygon POINTS="1638,1741 1639,1688 1420,1685 1419,1735 1497,1736 1504,1743 1513,1743 1519,1736 1528,1737 1531,1744 1546,1744 1554,1737 1567,1737 1592,1740 1598,1745 1609,1745 1613,1743 1615,1745 1628,1745 1633,1741"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0004" HEIGHT="83" WIDTH="1337" HPOS="343" VPOS="1750">
+            <Shape>
+              <Polygon POINTS="1049,1750 1028,1752 1023,1757 1021,1769 1005,1769 998,1768 999,1761 992,1753 981,1753 975,1758 961,1757 949,1768 898,1767 894,1763 885,1763 880,1766 836,1758 760,1757 730,1761 700,1760 655,1769 613,1766 608,1760 595,1760 585,1766 565,1767 531,1757 520,1757 516,1760 469,1760 455,1767 444,1768 430,1762 411,1758 343,1757 343,1823 584,1823 587,1832 599,1833 611,1823 644,1824 671,1820 891,1821 948,1823 954,1830 963,1830 973,1821 1012,1821 1042,1829 1133,1830 1162,1820 1225,1825 1231,1830 1242,1830 1251,1823 1276,1821 1284,1822 1295,1829 1345,1831 1405,1822 1525,1825 1545,1816 1675,1817 1680,1812 1680,1787 1675,1782 1538,1781 1538,1765 1533,1760 1469,1759 1431,1768 1402,1770 1396,1762 1383,1761 1368,1769 1314,1770 1175,1765 1157,1763 1136,1751"/>
+            </Shape>
+            <String ID="region0002_line0004_word0000" HEIGHT="49" WIDTH="79" HPOS="363" VPOS="1760" CONTENT="So">
+              <Shape>
+                <Polygon POINTS="424,1760 363,1760 363,1808 442,1809 442,1767 430,1762"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0001" HEIGHT="60" WIDTH="113" HPOS="499" VPOS="1759" CONTENT="Guth">
+              <Shape>
+                <Polygon POINTS="538,1759 517,1759 516,1760 499,1760 499,1818 612,1819 612,1765 608,1760 595,1760 585,1766 565,1767"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0002" HEIGHT="45" WIDTH="61" HPOS="672" VPOS="1764" CONTENT="als">
+              <Shape>
+                <Polygon POINTS="672,1765 672,1808 733,1809 733,1765 679,1764"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0003" HEIGHT="47" WIDTH="106" HPOS="791" VPOS="1766" CONTENT="Blut">
+              <Shape>
+                <Polygon POINTS="791,1766 897,1768 897,1813 791,1811"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0004" HEIGHT="60" WIDTH="64" HPOS="954" VPOS="1763" CONTENT="fuͤr">
+              <Shape>
+                <Polygon POINTS="998,1763 955,1763 954,1823 970,1823 973,1821 1012,1821 1018,1822 1018,1769 1005,1769 998,1768"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0005" HEIGHT="63" WIDTH="101" HPOS="1073" VPOS="1762" CONTENT="Ihn">
+              <Shape>
+                <Polygon POINTS="1157,1763 1074,1762 1073,1824 1148,1825 1162,1820 1173,1821 1174,1765 1157,1763"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0006" HEIGHT="47" WIDTH="44" HPOS="1231" VPOS="1777" CONTENT="zu">
+              <Shape>
+                <Polygon POINTS="1275,1821 1275,1778 1231,1777 1231,1824 1249,1824 1251,1823"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0007" HEIGHT="55" WIDTH="157" HPOS="1332" VPOS="1770" CONTENT="geben!">
+              <Shape>
+                <Polygon POINTS="1489,1824 1489,1772 1332,1770 1332,1825 1380,1825 1405,1822"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0004_word0008" HEIGHT="15" WIDTH="56" HPOS="1543" VPOS="1797" CONTENT="——">
+              <Shape>
+                <Polygon POINTS="1543,1797 1599,1798 1599,1812 1543,1811"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0005" HEIGHT="74" WIDTH="1033" HPOS="342" VPOS="1843">
+            <Shape>
+              <Polygon POINTS="1221,1845 1209,1853 1160,1853 1156,1850 1147,1850 1143,1853 1077,1854 1067,1852 1059,1843 1048,1843 1041,1848 1006,1844 949,1843 935,1844 918,1852 881,1855 854,1854 847,1849 839,1849 831,1854 794,1853 782,1851 774,1845 763,1845 755,1848 722,1847 696,1855 636,1856 547,1853 542,1849 509,1854 504,1847 496,1845 479,1844 471,1851 466,1848 342,1843 342,1908 419,1910 468,1908 473,1916 485,1917 490,1914 492,1907 666,1907 670,1910 679,1910 684,1907 749,1907 754,1915 767,1917 778,1906 808,1905 902,1907 935,1914 1011,1916 1036,1912 1041,1917 1050,1917 1059,1908 1143,1904 1234,1905 1253,1907 1258,1915 1269,1917 1276,1911 1280,1914 1289,1914 1294,1911 1369,1911 1374,1906 1375,1877 1370,1872 1338,1871 1336,1861 1329,1857 1241,1853 1234,1845"/>
+            </Shape>
+            <String ID="region0002_line0005_word0000" HEIGHT="46" WIDTH="61" HPOS="356" VPOS="1851" CONTENT="Es">
+              <Shape>
+                <Polygon POINTS="357,1851 417,1852 416,1897 356,1896"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0005_word0001" HEIGHT="57" WIDTH="79" HPOS="473" VPOS="1850" CONTENT="ſind">
+              <Shape>
+                <Polygon POINTS="506,1850 474,1850 473,1906 552,1907 552,1853 547,1853 544,1850 530,1850 509,1854"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0005_word0002" HEIGHT="41" WIDTH="82" HPOS="613" VPOS="1860" CONTENT="nun">
+              <Shape>
+                <Polygon POINTS="614,1860 695,1862 694,1901 613,1899"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0005_word0003" HEIGHT="56" WIDTH="164" HPOS="755" VPOS="1854" CONTENT="hundert">
+              <Shape>
+                <Polygon POINTS="918,1910 919,1856 756,1854 755,1909 774,1909 778,1906 808,1905 902,1907"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0005_word0004" HEIGHT="58" WIDTH="111" HPOS="974" VPOS="1855" CONTENT="Jahr">
+              <Shape>
+                <Polygon POINTS="1084,1906 1085,1857 975,1855 974,1912 1029,1913 1036,1912 1037,1913 1053,1913 1059,1908"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0005_word0005" HEIGHT="55" WIDTH="157" HPOS="1143" VPOS="1859" CONTENT="vorbey,">
+              <Shape>
+                <Polygon POINTS="1299,1911 1300,1861 1144,1859 1143,1904 1234,1905 1253,1907 1257,1914 1271,1914 1276,1911 1280,1914 1289,1914 1294,1911"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0006" HEIGHT="81" WIDTH="953" HPOS="343" VPOS="1927">
+            <Shape>
+              <Polygon POINTS="1079,1928 1055,1940 1050,1940 1041,1931 1033,1931 1026,1938 1004,1934 1000,1937 964,1937 929,1943 891,1942 889,1935 884,1931 814,1932 804,1934 798,1940 784,1942 744,1941 739,1937 732,1937 724,1927 713,1927 707,1931 618,1928 607,1931 600,1941 588,1943 570,1943 565,1934 549,1930 541,1934 538,1943 508,1944 456,1943 411,1932 343,1930 343,1997 416,1997 484,1993 536,1995 541,2003 552,2004 559,1995 791,1994 831,1996 838,2004 847,2004 855,1996 859,1996 864,2006 878,2008 889,1996 901,1995 1203,1992 1281,1994 1295,1980 1296,1947 1291,1942 1200,1940 1156,1929"/>
+            </Shape>
+            <String ID="region0002_line0006_word0000" HEIGHT="48" WIDTH="76" HPOS="351" VPOS="1936" CONTENT="Da">
+              <Shape>
+                <Polygon POINTS="352,1936 427,1938 426,1984 351,1982"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0006_word0001" HEIGHT="58" WIDTH="111" HPOS="483" VPOS="1936" CONTENT="unſre">
+              <Shape>
+                <Polygon POINTS="566,1936 540,1936 538,1943 508,1944 483,1943 483,1992 594,1994 594,1941 588,1943 570,1943"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0006_word0002" HEIGHT="54" WIDTH="129" HPOS="651" VPOS="1935" CONTENT="Vaͤter">
+              <Shape>
+                <Polygon POINTS="731,1936 652,1935 651,1987 779,1989 780,1942 744,1941 739,1937 732,1937"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0006_word0003" HEIGHT="60" WIDTH="108" HPOS="836" VPOS="1940" CONTENT="ſchon">
+              <Shape>
+                <Polygon POINTS="890,1941 837,1940 836,2000 850,2000 855,1996 859,1996 861,2000 884,2000 889,1996 901,1995 943,1994 944,1942 935,1941 929,1943 891,1942"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0006_word0004" HEIGHT="46" WIDTH="59" HPOS="1003" VPOS="1945" CONTENT="die">
+              <Shape>
+                <Polygon POINTS="1004,1945 1062,1946 1061,1991 1003,1990"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0006_word0005" HEIGHT="47" WIDTH="109" HPOS="1110" VPOS="1945" CONTENT="Treu">
+              <Shape>
+                <Polygon POINTS="1218,1992 1219,1947 1111,1945 1110,1992 1142,1992 1203,1992"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0007" HEIGHT="84" WIDTH="1474" HPOS="342" VPOS="2012">
+            <Shape>
+              <Polygon POINTS="1642,2019 1606,2021 1601,2026 1599,2034 1505,2031 1487,2023 1458,2020 1395,2019 1381,2022 1372,2031 1269,2031 1235,2028 1228,2016 1215,2015 1201,2028 1136,2030 1010,2029 996,2027 990,2019 978,2019 964,2028 911,2029 899,2020 881,2018 873,2012 852,2013 849,2017 850,2030 794,2028 752,2019 667,2017 650,2021 645,2029 641,2021 624,2018 613,2029 560,2025 545,2016 537,2016 529,2021 492,2022 472,2028 438,2027 403,2018 342,2017 342,2082 407,2083 471,2079 502,2085 527,2085 533,2090 543,2090 551,2084 597,2080 613,2080 616,2087 628,2089 635,2080 738,2082 804,2078 868,2079 872,2082 882,2083 891,2079 1028,2081 1082,2090 1126,2088 1154,2079 1202,2080 1207,2089 1220,2088 1225,2080 1308,2082 1331,2085 1337,2092 1351,2093 1363,2088 1384,2091 1444,2092 1492,2084 1525,2090 1577,2091 1602,2088 1606,2092 1615,2092 1627,2085 1630,2095 1645,2096 1651,2093 1656,2085 1816,2085 1815,2030 1660,2032 1657,2023"/>
+            </Shape>
+            <String ID="region0002_line0007_word0000" HEIGHT="48" WIDTH="106" HPOS="356" VPOS="2017" CONTENT="Dem">
+              <Shape>
+                <Polygon POINTS="356,2017 356,2063 462,2065 462,2027 438,2027 403,2018"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0007_word0001" HEIGHT="59" WIDTH="129" HPOS="520" VPOS="2016" CONTENT="Hauſe">
+              <Shape>
+                <Polygon POINTS="545,2016 536,2016 529,2021 520,2021 520,2073 649,2075 649,2021 645,2029 641,2021 624,2018 613,2029 560,2025"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0007_word0002" HEIGHT="63" WIDTH="388" HPOS="707" VPOS="2017" CONTENT="Branvdenburg">
+              <Shape>
+                <Polygon POINTS="881,2018 849,2017 850,2030 794,2028 752,2019 708,2018 707,2074 1094,2080 1095,2030 1010,2029 996,2027 990,2019 978,2019 964,2028 911,2029 899,2020 881,2018"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0007_word0003" HEIGHT="57" WIDTH="74" HPOS="1153" VPOS="2023" CONTENT="auf">
+              <Shape>
+                <Polygon POINTS="1156,2079 1226,2080 1227,2023 1207,2023 1201,2028 1154,2029 1153,2079 1154,2079 1154,2079"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0007_word0004" HEIGHT="47" WIDTH="103" HPOS="1278" VPOS="2038" CONTENT="ewge">
+              <Shape>
+                <Polygon POINTS="1326,2084 1381,2085 1381,2039 1278,2038 1278,2081 1308,2082"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0007_word0005" HEIGHT="58" WIDTH="84" HPOS="1419" VPOS="2029" CONTENT="Zeit">
+              <Shape>
+                <Polygon POINTS="1503,2030 1419,2029 1419,2086 1476,2087 1492,2084 1503,2086 1503,2030"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0007_word0006" HEIGHT="61" WIDTH="243" HPOS="1560" VPOS="2031" CONTENT="geſchworen.">
+              <Shape>
+                <Polygon POINTS="1802,2085 1803,2035 1599,2031 1599,2034 1560,2032 1560,2090 1577,2091 1602,2088 1605,2091 1615,2091 1627,2085 1629,2092 1651,2092 1656,2085"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0008" HEIGHT="73" WIDTH="850" HPOS="342" VPOS="2103">
+            <Shape>
+              <Polygon POINTS="1094,2105 1039,2111 1028,2105 1018,2105 1007,2110 996,2105 881,2103 857,2113 852,2113 843,2103 830,2103 820,2115 809,2114 802,2104 794,2104 785,2112 766,2109 760,2112 691,2112 687,2109 669,2106 661,2112 634,2114 626,2114 619,2106 609,2105 601,2110 530,2109 523,2112 472,2115 432,2115 398,2105 343,2103 342,2162 343,2167 566,2166 597,2167 605,2174 613,2174 621,2168 628,2167 817,2166 822,2173 833,2174 839,2166 867,2166 881,2173 931,2175 951,2170 957,2175 967,2175 974,2167 1005,2168 1016,2176 1036,2176 1044,2169 1095,2168 1102,2162 1104,2147 1140,2148 1145,2154 1175,2154 1187,2152 1192,2145 1192,2134 1188,2129 1166,2128 1166,2111 1161,2106"/>
+            </Shape>
+            <String ID="region0002_line0008_word0000" HEIGHT="49" WIDTH="192" HPOS="352" VPOS="2108" CONTENT="Erneuert">
+              <Shape>
+                <Polygon POINTS="411,2108 353,2108 352,2154 543,2157 544,2111 525,2110 523,2112 472,2115 432,2115"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0008_word0001" HEIGHT="54" WIDTH="109" HPOS="600" VPOS="2113" CONTENT="heute">
+              <Shape>
+                <Polygon POINTS="626,2113 601,2113 600,2165 690,2167 708,2167 709,2115 638,2114 634,2114 626,2114"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0008_word0002" HEIGHT="54" WIDTH="108" HPOS="750" VPOS="2115" CONTENT="dieſe">
+              <Shape>
+                <Polygon POINTS="857,2166 858,2116 751,2115 750,2166 817,2166 819,2169 836,2169 839,2166"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0008_word0003" HEIGHT="57" WIDTH="178" HPOS="912" VPOS="2117" CONTENT="Pflicht!">
+              <Shape>
+                <Polygon POINTS="1089,2168 1090,2120 913,2117 912,2172 941,2172 951,2170 954,2172 968,2172 974,2167 1005,2168 1012,2173 1038,2174 1044,2169"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0008_word0004" HEIGHT="9" WIDTH="43" HPOS="1149" VPOS="2143" CONTENT="—">
+              <Shape>
+                <Polygon POINTS="1192,2143 1149,2143 1149,2152 1187,2152 1192,2145"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0009" HEIGHT="95" WIDTH="1146" HPOS="343" VPOS="2178">
+            <Shape>
+              <Polygon POINTS="1067,2178 1062,2182 1060,2189 1042,2189 1021,2198 1004,2197 998,2190 989,2190 982,2200 968,2201 868,2199 861,2189 848,2189 834,2200 826,2192 816,2192 809,2200 804,2201 735,2202 717,2202 712,2193 701,2191 686,2191 678,2199 549,2198 483,2201 474,2198 432,2197 424,2193 403,2194 343,2190 343,2252 418,2250 449,2255 455,2260 463,2260 469,2256 510,2257 545,2251 632,2251 675,2253 681,2262 691,2263 699,2254 755,2254 792,2250 839,2253 843,2264 854,2265 867,2253 959,2251 1126,2253 1132,2260 1141,2260 1151,2252 1211,2252 1319,2254 1324,2256 1324,2261 1329,2267 1341,2267 1352,2256 1391,2258 1399,2264 1403,2272 1415,2273 1420,2268 1421,2258 1484,2259 1489,2254 1489,2227 1486,2223 1432,2222 1432,2206 1429,2202 1389,2198 1386,2190 1378,2185 1365,2187 1361,2192 1360,2203 1351,2203 1344,2193 1333,2193 1320,2202 1313,2193 1301,2193 1294,2203 1268,2199 1263,2203 1210,2203 1202,2201 1191,2191 1138,2190 1120,2193 1096,2189 1082,2190 1077,2180"/>
+            </Shape>
+            <String ID="region0002_line0009_word0000" HEIGHT="49" WIDTH="124" HPOS="349" VPOS="2190" CONTENT="Und,">
+              <Shape>
+                <Polygon POINTS="349,2190 349,2237 473,2239 473,2197 432,2197 424,2193 403,2194"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0009_word0001" HEIGHT="35" WIDTH="78" HPOS="544" VPOS="2198" CONTENT="wer">
+              <Shape>
+                <Polygon POINTS="544,2198 544,2231 622,2233 622,2198 549,2198"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0009_word0002" HEIGHT="53" WIDTH="45" HPOS="681" VPOS="2191" CONTENT="ſie">
+              <Shape>
+                <Polygon POINTS="681,2195 681,2244 726,2244 726,2202 717,2202 712,2193 701,2191 686,2191"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0009_word0003" HEIGHT="60" WIDTH="98" HPOS="787" VPOS="2190" CONTENT="nicht">
+              <Shape>
+                <Polygon POINTS="862,2190 846,2190 834,2200 826,2192 816,2192 809,2200 804,2201 787,2201 787,2248 885,2250 885,2199 868,2199"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0009_word0004" HEIGHT="46" WIDTH="71" HPOS="945" VPOS="2194" CONTENT="mit">
+              <Shape>
+                <Polygon POINTS="1002,2194 985,2194 982,2200 968,2201 945,2200 945,2239 1016,2240 1016,2197 1004,2197"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0009_word0005" HEIGHT="64" WIDTH="91" HPOS="1068" VPOS="2185" CONTENT="Euſt">
+              <Shape>
+                <Polygon POINTS="1079,2185 1069,2185 1068,2248 1159,2249 1159,2190 1138,2190 1120,2193 1096,2189 1082,2190"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0009_word0006" HEIGHT="71" WIDTH="227" HPOS="1188" VPOS="2190" CONTENT="entricht't,">
+              <Shape>
+                <Polygon POINTS="1386,2190 1362,2190 1361,2192 1360,2203 1351,2203 1344,2193 1333,2193 1320,2202 1313,2193 1301,2193 1294,2203 1268,2199 1263,2203 1210,2203 1202,2201 1191,2191 1188,2190 1188,2252 1211,2252 1319,2254 1324,2256 1324,2259 1348,2259 1352,2256 1391,2258 1394,2260 1415,2261 1415,2200 1389,2198"/>
+              </Shape>
+            </String>
+          </TextLine>
+          <TextLine ID="region0002_line0010" HEIGHT="79" WIDTH="1473" HPOS="343" VPOS="2273">
+            <Shape>
+              <Polygon POINTS="1688,2277 1672,2280 1655,2288 1623,2290 1605,2290 1599,2282 1589,2282 1573,2289 1562,2289 1556,2281 1546,2281 1532,2290 1495,2291 1487,2288 1439,2287 1435,2284 1418,2287 1411,2279 1400,2279 1384,2287 1376,2288 1273,2292 1254,2290 1252,2278 1245,2274 1237,2274 1229,2280 1155,2278 1132,2284 1116,2281 1105,2286 1078,2288 1025,2286 1021,2283 1004,2286 999,2275 986,2276 972,2285 929,2287 879,2287 873,2280 862,2280 855,2285 854,2278 848,2273 836,2274 827,2285 817,2276 729,2275 715,2277 699,2286 681,2286 673,2275 573,2274 559,2276 547,2285 533,2287 517,2287 515,2281 506,2274 495,2275 484,2285 434,2284 399,2275 343,2274 343,2339 484,2337 490,2350 500,2351 504,2348 508,2338 517,2338 522,2346 532,2346 543,2338 554,2338 625,2340 628,2343 637,2343 642,2340 702,2339 796,2341 802,2351 814,2352 824,2342 856,2341 864,2347 874,2348 884,2340 919,2337 964,2339 975,2342 981,2351 995,2351 1009,2340 1066,2338 1248,2343 1268,2345 1273,2351 1290,2351 1301,2345 1338,2342 1388,2342 1390,2352 1410,2352 1418,2343 1433,2345 1472,2342 1519,2343 1549,2347 1553,2344 1574,2343 1575,2351 1593,2352 1602,2344 1608,2343 1654,2341 1724,2343 1755,2335 1816,2335 1816,2300 1747,2299 1747,2283 1742,2278"/>
+            </Shape>
+            <String ID="region0002_line0010_word0000" HEIGHT="48" WIDTH="107" HPOS="348" VPOS="2276" CONTENT="Dem">
+              <Shape>
+                <Polygon POINTS="407,2277 348,2276 348,2322 455,2324 455,2284 434,2284"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0010_word0001" HEIGHT="60" WIDTH="58" HPOS="490" VPOS="2275" CONTENT="ſey">
+              <Shape>
+                <Polygon POINTS="507,2275 495,2275 491,2279 490,2335 547,2335 548,2284 547,2285 533,2287 517,2287 515,2281"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0010_word0002" HEIGHT="53" WIDTH="109" HPOS="592" VPOS="2276" CONTENT="Sein">
+              <Shape>
+                <Polygon POINTS="674,2277 593,2276 592,2327 701,2329 701,2284 699,2286 681,2286"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0010_word0003" HEIGHT="68" WIDTH="289" HPOS="738" VPOS="2275" CONTENT="Schuͤtzenrecht">
+              <Shape>
+                <Polygon POINTS="817,2276 758,2275 739,2275 738,2338 883,2341 884,2340 919,2337 964,2339 975,2342 975,2342 1006,2343 1009,2340 1026,2339 1027,2286 1025,2286 1021,2283 1004,2286 1001,2280 981,2279 972,2285 929,2287 879,2287 873,2280 862,2280 855,2285 854,2278 853,2277 834,2277 827,2285"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0010_word0004" HEIGHT="45" WIDTH="78" HPOS="1062" VPOS="2287" CONTENT="und">
+              <Shape>
+                <Polygon POINTS="1062,2287 1062,2330 1140,2332 1140,2289 1083,2287 1078,2288"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0010_word0005" HEIGHT="66" WIDTH="258" HPOS="1179" VPOS="2281" CONTENT="Buͤrgerrecht">
+              <Shape>
+                <Polygon POINTS="1253,2282 1180,2281 1179,2341 1248,2343 1261,2344 1302,2345 1338,2342 1388,2342 1389,2346 1415,2347 1418,2343 1433,2345 1437,2345 1437,2286 1436,2285 1430,2285 1418,2287 1416,2285 1389,2284 1384,2287 1376,2288 1273,2292 1254,2290"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0010_word0006" HEIGHT="63" WIDTH="229" HPOS="1473" VPOS="2288" CONTENT="verlohren!">
+              <Shape>
+                <Polygon POINTS="1487,2288 1474,2288 1473,2342 1519,2343 1549,2347 1553,2344 1574,2343 1575,2350 1595,2351 1602,2344 1608,2343 1654,2341 1701,2342 1702,2291 1624,2290 1623,2290 1605,2290 1605,2290 1534,2289 1532,2290 1495,2291"/>
+              </Shape>
+            </String>
+            <SP/>
+            <String ID="region0002_line0010_word0007" HEIGHT="16" WIDTH="54" HPOS="1745" VPOS="2315" CONTENT="—">
+              <Shape>
+                <Polygon POINTS="1745,2315 1799,2316 1799,2331 1745,2330"/>
+              </Shape>
+            </String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="region0003" HEIGHT="83" WIDTH="27" HPOS="1995" VPOS="1860">
+          <Shape>
+            <Polygon POINTS="2022,1860 1995,1860 1995,1943 2021,1943"/>
+          </Shape>
+          <TextLine ID="region0003_line" HEIGHT="83" WIDTH="27" HPOS="1995" VPOS="1860">
+            <Shape>
+              <Polygon POINTS="2022,1860 1995,1860 1995,1943 2021,1943"/>
+            </Shape>
+            <String ID="region0003_line_word0000" HEIGHT="72" WIDTH="22" HPOS="1999" VPOS="1865" CONTENT="*a">
+              <Shape>
+                <Polygon POINTS="1999,1937 2000,1865 2021,1865 2020,1937"/>
+              </Shape>
+            </String>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

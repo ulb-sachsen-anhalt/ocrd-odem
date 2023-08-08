@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mets="http://www.loc.gov/METS/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:mods="http://www.loc.gov/mods/v3" xsi:schemaLocation="http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/version112/mets.xsd" OBJID="5" LABEL="Drucke des 18. Jahrhunderts (VD18)">
+  <mets:metsHdr CREATEDATE="2022-04-27T09:55:41">
+    <mets:agent ROLE="OTHER" TYPE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>vls/2012</mets:name>
+    </mets:agent>
+    <mets:agent ROLE="OTHER" TYPE="OTHER" OTHERTYPE="INSTANCE">
+      <mets:name>ulbhalvd</mets:name>
+    </mets:agent>
+    <mets:agent ROLE="OTHER" TYPE="OTHER" OTHERTYPE="REPOSITORY">
+      <mets:name>digitale.bibliothek.uni-halle.de/vd18</mets:name>
+    </mets:agent>
+    <mets:agent ROLE="OTHER" TYPE="OTHER" OTHERTYPE="BUILDER">
+      <mets:name>vd</mets:name>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="md1180329">
+    <mets:mdWrap MIMETYPE="text/xml" MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods version="3.7" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd">
+          <mods:titleInfo>
+            <mods:nonSort>Dem</mods:nonSort>
+            <mods:title>bisherigen Würdigen Schützenkönig Herrn Rathsmeister Reichhelm und der ganzen Löblichen Schützenkompagnie der Stadt Halle am Tage der Jubelfeyer und Einweihung des neuen Schützenhauses den 10 Jul. 1780. gewidmet von einem Patrioten</mods:title>
+          </mods:titleInfo>
+          <mods:name type="personal" authority="gnd" authorityURI="http://d-nb.info/gnd/" valueURI="http://d-nb.info/gnd/104254599">
+            <mods:namePart>Reichhelm, Friedrich August</mods:namePart>
+            <mods:namePart type="given">Friedrich August</mods:namePart>
+            <mods:namePart type="family">Reichhelm</mods:namePart>
+            <mods:namePart type="date">1726-1782</mods:namePart>
+            <mods:role>
+              <mods:roleTerm type="code" authority="marcrelator">oth</mods:roleTerm>
+              <mods:roleTerm type="text">ErwähnteR</mods:roleTerm>
+            </mods:role>
+          </mods:name>
+          <mods:name type="personal" authority="gnd" authorityURI="http://d-nb.info/gnd/" valueURI="http://d-nb.info/gnd/116700645">
+            <mods:namePart>Hendel, Johann Christian</mods:namePart>
+            <mods:namePart type="given">Johann Christian</mods:namePart>
+            <mods:namePart type="family">Hendel</mods:namePart>
+            <mods:namePart type="date">1742-1823</mods:namePart>
+            <mods:role>
+              <mods:roleTerm type="code" authority="marcrelator">pbl</mods:roleTerm>
+              <mods:roleTerm type="text">Verl.</mods:roleTerm>
+            </mods:role>
+          </mods:name>
+          <mods:typeOfResource>text</mods:typeOfResource>
+          <mods:genre authority="aad">Gelegenheitsschrift:Fest</mods:genre>
+          <mods:genre authority="aad">Lyrik</mods:genre>
+          <mods:originInfo eventType="publication">
+            <mods:place>
+              <mods:placeTerm type="text">Halle</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Hendel</mods:publisher>
+            <mods:dateIssued encoding="w3cdtf" keyDate="yes">1780</mods:dateIssued>
+            <mods:issuance>monographic</mods:issuance>
+          </mods:originInfo>
+          <mods:originInfo>
+            <mods:edition>[Electronic ed.]</mods:edition>
+            <mods:place>
+              <mods:placeTerm type="text">Halle, Saale</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:publisher>
+            <mods:dateIssued>2019</mods:dateIssued>
+          </mods:originInfo>
+          <mods:language>
+            <mods:languageTerm authority="iso639-2b" type="code">ger</mods:languageTerm>
+          </mods:language>
+          <mods:physicalDescription>
+            <mods:extent>[2] Bl. ; 4°</mods:extent>
+          </mods:physicalDescription>
+          <mods:note>Vorlageform des Erscheinungsvermerks: Halle, gedruckt bey Johann Christian Hendel.</mods:note>
+          <mods:subject authority="gnd" authorityURI="http://d-nb.info/gnd/" valueURI="http://d-nb.info/gnd/4023025-9">
+            <mods:geographic>Halle (Saale)</mods:geographic>
+          </mods:subject>
+          <mods:identifier type="vd18">10075631</mods:identifier>
+          <mods:identifier type="gbv">198114125</mods:identifier>
+          <mods:identifier type="urn">urn:nbn:de:gbv:3:1-286968</mods:identifier>
+          <mods:location>
+            <mods:physicalLocation authority="local library code">65</mods:physicalLocation>
+            <mods:holdingSimple>
+              <mods:copyInformation>
+                <mods:shelfLocator>Pon Zd 5528, QK</mods:shelfLocator>
+                <mods:note>digitized copy</mods:note>
+              </mods:copyInformation>
+            </mods:holdingSimple>
+          </mods:location>
+          <mods:extension>
+            <zvdd:zvddWrap xmlns:zvdd="http://zvdd.gdz-cms.de/">
+              <zvdd:titleWord>Ratsmeister Schützenkompanie Jubelfeier</zvdd:titleWord>
+            </zvdd:zvddWrap>
+            <vlz:externalType xmlns:vlz="http://visuallibrary.net/vlz/1.0/" recordSyntax="pica" code="Aa"/>
+            <vlz:info xmlns:vlz="http://visuallibrary.net/vlz/1.0/" version="2"/>
+          </mods:extension>
+          <mods:recordInfo>
+            <mods:recordCreationDate encoding="marc">14-05-96</mods:recordCreationDate>
+            <mods:recordChangeDate encoding="marc">13-04-21</mods:recordChangeDate>
+            <mods:recordIdentifier source="ulbhalvd18">198114125</mods:recordIdentifier>
+            <mods:descriptionStandard>rak</mods:descriptionStandard>
+          </mods:recordInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="amd1180329">
+    <mets:rightsMD ID="rights1180329">
+      <mets:mdWrap MIMETYPE="text/xml" MDTYPE="OTHER" OTHERMDTYPE="DVRIGHTS">
+        <mets:xmlData>
+          <dv:rights xmlns:dv="http://dfg-viewer.de/">
+            <dv:ownerLogo>https://digitale.bibliothek.uni-halle.de/vd18//domainresource/static/graphics/connectors/viewerLogo.gif</dv:ownerLogo>
+            <dv:owner>Halle, Saale : Universitäts- und Landesbibliothek Sachsen-Anhalt</dv:owner>
+            <dv:ownerSiteURL>http://www.bibliothek.uni-halle.de</dv:ownerSiteURL>
+            <dv:ownerContact>mailto:auskunft@bibliothek.uni-halle.de</dv:ownerContact>
+          </dv:rights>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:rightsMD>
+    <mets:digiprovMD ID="digiprov1180329">
+      <mets:mdWrap MIMETYPE="text/xml" MDTYPE="OTHER" OTHERMDTYPE="DVLINKS">
+        <mets:xmlData>
+          <dv:links xmlns:dv="http://dfg-viewer.de/">
+            <dv:reference>http://opac.bibliothek.uni-halle.de/DB=1/CLK?IKT=12&amp;TRM=198114125</dv:reference>
+            <dv:presentation>https://digitale.bibliothek.uni-halle.de/vd18/id/1180329</dv:presentation>
+            <dv:iiif>https://digitale.bibliothek.uni-halle.de/vd18/i3f/v20/1180329/manifest</dv:iiif>
+          </dv:links>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:digiprovMD>
+  </mets:amdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="DOWNLOAD">
+      <mets:file MIMETYPE="application/pdf" CHECKSUM="9e4f0d929a9ad2d565f585fc6d427141139d6906" CREATED="2019-06-18T10:00:18.883800Z" CHECKSUMTYPE="SHA-1" SIZE="1606641" ID="PDF_1180329">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/pdf/1180329" LOCTYPE="URL"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="TEASER">
+      <mets:file MIMETYPE="image/jpeg" CREATED="2019-04-02T19:24:38.553700Z" ID="IMG_TEASER_16258162">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/304/16258162" LOCTYPE="URL"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="DEFAULT">
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258162">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258162" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258163">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258163" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258165">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258165" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258167">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258167" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258168">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258168" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258169">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258169" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258171">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258171" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_DEFAULT_16258172">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/1000/16258172" LOCTYPE="URL"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="THUMBS">
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258162">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258162" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258163">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258163" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258165">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258165" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258167">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258167" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258168">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258168" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258169">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258169" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258171">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258171" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_THUMBS_16258172">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/128/16258172" LOCTYPE="URL"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="MIN">
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258162">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258162" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258163">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258163" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258165">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258165" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258167">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258167" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258168">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258168" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258169">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258169" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258171">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258171" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MIN_16258172">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/600/16258172" LOCTYPE="URL"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="MAX">
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258162">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258162" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258163">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258163" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258165">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258165" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258167">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258167" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258168">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258168" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258169">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258169" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258171">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258171" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_16258172">
+        <mets:FLocat xlink:href="https://digitale.bibliothek.uni-halle.de/vd18/download/webcache/0/16258172" LOCTYPE="URL"/>
+      </mets:file>
+    </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div TYPE="physSequence" ID="physroot">
+      <mets:div ID="phys16258162" TYPE="page" LABEL="[Seite 3]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0001-3" ORDER="1">
+        <mets:fptr FILEID="IMG_DEFAULT_16258162"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258162"/>
+        <mets:fptr FILEID="IMG_MIN_16258162"/>
+        <mets:fptr FILEID="IMG_MAX_16258162"/>
+      </mets:div>
+      <mets:div ID="phys16258163" TYPE="page" LABEL="[Seite 4]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0002-9" ORDER="2">
+        <mets:fptr FILEID="IMG_DEFAULT_16258163"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258163"/>
+        <mets:fptr FILEID="IMG_MIN_16258163"/>
+        <mets:fptr FILEID="IMG_MAX_16258163"/>
+      </mets:div>
+      <mets:div ID="phys16258165" TYPE="page" LABEL="[Seite 5]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0003-4" ORDER="3">
+        <mets:fptr FILEID="IMG_DEFAULT_16258165"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258165"/>
+        <mets:fptr FILEID="IMG_MIN_16258165"/>
+        <mets:fptr FILEID="IMG_MAX_16258165"/>
+      </mets:div>
+      <mets:div ID="phys16258167" TYPE="page" LABEL="[Gedicht]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0004-0" ORDER="4">
+        <mets:fptr FILEID="IMG_DEFAULT_16258167"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258167"/>
+        <mets:fptr FILEID="IMG_MIN_16258167"/>
+        <mets:fptr FILEID="IMG_MAX_16258167"/>
+      </mets:div>
+      <mets:div ID="phys16258168" TYPE="page" LABEL="[Gedicht]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0005-6" ORDER="5">
+        <mets:fptr FILEID="IMG_DEFAULT_16258168"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258168"/>
+        <mets:fptr FILEID="IMG_MIN_16258168"/>
+        <mets:fptr FILEID="IMG_MAX_16258168"/>
+      </mets:div>
+      <mets:div ID="phys16258169" TYPE="page" LABEL="[Gedicht]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0006-1" ORDER="6">
+        <mets:fptr FILEID="IMG_DEFAULT_16258169"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258169"/>
+        <mets:fptr FILEID="IMG_MIN_16258169"/>
+        <mets:fptr FILEID="IMG_MAX_16258169"/>
+      </mets:div>
+      <mets:div ID="phys16258171" TYPE="page" LABEL="[Seite 9]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0007-7" ORDER="7">
+        <mets:fptr FILEID="IMG_DEFAULT_16258171"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258171"/>
+        <mets:fptr FILEID="IMG_MIN_16258171"/>
+        <mets:fptr FILEID="IMG_MAX_16258171"/>
+      </mets:div>
+      <mets:div ID="phys16258172" TYPE="page" LABEL="[Seite 10]" CONTENTIDS="urn:nbn:de:gbv:3:1-286968-p0008-3" ORDER="8">
+        <mets:fptr FILEID="IMG_DEFAULT_16258172"/>
+        <mets:fptr FILEID="IMG_THUMBS_16258172"/>
+        <mets:fptr FILEID="IMG_MIN_16258172"/>
+        <mets:fptr FILEID="IMG_MAX_16258172"/>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+  <mets:structMap TYPE="LOGICAL">
+    <mets:div ID="log1180329" DMDID="md1180329" ADMID="amd1180329" TYPE="monograph" LABEL="Dem bisherigen Würdigen Schützenkönig Herrn Rathsmeister Reichhelm und der ganzen Löblichen Schützenkompagnie der Stadt Halle am Tage der Jubelfeyer und Einweihung des neuen Schützenhauses den 10 Jul. 1780. gewidmet von einem Patrioten" ORDER="1" CONTENTIDS="urn:nbn:de:gbv:3:1-286968">
+      <mets:fptr FILEID="PDF_1180329"/>
+      <mets:fptr FILEID="IMG_TEASER_16258162"/>
+      <mets:div ID="log16258161" TYPE="cover_front" ORDER="1"/>
+      <mets:div ID="log16258164" TYPE="title_page" ORDER="2"/>
+      <mets:div ID="log16258166" TYPE="section" ORDER="3"/>
+      <mets:div ID="log16258170" TYPE="cover_back" ORDER="4"/>
+    </mets:div>
+  </mets:structMap>
+  <mets:structLink>
+    <mets:smLink xlink:from="log1180329" xlink:to="physroot"/>
+    <mets:smLink xlink:from="log16258161" xlink:to="phys16258162"/>
+    <mets:smLink xlink:from="log16258161" xlink:to="phys16258163"/>
+    <mets:smLink xlink:from="log16258164" xlink:to="phys16258165"/>
+    <mets:smLink xlink:from="log16258166" xlink:to="phys16258167"/>
+    <mets:smLink xlink:from="log16258166" xlink:to="phys16258168"/>
+    <mets:smLink xlink:from="log16258166" xlink:to="phys16258169"/>
+    <mets:smLink xlink:from="log16258170" xlink:to="phys16258171"/>
+    <mets:smLink xlink:from="log16258170" xlink:to="phys16258172"/>
+  </mets:structLink>
+</mets:mets>
