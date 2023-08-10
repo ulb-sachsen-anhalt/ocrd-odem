@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Appenders>
+		<Console name="LogToConsole" target="SYSTEM_OUT">
+			<PatternLayout>
+				<Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level][%t](%C{1}:%L) %m%n</Pattern>
+			</PatternLayout>
+		</Console>
+		<RollingFile name="derivansLog" fileName="${sys:user.home}/derivans.log" filePattern="${sys:user.home}/derivans.%i.log.gz" ignoreExceptions="false">
+			<PatternLayout>
+				<Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level] (%C{1}:%L) %m%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<SizeBasedTriggeringPolicy size="10MB" />
+			</Policies>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Logger name="de.ulb.digital.derivans" level="debug" additivity="false">
+			<AppenderRef ref="LogToConsole" />
+		</Logger>
+		<Logger name="de.ulb.digital.derivans" level="trace" additivity="false">
+			<AppenderRef ref="derivansLog" />
+		</Logger>
+		<Root level="error">
+			<AppenderRef ref="LogToConsole" />
+		</Root>
+	</Loggers>
+</Configuration>
