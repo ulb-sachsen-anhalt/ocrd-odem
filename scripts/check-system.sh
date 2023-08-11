@@ -5,6 +5,8 @@
 
 declare -A errors
 
+DATA_SHARE_MOUNT_POINT=/data/ocr
+
 PLATTFORM=${1:-ironman}
 
 ROLE=${2:-worker}
@@ -32,20 +34,10 @@ then
   errors["zip"]="missing"
 fi 
 
-if ! [ "$(which  mvn)" ]
-then
-  errors["maven"]="maven missing ! "
-fi 
-
-if ! [ "$(which  java)" ]
-then
-  errors["java"]="java missing ! "
-fi 
-
 # only for virtual machines relevant
 # double-brackets required for ignore case matches
 if [[ "${PLATTFORM}" == "vm" ]]; then
-  if ! [ -d "/data/ocr" ]
+  if ! [ -d "${DATA_SHARE_MOUNT_POINT}" ]
   then
     errors["data mount"]="data share not mounted ! "
   else
