@@ -1,15 +1,17 @@
 # ULB ODEM
 
-Implementationproject of the University and Statelibrary Sachsem-Anhalt for [OCR-D-Phase III](https://ocr-d.de/de/phase3) which implements an OCR-D-based Workflow for fulltext generation via [Tesseract-OCR]() of an already existing retro digitalisates in ["Drucke des 18. Jahrhunderts (VD18)"](https://opendata.uni-halle.de/handle/1981185920/31824), see.
+![Python application](https://github.com/ulb-sachsen-anhalt/ocrd-odem/actions/workflows/python-app.yml/badge.svg)
 
-Digitized prints are accessed as records via [OAI-PMH]() from a record list with, at the time of project start, consisted about 40.000 prints, both monographs and multivolumes. Correspondig images are load to a local worker machine, then each page is processed individually with a complete OCR-D-Workflow. Afterwards, the results are transformed into ALTO-OCR and an archive file containing a new complete PDF for the print with textlayer is generated. The resulting archive file complies to the [SAF fileformat]() of [DSpace-Systems]() like [Share_it](https://opendata.uni-halle.de/).
+Project of the University and State Library Sachsen-Anhalt (ULB Sachsen-Anhalt) for [OCR-D-Phase III](https://ocr-d.de/de/phase3) which implements an OCR-D-based Workflow for fulltext generation for existing digitalisates of ["Drucke des 18. Jahrhunderts (VD18)"](https://opendata.uni-halle.de/handle/1981185920/31824).
+
+Digitized prints are accessed as records via [OAI-PMH](https://www.openarchives.org/pmh/) from a record list which, at the time of project start, included about 40.000 prints (monographs and multivolumes). Corresponding images are load to a local worker machine, then each page is processed individually with a complete OCR-D-Workflow. Afterwards, the results are transformed into ALTO-OCR and an archive file containing a new complete PDF for the print with textlayer is generated. The resulting archive file complies to the [SAF fileformat](https://wiki.lyrasis.org/display/DSDOC6x/Importing+and+Exporting+Items+via+Simple+Archive+Format) of [DSpace-Systems](https://github.com/DSpace/DSpace) like [Share_it](https://opendata.uni-halle.de/).
 
 ## Features
 
-* Monitor required computing ressources (RAM / disc space)
+* Monitor required computing resources (RAM / disc space)
 * Runs both in virtual environment using local mount points or in isolated server machines
 * Processing print on page-level: In case of errors/problems, only single page is lost
-* Utilize print metadata (MODS) to select matching OCR modell configuration
+* Utilize print metadata (MODS) to select matching OCR model configuration
 * Utilize print metadata (METS) to filter pages for ocr-ing by blacklisting pages by logical structs or physical struct
   
 ## Runtime Requirements
@@ -38,7 +40,7 @@ pytest -v
 
 ## Configuration
 
-See `ressources/ode.ini` for complete template.
+See `resources/ode.ini` for complete template.
 
 * `[resource-monitoring]` : include limits for disc and virtual memory usage
 * `[mets]` : includes blacklists for pages/logical sections
@@ -57,6 +59,6 @@ OAI_RECORDS=oai-records-opendata-vd18-odem
 */5  08-23  * * *  ${PYTHON_BIN} ${PROJECT}/cli_oai_client.py ${OAI_RECORDS} -c ${PROJECT}/resources/odem.ocr-workerXX.ini -l
 ```
 
-## Licence
+## License
 
-Under terms of the [MIT license](https://opensource.org/licenses/MIT)
+Licensed under terms of the [MIT license](https://opensource.org/licenses/MIT).
