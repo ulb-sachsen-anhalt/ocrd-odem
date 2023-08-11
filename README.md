@@ -34,17 +34,20 @@ pip install -U pip
 pip install -r requirements.txt
 
 # run tests
-python -m pip install -r ./tests/test_requirements.txt
-pytest -v
+python -m pip install pytest-cov
+python -m pytest --cov=lib tests/ -v
 ```
 
 ## Configuration
 
-See `resources/ode.ini` for complete template.
+The important options can found in the following sections:
 
-* `[resource-monitoring]` : include limits for disc and virtual memory usage
-* `[mets]` : includes blacklists for pages/logical sections
-* `[ocr]` : includes used OCR-D-Container image and language model configuration mappings
+* `[resource-monitoring]` : limits for disc and virtual memory usage
+* `[mets]` : blacklists for pages/logical sections
+* `[ocr]` : OCR-D-Container image, language model configuration mappings
+* `[derivans]` : Derivans container image and configuration
+
+See `resources/ode.ini`.
 
 ### Trigger Workflow via Crontab
 
@@ -61,4 +64,4 @@ OAI_RECORDS=oai-records-opendata-vd18-odem
 
 ## License
 
-Licensed under terms of the [MIT license](https://opensource.org/licenses/MIT).
+This project's source code is licensed under terms of the [MIT license](https://opensource.org/licenses/MIT).
