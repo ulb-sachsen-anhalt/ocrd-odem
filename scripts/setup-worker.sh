@@ -1,6 +1,12 @@
 #!/bin/bash
 
-#set -e
+###########################
+# ODEM setup for an ODEM
+# worker instance
+# managed via gitlab-runner
+###########################
+
+set -e
 
 # check and enforce sude
 if [[ $UID != 0 ]]; then
@@ -9,11 +15,12 @@ if [[ $UID != 0 ]]; then
     exit 1
 fi
 
-# ocr functional account properties
+# ocr account
 OCR_NAME=ocr
 OCR_GROUP=ocr
 OCR_GID=40367
 OCR_UID=567
+# set custum password
 OCR_PSW=$1
 
 echo "create OCR FA account ${OCR_UID}:${OCR_GID}"
@@ -36,7 +43,7 @@ curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/s
 
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin gitlab-runner \
-  maven openjdk-11-jdk zip python3-venv
+  zip python3-venv
 
 echo "prepare docker"
 docker pull ocrd/all:2022-08-15
@@ -50,9 +57,8 @@ usermod -aG docker ${OCR_NAME}
 echo "set deafult shell for user ${OCR_NAME}"
 sudo usermod --shell /bin/bash ${OCR_NAME}
 
-
 echo "create directories for user ${OCR_NAME}"
-mkdir /home/${OCR_NAME}/ulb-ocr-odem
+mkdir /home/${OCR_NAME}/ocrd-odem
 mkdir /home/${OCR_NAME}/odem-wrk-dir
 mkdir /home/${OCR_NAME}/odem-export
 mkdir /home/${OCR_NAME}/odem-tessdata
