@@ -1,93 +1,50 @@
-# ODEM OCR-D-Phase III Implementationsprojekt ULB: ODEM
+# ULB ODEM
 
-[![pipeline status](https://git.itz.uni-halle.de/ulb/ulb-ocr-odem/badges/master/pipeline.svg)](https://git.itz.uni-halle.de/ulb/ulb-ocr-odem/badges/master/pipeline.svg)
-[![coverage report](https://git.itz.uni-halle.de/ulb/ulb-ocr-odem/badges/master/coverage.svg)](https://git.itz.uni-halle.de/ulb/ulb-ocr-odem/commits/master)
+Implementationproject of the University and Statelibrary Sachsem-Anhalt for [OCR-D-Phase III](https://ocr-d.de/de/phase3) which implements an OCR-D-based Workflow for fulltext generation via [Tesseract-OCR]() of an already existing retro digitalisates in ["Drucke des 18. Jahrhunderts (VD18)"](https://opendata.uni-halle.de/handle/1981185920/31824), see.
 
-Implementationsprojekt ULB Sachsen-Anhalt für OCR-D Phase III zur verteilten Erzeugung und Anreicherung von OCR-Daten.
-Die Daten der Digitalisate werden über OAI-PMH bzw. HTTP geladen, lokal auf OCR-Clients bzw. Workern verarbeitet und
-anschließend mit Volltext und neuen PDF-Daten (mit Textlayer) als SAF-Pakete für Share_it gespeichert.
+Digitized prints are accessed as records via [OAI-PMH]() from a record list with, at the time of project start, consisted about 40.000 prints, both monographs and multivolumes. Correspondig images are load to a local worker machine, then each page is processed individually with a complete OCR-D-Workflow. Afterwards, the results are transformed into ALTO-OCR and an archive file containing a new complete PDF for the print with textlayer is generated. The resulting archive file complies to the [SAF fileformat]() of [DSpace-Systems]() like [Share_it](https://opendata.uni-halle.de/).
 
-## Workflow
+## Features
 
-* jede Printausgabe mit Images wird als OAI-Record über die OAI-PMH-Schnittstelle des Präsentationssystems geladen ()
-* Metadaten des Records werden ausgewertet umd Images für das OCR auszuwählen und Sprachinformationen für OCR festzulegen
-* je ausgewählter Seite wird ein kompletter OCR-D-Workflow durchgeführt (produktiv: 8-12 Seiten parallel je nach System)
-  Bricht ein Container ab, fehlt für diese Seite OCR
-* alle erzeugten OCR-Daten in die Metadaten des Records integriert und es wird eine neue PDF erstellt
-* abschließend wird ein neues Datenpaket für das Share_it-System generiert (SAF), was die vorhanden Daten im Präsentationssystem ersetzt bzw. ergänzt
+* Monitor required computing ressources (RAM / disc space)
+* Runs both in virtual environment using local mount points or in isolated server machines
+* Processing print on page-level: In case of errors/problems, only single page is lost
+* Utilize print metadata (MODS) to select matching OCR modell configuration
+* Utilize print metadata (METS) to filter pages for ocr-ing by blacklisting pages by logical structs or physical struct
+  
+## Runtime Requirements
 
-## Installation
-
-### Requirements
-
-* Docker CE 19.03.13 / Version `ocrd-all` - Containerimage laut Konfiguration
+* Minimum: Ubuntu Linux Server 20.04 LTS with 12 GB RAM / 8 CPUs
+  (Recommended: 24 GB RAM / 12 CPUs)
+* Docker CE 19.03.13
 * Python 3.8+
-* OpenJDK 11+
-* maven 3.6+
-* `zip` Befehl
-* Git
-* Access-Token für [interne library digiflow](https://git.itz.uni-halle.de/ulb/ulb-digiflow)
+* `git`, `zip`
 
-Systemcheck via `./check-host.sh`
+## Local Installation
 
-## Development Setup
+```bash
+# clone
+git clone <repo-url> <local-dir>
 
-* git clone rekursiv (Submodule!)
-* `./setup-host.sh <access-token-name> <access-token-value>`
+# setup python venv
+python3 -m venv venv
+pip install -U pip
+pip install -r requirements.txt
 
-### Test Dependencies
+# run tests
+python -m pip install -r ./tests/test_requirements.txt
+pytest -v
+```
 
-   python -m pip install -r ./tests/test_requirements.txt
-   pytest -v
+## Configuration
 
-## Konfiguration (ODEM Projekt INI-Configuration)
+See `ressources/ode.ini` for complete template.
 
-Je nach Worker muss eine Konfiguration unter `./resources/odem.<SHORT_HOSTNAME>.ini` erstellt/angepasst werden.
-Das aktuelle `odem.ini` Template ist zu finden unter `./resources/odem.ini`
+* `[resource-monitoring]` : include limits for disc and virtual memory usage
+* `[mets]` : includes blacklists for pages/logical sections
+* `[ocr]` : includes used OCR-D-Container image and language model configuration mappings
 
-## Projektmaschine Setup (OCR Worker / OAI Client)
-
-### 1. Grundeinrichtung
-
-OCR-User (Funktionsaccount), Gruppen, Verzeichnisse und Software einrichten mit `sudo ./scripts/setup-worker.sh <password-funktionsaccount>`
-Passwort: `"Laufwerk T:"/IT-DD/ULB-IT-Database.kdbx` unter `Funktionsaccount OCR System`
-
-### 2. CI/CD
-
-Die Aktualisierung der Pipeline findet durch einen lokal vorhandenen Gitlab Runner statt.
-Dieser muss auf jedem System neu eingerichtet und anschließend mit der gitlab-Konfiguration verbunden werden.
-
-* auf dem Host/Worker `sudo gitlab-runner register` ausführen
-* Registrierungsinfos: auf [Projektseite](https://git.itz.uni-halle.de/ulb/ulb-ocr-odem) unter `Settings > CI/CD > Runners > Specific runners`
-* Executor: `shell`
-* Benennung == `tag` in gitlab-Projekt-Konfiguration
-* ca. 30s nach Abschluss muss in der Webansicht in GitLab der neu registrierte Runner gelistet werden
-* füge Jobs für den neuen Runner in `.gitlab-ci.yml` hinzu
-
-### 4. Modelldaten hinzufügen
-
-Wenn auf dem System das OCR-Austauschlaufwerk gemountet ist, stehen die Modelle direkt zur Verfügung.
-Wenn nicht, werden sie via `scp` nach `/home/ocr/odem-tessdata` kopiert:
-
-Bsp.:
-
-   ```bash
-    scp -r /data/ocr/tesseract4/tessdata/* aqspw@ocr-worker07.bibliothek.uni-halle.de:/home/ocr/odem-tessdata
-   ```
-
-### 5. ODEM Konfiguration erstellen und anpassen
-
-siehe [Konfiguration](#konfiguration-odem-projekt-ini-configuration)
-
-### 6. Cronjob einrichten/aktivieren (Crontab OAI Client)
-
-**ACHTUNG!!!** \
-Zum editieren des Cronjiobs via `crontab -e` muss zuvor zum Nutzer `ocr` via `sudo su - ocr` gewechselt worden sein
-
-Auf den Workern lauft der Aufruf von `cli_oai_client.py` Cronjob getriggert.
-
-**ACHTUNG!!!** \
-`*.ini`-Namen anpassen
+### Trigger Workflow via Crontab
 
 ```bash
 #
@@ -100,71 +57,6 @@ OAI_RECORDS=oai-records-opendata-vd18-odem
 */5  08-23  * * *  ${PYTHON_BIN} ${PROJECT}/cli_oai_client.py ${OAI_RECORDS} -c ${PROJECT}/resources/odem.ocr-workerXX.ini -l
 ```
 
-## Zusatz Workflows - Scripte
+## Licence
 
-### Setzte STATE (zurück) von OAI-Records in der CSV
-
-Beispielabruf - dry-run mit Verbosität.  
-Setze State des/der Eintrag/äge mit folgen Kriterien auf `ocr_busy`:
-IDENTIFIER entspricht `1981185920/48087` und STATE entspricht `ocr_fail` und INFO enthält '.jpg'
-
-```bash
-source venv/bin/activate
-python ./scripts/oai_record_set_state.py ./temp/reset_me.csv -S ocr_busy -DV -s ocr_fail -t .jpg -i 1981185920/48087
-```
-
-### Statistik Verdächtige Non-OCR-ed #9880
-
-Siehe Ticket #9880. Statistik über Verhältnis OCR-able zu OCR-ed Seiten, der bisher abgeschlossenen Vorgänge
-
-```bash
-source venv/bin/activate
-python ./scripts/feat9880_diff_detection.py <path-to-oai-records-csv>
-# i.e. python ./scripts/feat9880_diff_detection.py ./resources/oai-records-opendata-vd18-odem.csv
-```
-
-### OCR Statistics
-
-Statistiken über den Fortschritt des OCR-ing aller ~40k Vorgänge
-
-```bash
-source venv/bin/activate
-python ./scripts/ulb_statistics.py <path-to-oai-records-csv>
-# i.e. python ./scripts/ulb_statistics.py ./resources/oai-records-opendata-vd18-odem.csv
-```
-
-### Analyse
-
-Testdaten VD18 (Monographien + F-Stufen): 40844 OAI-Records
-
-Beispielabruf METS/MODS:
-
-`https://digitale.bibliothek.uni-halle.de/vd18/oai/?verb=GetRecord&metadataPrefix=mets&identifier=<VL ID>`
-
-### oai2img Skript
-
-Verwendung:
-
-```bash
-cd scripts
-
-python3.6 oai2img.py resources/oai-urn-vd18-pages.vlids
-```
-
-Skript erzeugt zunächst eine Tupelliste mit `len(elem)==3` mit OAI-URN, physID und Image-URL.
-Das Ergebnis wird in `result.tsv` geschrieben.
-
-Aktuell wird von jedem Datensatz mindestens 1, sonst `len(pages) // 100` Bildadressen ausgegeben, was zu mehr als 42k
-Dateien führen würde.
-
-### create_lists.py
-
-Das Skript iteriert über die Liste `resources/oai-urn-vd18-pages.vlids`, holt OAI-IDs, lädt die entsprechende MODS-Datei
-und erzeugt drei Dateien:
-
-1. `bibinfo.tsv`: Liste der OAI-Datensätze mit: OAI-ID, Erscheinungsort, Erscheinungsjahr, Sprache(n), Zahl physischer
-   Seiten
-2. `result.tsv`: Liste aller physischer Seiten aus den logischen `section`-Abschnitten: OAI-ID, physID der phys. Seite,
-   URL der maximalen Bilddatei
-3. `logs.txt`: Log-File mit Fehlermeldungen (in erster Version dummerweise ohne ID, es ist also für eine Nachbearbeitung
-   der fehlerhaften Abrufe ein weiteres kleines Programm zu schreiben (-> `2ndrun.py`)
+Under terms of the [MIT license](https://opensource.org/licenses/MIT)
