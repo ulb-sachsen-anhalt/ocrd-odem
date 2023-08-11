@@ -8,3 +8,7 @@ venv
 
 # PYTHON
 SERVER_RUNNING
+
+# artefacts
+.coverage
+.run
