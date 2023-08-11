@@ -41,7 +41,8 @@ from digiflow import (
     validate_xml,
     MetsProcessor,
     MetsReader,
-    DerivansManager, BaseDerivansManager
+    BaseDerivansManager,
+    DerivansResult
 )
 
 #
@@ -884,9 +885,9 @@ class ODEMProcess:
         derivans.init()
         # be cautious
         try:
-            outcome = derivans.start()
+            dresult:DerivansResult = derivans.start()
             self.the_logger.info("[%s] create derivates in %s",
-                                 self.process_identifier, outcome[2])
+                                 self.process_identifier, dresult.duration)
         except subprocess.CalledProcessError as _sub_err:
             _err_msg = _sub_err.stdout.decode().split(os.linesep)[0].replace("'", "\"")
             _args = [_err_msg]
