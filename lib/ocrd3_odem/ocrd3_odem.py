@@ -860,19 +860,19 @@ class ODEMProcess:
         self._statistics['lines'] = len(_txts)
 
     def create_pdf(self):
-        """Forward PDF-creation"""
+        """Forward PDF-creation to Derivans"""
 
-        path_bin = os.path.join(
-            PROJECT_ROOT,
-            self.cfg.get('derivans', 'derivans_dir_bin')
-        )
+        _cfg_path_dir_bin = self.cfg.get('derivans', 'derivans_dir_bin', fallback=None)
+        path_bin = None
+        if _cfg_path_dir_bin is not None:
+            path_bin = os.path.join(PROJECT_ROOT, _cfg_path_dir_bin)
+        _cfg_path_dir_project = self.cfg.get('derivans', 'derivans_dir_project', fallback=None)
+        path_prj = None
+        if _cfg_path_dir_project is not None:
+            path_prj = os.path.join(PROJECT_ROOT, _cfg_path_dir_project)
         path_cfg = os.path.join(
             PROJECT_ROOT,
             self.cfg.get('derivans', 'derivans_config')
-        )
-        path_prj = os.path.join(
-            PROJECT_ROOT,
-            self.cfg.get('derivans', 'derivant_dir_project')
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
         derivans: BaseDerivansManager = BaseDerivansManager.create(
