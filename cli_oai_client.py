@@ -211,12 +211,14 @@ if __name__ == "__main__":
     LOCAL_DELETE_BEFORE_EXPORT = []
     if CFG.has_option('global', 'delete_before_export'):
         LOCAL_DELETE_BEFORE_EXPORT = CFG.getlist('global', 'delete_before_export')
-
+    LOG_FILE_NAME = None
+    if CFG.has_option('global', 'logfile_name'):
+        LOG_FILE_NAME = CFG.get('global', 'logfile_name')
     LOCAL_LOG_DIR = CFG.get('global', 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
-    LOGGER = get_odem_logger(LOCAL_LOG_DIR)
+    LOGGER = get_odem_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # respect possible lock
     if MUST_LOCK:

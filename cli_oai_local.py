@@ -112,11 +112,14 @@ if __name__ == "__main__":
     LOCAL_DELETE_BEVOR_EXPORT = []
     if CFG.has_option('global', 'delete_bevor_export'):
         LOCAL_DELETE_BEVOR_EXPORT = CFG.getlist('global', 'delete_bevor_export')
-    log_dir = CFG.get('global', 'local_log_dir')
-    if not os.path.exists(log_dir) or not os.access(
-            log_dir, os.W_OK):
-        raise RuntimeError(f"cant store log files at invalid {log_dir}")
-    LOGGER = get_odem_logger(log_dir)
+    LOCAL_LOG_DIR = CFG.get('global', 'local_log_dir')
+    if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
+            LOCAL_LOG_DIR, os.W_OK):
+        raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
+    LOG_FILE_NAME = None
+    if CFG.has_option('global', 'logfile_name'):
+        LOG_FILE_NAME = CFG.get('global', 'logfile_name')
+    LOGGER = get_odem_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set

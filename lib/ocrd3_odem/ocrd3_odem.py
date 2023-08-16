@@ -199,14 +199,15 @@ def get_imageinfo(path_img_dir):
     return mps, dpi
 
 
-def get_odem_logger(log_dir):
+def get_odem_logger(log_dir, logfile_name=None):
     """Create logger using log_dir"""
 
     _today = time.strftime('%Y-%m-%d', time.localtime())
     _host = socket.gethostname()
-    logfile_name = os.path.join(
-        log_dir, f"odem_{_host}_{_today}.log")
-    conf_logname = {'logname': logfile_name}
+    _label = logfile_name if logfile_name is not None else ''
+    _logfile_name = os.path.join(
+        log_dir, f"odem_{_host}{_label}_{_today}.log")
+    conf_logname = {'logname': _logfile_name}
     conf_file_location = os.path.join(
         PROJECT_ROOT, 'resources', 'odem_logging.ini')
     logging.config.fileConfig(conf_file_location, defaults=conf_logname)
