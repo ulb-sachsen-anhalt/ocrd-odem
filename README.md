@@ -8,7 +8,7 @@ Digitized prints are accessed as records via [OAI-PMH](https://www.openarchives.
 
 ## Features
 
-* Monitor required computing resources (RAM / disc space)
+* Monitors required computing resources (RAM / disk space)
 * Runs both in virtual environment using local mount points or in isolated server machines
 * Processing print on page-level: In case of errors/problems, only single page is lost
 * Utilize print metadata (MODS) to select matching OCR model configuration
@@ -42,12 +42,12 @@ python -m pytest --cov=lib tests/ -v
 
 The important options can found in the following sections:
 
-* `[resource-monitoring]` : limits for disc and virtual memory usage
+* `[resource-monitoring]` : limits for disk and virtual memory usage
 * `[mets]` : blacklists for pages/logical sections
 * `[ocr]` : OCR-D-Container image, language model configuration mappings
 * `[derivans]` : Derivans container image and configuration
 
-See `resources/ode.ini`.
+See `resources/odem.ini`.
 
 ### Trigger Workflow via Crontab
 
