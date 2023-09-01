@@ -77,7 +77,9 @@ STATS_TEMPLATE = """<!DOCTYPE html>
   </body>
 </html>
 """
-
+# mark requested record file contains no open records
+MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
+MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
 
 
 def to_json(record: OAIRecord) -> dict:
@@ -236,7 +238,8 @@ class OAIService(SimpleHTTPRequestHandler):
         next_record = handler.next_record()
         # if no record in resource available, alert no resource after all, too
         if not next_record:
-            return (404, f'no open records in {data_file_path}, please inspect resource')
+            _msg = f'{MARK_DATA_EXHAUSTED_PREFIX}{MARK_DATA_EXHAUSTED.format(data_file_path)}'
+            return (404, _msg)
 
         # store information which client got the package delivered
         _info = client_name

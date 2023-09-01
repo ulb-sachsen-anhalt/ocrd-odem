@@ -7,9 +7,15 @@ import shutil
 import socket
 import sys
 import time
-from typing import Optional
 
+from logging import (
+    Logger
+)
+from typing import (
+	Optional
+)
 import requests
+
 from digiflow import (
     OAIRecord,
     LocalStore,
@@ -32,6 +38,10 @@ from lib.ocrd3_odem import (
     MARK_OCR_FAIL,
 )
 
+from cli_oai_server import (
+    MARK_DATA_EXHAUSTED_PREFIX
+)
+
 # number of OCR-D executors
 # when running parallel
 DEFAULT_EXECUTORS = 2
@@ -43,6 +53,10 @@ LOCK_FILE_PATH = os.path.join(os.path.dirname(__file__), LOCK_FILE_NAME)
 
 # date format pattern
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
+
+
+class OAIRecordExhaustedException(Exception):
+    """Mark that given file contains no open records"""
 
 
 def trnfrm(row):
@@ -74,6 +88,7 @@ class OAIServiceClient:
         self.record_data = {}
         self.oai_server_url = \
             f'http://{self.host}:{self.port}/{oai_record_list_label}'
+        self.logger: Optional[Logger] = None
 
     def _request_record(self):
         """Request next open OAI record from service
@@ -81,18 +96,26 @@ class OAIServiceClient:
         try:
             response = requests.get(f'{self.oai_server_url}/next', timeout=30)
         except requests.exceptions.RequestException as err:
-            LOGGER.error("OAI server connection fails: %s", err)
+            if self.logger is not None:
+                self.logger.error("OAI server connection fails: %s", err)
             _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', err)
             sys.exit(1)
         status = response.status_code
         result = response.content
-        if status != 200:
-            LOGGER.error(
-                "OAI server connection status: %s -> %s", status, result)
+        if status == 404:
+            # probably nothing more to do?
+            if result and result.startswith(MARK_DATA_EXHAUSTED_PREFIX):
+                if self.logger is not None:
+                    self.logger.info(result)
+                raise OAIRecordExhaustedException(result)
+            # otherwise exit anyway
             sys.exit(1)
-        if result == b'done':  # this is just a convention
-            LOGGER.info("no open records")
-            sys.exit(0)
+
+        if status != 200:
+            if self.logger is not None:
+                self.logger.error(
+                    "OAI server connection status: %s -> %s", status, result)
+            sys.exit(1)
         return response.json()
 
     def get_record(self) -> OAIRecord:
@@ -106,7 +129,8 @@ class OAIServiceClient:
 
     def update(self, status, urn, **kwargs):
         """Store status update && send message to OAI Service"""
-        LOGGER.debug("update record  status: %s urn: %s", status, urn)
+        if self.logger is not None:
+            self.logger.debug("update record  status: %s urn: %s", status, urn)
         right_now = time.strftime(STATETIME_FORMAT)
         self.record_data['STATE'] = status
         self.record_data['STATE_TIME'] = right_now
@@ -118,7 +142,8 @@ class OAIServiceClient:
             if self.record_data['INFO'] != 'n.a.':
                 _info = f"{self.record_data['INFO']},{_info}"
             self.record_data['INFO'] = _info
-        LOGGER.debug("update record %s url %s", self.record_data, self.oai_server_url)
+        if self.logger is not None:
+            self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
         response = requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=30)
         return response
 
@@ -250,6 +275,7 @@ if __name__ == "__main__":
     LOGGER.info("OAIServiceClient instance listens %s:%s for '%s' (format:%s)",
                 HOST, PORT, OAI_RECORD_FILE_NAME, DATA_FIELDS)
     CLIENT = OAIServiceClient(OAI_RECORD_FILE_NAME, HOST, PORT)
+    CLIENT.logger = LOGGER
 
     # start!
     record = CLIENT.get_record()
@@ -364,6 +390,13 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', _err_args)
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
+    except OAIRecordExhaustedException as _rec_ex:
+        _err_args = _rec_ex.args[0]
+        LOGGER.warning("[%s] '%s'", PROCESS.process_identifier, _err_args)
+        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
+        _notify('[OCR-D-ODEM] Date done', _err_args)
+        # don't remove lock file, human interaction required
+        sys.exit(1)
     except Exception as exc:
         # pick the whole error context, since some exceptions' args are
         # rather mysterious, i.e. "13" for PermissionError
@@ -373,15 +406,13 @@ if __name__ == "__main__":
                      "'%s'", PROCESS.process_identifier, _name, _err_args)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', _err_args)
-        # bad exit
         # don't remove lock file, human interaction required
         sys.exit(1)
 
-        # if exception thrown previously
-        # we do *not* remove the workflow lock
-        # automatically if run in lock mode!
-        # therefore, investigation is required
-        # and manual deletion of LOCK_FILE_PATH
+        # if exception thrown previously which doesn't
+        # resulted in hard workflow exit(1) then
+        # remove the workflow lock file finally
+        # to try next data record after the flesh
     if MUST_LOCK and os.path.isfile(LOCK_FILE_PATH):
         os.remove(LOCK_FILE_PATH)
         LOGGER.info("[%s] finally removed %s, ready for next onslaught",
