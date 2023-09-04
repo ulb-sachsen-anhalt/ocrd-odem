@@ -247,7 +247,7 @@ class ODEMProcess:
         self.n_executors = executors
         self.work_dir_main = work_dir
         self.digi_type = None
-        self.languages = None
+        self.languages = []
         self.local_mode = record is None
         self.identifier = None
         self.process_identifier = None
@@ -308,7 +308,7 @@ class ODEMProcess:
         except RuntimeError as _err:
             raise ODEMException(_err.args[0]) from _err
 
-    def evaluate_record_data(self):
+    def inspect_metadata(self):
         """Inspected loaded data and try to
         make some sense or go nuts if invalid
         record data detected"""
@@ -316,12 +316,12 @@ class ODEMProcess:
         try:
             reader = MetsReader(self.mets_file)
             report = reader.analyze()
-            # share report results with self
-            self.languages = report.languages
+            # detailed inspection of languages
+            self.inspect_languages(report.languages)
             self.digi_type = report.type
             self.identifiers = report.identifiers
             # apply some metadata checks forehand
-            # stop if data corrupted, ill or bad
+            # stop if data corrupt, ill or bad
             reader.check()
         except RuntimeError as _err:
             raise ODEMException(_err.args[0]) from _err
@@ -334,6 +334,57 @@ class ODEMProcess:
         self._statistics['type'] = self.digi_type
         self._statistics['host'] = socket.gethostname()
         self._statistics['langs'] = self.languages
+
+    def inspect_languages(self, languages:List[str]):
+        """compose tesseract-ocr model config
+        from metadata language entries.
+        
+        Please note: Configured model mappings
+        might also contain compositions, therefore
+        the additional inner loop
+        """
+
+        # disable warning since converter got added
+        model_mappings: dict = self.cfg.getdict(  # pylint: disable=no-member
+            'ocr', 'model_mapping')
+        self.the_logger.info("[%s] inspect languages '%s'",
+                             self.process_identifier, languages)
+        for lang in languages:
+            model_entry = model_mappings.get(lang)
+            if not model_entry:
+                raise ODEMException(f"'{lang}' mapping not found (languages: {languages})!")
+            for model in model_entry.split('+'):
+                if self._is_lang_available(model):
+                    self.languages.append(model)
+                else:
+                    raise ODEMException(f"'{model}' model config not found !")
+        self.the_logger.info("[%s] map languages '%s' => '%s'",
+                             self.process_identifier, languages, self.languages)
+
+    def map_language_to_modelconfig(self, image_path) -> str:
+        """Determine Tesseract config from forehead
+        processed print metadata or file name suffix
+        if run in local mode
+        """
+        if self.local_mode:
+            try:
+                _file_lang_suffix = get_modelconf_from(image_path)
+            except ODEMException as oxc:
+                self.the_logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
+                                        self.process_identifier, oxc.args[0],
+                                        image_path, DEFAULT_LANG)
+                _file_lang_suffix = DEFAULT_LANG
+            self.inspect_languages(_file_lang_suffix)
+        return '+'.join(self.languages)
+
+    def _is_lang_available(self, lang) -> bool:
+        """Determine whether model is available"""
+
+        tess_host = self.cfg.get('ocr', 'tessdir_host')
+        training_file = tess_host + '/' + lang + '.traineddata'
+        if os.path.exists(training_file):
+            return True
+        return False
 
     def set_images_from_directory(self, image_local_dir=None):
         """Build dataset from two different scenarios
@@ -478,49 +529,6 @@ class ODEMProcess:
                              self.process_identifier, cmd)
         subprocess.run(cmd, shell=True, check=True, timeout=docker_container_timeout)
 
-    def get_model_config(self, image_path) -> str:
-        """Determine Tesseract config from
-        model mapping or file name suffix
-        """
-
-        # disable warning since converter got added
-        model_mappings: dict = self.cfg.getdict(  # pylint: disable=no-member
-            'ocr', 'model_mapping')
-
-        if self.local_mode:
-            try:
-                _file_lang_suffix = get_modelconf_from(image_path)
-            except ODEMException as oxc:
-                self.the_logger.warning("[%s] language mapping err '%s', fallback to %s",
-                                        self.process_identifier, oxc.args[0], DEFAULT_LANG)
-                _file_lang_suffix = DEFAULT_LANG
-            self.languages = _file_lang_suffix.split('+')
-
-        # compose tesseract model config
-        _languages = []
-        for lang in self.languages:
-            models = model_mappings.get(lang)
-            if not models:
-                raise ODEMException(f"'{lang}' not found in language mappings!")
-            # modelmappings *might* also contain composition
-            _sub_langs = models.split('+')
-            for _lang in _sub_langs:
-                if self.is_lang_available(_lang):
-                    _languages.append(_lang)
-                else:
-                    raise ODEMException(f"Cant find language {_lang} file")
-
-        return '+'.join(_languages)
-
-    def is_lang_available(self, lang) -> bool:
-        """Determine whether model is available"""
-
-        tess_host = self.cfg.get('ocr', 'tessdir_host')
-        training_file = tess_host + '/' + lang + '.traineddata'
-        if os.path.exists(training_file):
-            return True
-        return False
-
     @staticmethod
     def get_recognition_level(model_config:str) -> str:
         """Determine tesseract recognition level
@@ -561,7 +569,7 @@ class ODEMProcess:
         ocrd_workspace_setup(page_workdir, processed_image_path)
 
         # find out the needed model config for tesseract
-        model_config = self.get_model_config(image_path)
+        model_config = self.map_language_to_modelconfig(image_path)
         self.the_logger.info("[%s] use '%s' for '%s'",
                              self.process_identifier, model_config, self.languages)
 
@@ -1203,14 +1211,14 @@ def _uplete(curr_el: ET._Element, parent: ET._Element):
         _uplete(parent, parent.getparent())
 
 
-def get_modelconf_from(file_path) -> str:
+def get_modelconf_from(file_path) -> List[str]:
     """Determine model from file name extension
     marked with'_' at the end"""
 
     file_name = os.path.basename(file_path)
     if '_' not in file_name:
         raise ODEMException(f"Miss language in '{file_path}'!")
-    return file_name.split('.')[0].split('_')[-1]
+    return file_name.split('.')[0].split('_')[-1].split('+')
 
 
 def _normalize_vocal_ligatures(a_string):

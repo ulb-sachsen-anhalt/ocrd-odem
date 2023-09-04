@@ -14,7 +14,6 @@ from ocrd_utils import (
 from digiflow import (
     OAIRecordHandler,
     OAIRecord,
-    OAIFileSweeper,
     LocalStore
 )
 
@@ -27,7 +26,6 @@ from lib.ocrd3_odem import (
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
-    MARK_OCR_SKIP,
     IDENTIFIER_CATALOGUE
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
@@ -188,7 +186,7 @@ if __name__ == "__main__":
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
 
-        PROCESS.evaluate_record_data()
+        PROCESS.inspect_metadata()
         PROCESS.set_images_from_directory()
         PROCESS.filter_images()
         initLogging()

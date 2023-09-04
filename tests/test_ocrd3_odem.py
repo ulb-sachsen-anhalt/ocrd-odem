@@ -34,9 +34,9 @@ from .conftest import (
 
 @pytest.mark.parametrize("file_path,model_conf",
                          [
-                             ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'ger'),
-                             ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat'),
-                             ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'ger+lat')
+                             ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', ['ger']),
+                             ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', ['lat']),
+                             ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', ['ger','lat'])
                          ])
 def test_odem_local_file_modelconf(file_path, model_conf):
     """Ensure that expected models picked
@@ -68,8 +68,8 @@ def test_lang_mapping(img_path, lang_str, tmp_path):
     # prepare
     models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger']
     for _m in models:
-        with open(str(model_dir / f'{_m}.traineddata'), 'w') as writer:
-            writer.write('abc')
+        with open(str(model_dir / f'{_m}.traineddata'), 'wb') as writer:
+            writer.write(b'abc')
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     odem_processor.cfg = fixture_configuration()
     odem_processor.cfg.set('ocr', 'tessdir_host', str(tmp_path / 'tessdata'))
@@ -77,7 +77,7 @@ def test_lang_mapping(img_path, lang_str, tmp_path):
     odem_processor.local_mode = True
 
     # act
-    assert odem_processor.get_model_config(img_path) == lang_str
+    assert odem_processor.map_language_to_modelconfig(img_path) == lang_str
 
 
 @pytest.fixture(name="init_odem", scope='module')
@@ -112,20 +112,20 @@ def _fixture_1981185920_44043(tmp_path_factory):
         yield odem
 
 
-def test_odem_process_internal_identifier(init_odem):
+def test_odem_process_internal_identifier(init_odem: ODEMProcess):
     """Ensure proper internal identifier calculated
     for say, logging"""
 
     assert init_odem.process_identifier == '1981185920_44046'
 
 
-def test_odem_process_catalog_identifier(init_odem):
+def test_odem_process_catalog_identifier(init_odem: ODEMProcess):
     """Ensure proper external identifier present
     which will be used finally to name the export SAF
     """
 
     # act
-    init_odem.evaluate_record_data()
+    init_odem.inspect_metadata()
 
     # assert
     assert init_odem.identifiers[IDENTIFIER_CATALOGUE] == '265982944'
@@ -156,38 +156,41 @@ def _fixture_odem_setup(tmp_path):
     log_dir.mkdir()
     model_dir = tmp_path / 'tessdata'
     model_dir.mkdir()
-    with open(str(model_dir / 'gt4hist.traineddata'), 'w') as writer:
-        writer.write('abc')
+    with open(str(model_dir / 'gt4hist.traineddata'), 'wb') as writer:
+        writer.write(b'abc')
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     cfg = get_config()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     odem_processor.cfg = cfg
     odem_processor.local_mode = True
+    odem_processor.the_logger = get_odem_logger(log_dir)
     return odem_processor
 
 
-def test_lang_mapping_missing_conf_error(odem_processor):
+def test_lang_mapping_missing_conf_error(odem_processor: ODEMProcess):
     # arrange
     img_path = 'resources/urn+nbn+de+gbv+3+1-116899-p0062-3_gop.jpg'
 
     # act
     with pytest.raises(ODEMException) as err:
-        odem_processor.get_model_config(img_path)
+        odem_processor.map_language_to_modelconfig(img_path)
 
     # assert
-    assert "'gop' not found in language mappings" in err.value.args[0]
+    assert "'gop' mapping not found (languages: ['gop'])!" in err.value.args[0]
 
 
-def test_lang_mapping_missing_lang_error(odem_processor):
+def test_lang_mapping_missing_lang_error(odem_processor: ODEMProcess):
+    """Ensure cannot map dummy language 'yyy'"""
+    
     # arrange
     img_path = 'resources/urn+nbn+de+gbv+3+1-116899-p0062-3_xxx.jpg'
 
     # act
     with pytest.raises(ODEMException) as err:
-        odem_processor.get_model_config(img_path)
+        odem_processor.map_language_to_modelconfig(img_path)
 
     # assert
-    assert 'Cant find language yyy file' in err.value.args[0]
+    assert "'yyy' model config not found !" in err.value.args[0]
 
 
 @pytest.fixture(name="module_fixture_one", scope='module')
@@ -206,7 +209,7 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     oproc.ocr_files = [os.path.join(trgt_alto, a)
                        for a in os.listdir(trgt_alto)]
     oproc.mets_file = str(trgt_mets)
-    oproc.evaluate_record_data()
+    oproc.inspect_metadata()
     yield (oproc, path_workdir)
 
 
@@ -298,7 +301,7 @@ def _fixture_123456789_27949(tmp_path):
     oproc.ocr_files = [os.path.join(trgt_alto, a)
                        for a in os.listdir(trgt_alto)]
     oproc.mets_file = str(trgt_mets)
-    oproc.evaluate_record_data()
+    oproc.inspect_metadata()
     yield (oproc, path_workdir)
 
 
@@ -324,7 +327,7 @@ def test_fixture_one_postprocess_ocr_files(fixture_one):
     # arrange
     _, tmp_path = fixture_one
     path_file = tmp_path / 'FULLTEXT' / '00000003.xml'
-    strip_tags = fixture_configuration().getlist('ocr', 'strip_tags')
+    strip_tags = fixture_configuration().getlist('ocr', 'strip_tags') # pylint: disable=no-member
 
     # act
     postprocess_ocr_file(path_file, strip_tags)
@@ -367,7 +370,8 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_one):
     _txt_bundle_file = tmp_path / '198114125.pdf.txt'
     assert os.path.exists(_txt_bundle_file)
     assert 77 == odem.statistics['lines']
-    assert 77 == len(open(_txt_bundle_file).readlines())
+    with open(_txt_bundle_file, encoding='utf-8') as bundle_handle:
+        assert 77 == len(bundle_handle.readlines())
 
 
 @pytest.fixture(name='post_mets', scope='module')
@@ -508,3 +512,28 @@ def test_odem_recognition_level(model_configuration, recognotion_level):
     forth to tesserocr for common model configurations"""
 
     assert ODEMProcess.get_recognition_level(model_configuration) == recognotion_level
+
+
+def test_opendata_record_unknown_language(tmp_path):
+    """Fix behavior when opendata record has one
+    of total 3 languages which is actually
+    not unknown (gmh == German, Middle High 1050-1500)
+    """
+
+    path_workdir = tmp_path / 'workdir'
+    path_workdir.mkdir()
+    orig_file = TEST_RES / '1981185920_72977.xml'
+    trgt_mets = path_workdir / 'test.xml'
+    shutil.copyfile(orig_file, trgt_mets)
+    (path_workdir / 'log').mkdir()
+    record = OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
+    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc.cfg = fixture_configuration()
+    oproc.mets_file = str(trgt_mets)
+
+    # act
+    with pytest.raises(ODEMException) as odem_exc:
+        oproc.inspect_metadata()
+
+    # assert
+    assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" ==  odem_exc.value.args[0]

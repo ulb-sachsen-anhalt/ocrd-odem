@@ -332,7 +332,7 @@ if __name__ == "__main__":
         process_resource_monitor.monit_disk_space(PROCESS.load)
 
         # go on
-        PROCESS.evaluate_record_data()
+        PROCESS.inspect_metadata()
         PROCESS.set_images_from_directory()
         PROCESS.filter_images()
 
