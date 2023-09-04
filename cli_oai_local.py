@@ -187,7 +187,6 @@ if __name__ == "__main__":
         process_resource_monitor.monit_disk_space(PROCESS.load)
 
         PROCESS.inspect_metadata()
-        PROCESS.set_images_from_directory()
         PROCESS.filter_images()
         initLogging()
         if SEQUENTIAL:

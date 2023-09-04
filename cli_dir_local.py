@@ -94,7 +94,10 @@ if __name__ == "__main__":
         PROCESS.local_mode = True
         PROCESS.cfg = CFG
         PROCESS.the_logger = LOGGER
-        PROCESS.set_images_from_directory(image_local_dir=ROOT_PATH)
+        local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
+        PROCESS._statistics['n_images_total'] = len(local_images)
+        PROCESS._statistics['n_images_ocrable'] = 0
+        PROCESS.images_4_ocr = local_images
         # Type and Value change!!!
         # ODEMProcess.single_ocr() needs Tuple[str,str], in non-local
         # this is assigned to "PROCESS.images_4_ocr" in ODEMProcess.filter_images()

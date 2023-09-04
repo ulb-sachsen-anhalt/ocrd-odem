@@ -21,6 +21,7 @@ from lib.ocrd3_odem import (
     postprocess_ocr_file,
     ODEMProcess,
     ODEMException,
+    ODEMNoImagesForOCRException,
     XMLNS,
     PUNCTUATIONS,
     IDENTIFIER_CATALOGUE,
@@ -277,8 +278,7 @@ def test_module_fixture_one_images_4_ocr_by_metadata(module_fixture_one):
     ResourceGenerator(tmp_path / 'MAX', number=9).get_batch()
 
     # act
-    odem_123456789_27949.set_images_from_directory()
-    odem_123456789_27949.filter_images()
+    odem_123456789_27949.inspect_metadata_images()
 
     # assert
     assert len(odem_123456789_27949.images_4_ocr) == 4
@@ -462,13 +462,12 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     odem_processor.the_logger = get_odem_logger(str(_log_dir))
 
     # act
-    odem_processor.set_images_from_directory()  # required
+    odem_processor.inspect_metadata_images()
     odem_processor.filter_images()
 
     # assert
     assert len(odem_processor.images_4_ocr) == 4
     assert odem_processor.images_4_ocr[0][0].endswith('1981185920_44046/MAX/00000001.jpg')
-    assert 'urn+nbn+de+gbv+3+1-146566-p0001-1' == odem_processor.images_4_ocr[0][1]
 
 
 @mock.patch('digiflow.OAILoader.load', side_effect=OAILoadException("url '{}' returned '{}'"))
@@ -526,7 +525,7 @@ def test_opendata_record_unknown_language(tmp_path):
     trgt_mets = path_workdir / 'test.xml'
     shutil.copyfile(orig_file, trgt_mets)
     (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
+    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/72977')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
     oproc.mets_file = str(trgt_mets)
@@ -537,3 +536,28 @@ def test_opendata_record_unknown_language(tmp_path):
 
     # assert
     assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" ==  odem_exc.value.args[0]
+
+
+def test_opendata_record_no_images_for_ocr(tmp_path):
+    """Fix behavior when opendata record contains
+    only cover pages or illustrations
+    """
+
+    path_workdir = tmp_path / 'workdir'
+    path_workdir.mkdir()
+    orig_file = TEST_RES / '1981185920_74357.xml'
+    trgt_mets = path_workdir / 'test.xml'
+    shutil.copyfile(orig_file, trgt_mets)
+    (path_workdir / 'log').mkdir()
+    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/74357')
+    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc.cfg = fixture_configuration()
+    oproc.mets_file = str(trgt_mets)
+
+    # act
+    with pytest.raises(ODEMNoImagesForOCRException) as odem_exc:
+        oproc.inspect_metadata()
+        oproc.inspect_metadata_images()
+
+    # assert
+    assert "1981185920_74357 contains no images for OCR (total: 15)!" ==  odem_exc.value.args[0]

@@ -25,7 +25,7 @@ def fixture_configuration():
     config.set('global', 'data_fields', 'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
     config.set('mets', 'blacklist_file_groups', 'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')
     config.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back')
-    config.set('mets', 'blacklist_physical_container_labels', 'Auftragszettel,Colorchecker,Leerseite,Rückdeckel,Deckblatt,Vorderdeckel')
+    config.set('mets', 'blacklist_physical_container_labels', 'Auftragszettel,Colorchecker,Leerseite,Rückdeckel,Deckblatt,Vorderdeckel,Illustration')
     config.set('ocr', 'strip_tags', 'alto:Shape,alto:Processing,alto:Illustration,alto:GraphicalElement')
     config.set('ocr', 'ocrd_baseimage', 'ocrd/all:2022-08-15')
     return config

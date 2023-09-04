@@ -218,6 +218,13 @@ class ODEMException(Exception):
     """Mark custom ODEM Workflow Exceptions"""
 
 
+class ODEMNoImagesForOCRException(ODEMException):
+    """Mark custom ODEM Workflow Exception
+    when print contains no images-of-interest
+    for OCR, i.e. only maps/illustrations
+    """
+
+
 class ODEMProcess:
     """Create OCR for OAI Records.
 
@@ -249,7 +256,6 @@ class ODEMProcess:
         self.digi_type = None
         self.languages = []
         self.local_mode = record is None
-        self.identifier = None
         self.process_identifier = None
         if self.local_mode:
             self.process_identifier = os.path.basename(work_dir)
@@ -323,6 +329,8 @@ class ODEMProcess:
             # apply some metadata checks forehand
             # stop if data corrupt, ill or bad
             reader.check()
+            # detailed inspection of image group
+            self.inspect_metadata_images()
         except RuntimeError as _err:
             raise ODEMException(_err.args[0]) from _err
 
@@ -386,7 +394,7 @@ class ODEMProcess:
             return True
         return False
 
-    def set_images_from_directory(self, image_local_dir=None):
+    def get_local_image_paths(self, image_local_dir=None) -> List[str]:
         """Build dataset from two different scenarios
         (-therefore setting images is divided from filtering):
 
@@ -419,36 +427,57 @@ class ODEMProcess:
 
         self.the_logger.info("[%s] %d images total",
                              self.process_identifier, len(images))
-        self._statistics['n_images_total'] = len(images)
-        self._statistics['n_images_ocrable'] = 0
-        self.images_4_ocr = images
+        return images
 
-    def filter_images(self):
-        """
-        Reduce the amount of Images passed to OCR.
+    def inspect_metadata_images(self):
+        """Reduce amount of Images passed on to
+        OCR by utilizing metadata knowledge.
+        Drop images which belong to
+        * physical containers (named "Colorchecker")
+        * logical structures (type "cover_front")
 
-        Only applied to Imagedata belonging to 
-        proper OAI-Records, not single local dirs.
-
-        Drop images which belong to a certain useless
-        * physical containers (like "Colorchecker")
-        * logical structures (like "cover_front")
+        This can obviously only apply if metadata
+        is present at all and structured in-depth
         """
 
         blacklist_log = self.cfg.getlist('mets', 'blacklist_logical_containers')
         blacklist_lab = self.cfg.getlist('mets', 'blacklist_physical_container_labels')
-
-        # gather images via generator
-        img_for_ocr_generator = images_4_ocr(self.mets_file, self.images_4_ocr, blacklist_log, blacklist_lab)
-        images_2_care_4 = [i for i in img_for_ocr_generator]
-        n_img = len(self.images_4_ocr)
-        n_use = len(images_2_care_4)
-        _ratio = n_use / n_img * 100
+        # are max images present?
+        mets_root = ET.parse(self.mets_file).getroot()
+        _max_images = mets_root.findall('.//mets:fileGrp[@USE="MAX"]/mets:file', XMLNS)
+        _n_max_images = len(_max_images)
+        if _n_max_images < 1:
+            _msg = f"{self.process_identifier} contains absolutly no images for OCR!"
+            raise ODEMNoImagesForOCRException(_msg)
+        # gather present images via generator
+        _a_generator = images_from_metadata_generator(mets_root, self.images_4_ocr, blacklist_log, blacklist_lab)
+        pairs_image_urn = [pair for pair in _a_generator]
+        n_images_ocrable = len(pairs_image_urn)
+        _ratio = n_images_ocrable / _n_max_images * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
-                             self.process_identifier, n_use, _ratio, n_img)
-        if len(images_2_care_4) > 0:
-            self.images_4_ocr = images_2_care_4
-            self._statistics['n_images_ocrable'] = len(self.images_4_ocr)
+                             self.process_identifier, n_images_ocrable, _ratio, _n_max_images)
+        if n_images_ocrable < 1:
+            _msg = f"{self.process_identifier} contains no images for OCR (total: {_n_max_images})!"
+            raise ODEMNoImagesForOCRException(_msg)
+        # else, journey onwards with image name only
+        self.images_4_ocr = pairs_image_urn #[i[0] for i in pairs_image_urn]
+        self._statistics['n_images_ocrable'] = len(self.images_4_ocr)
+
+    def filter_images(self):
+        """Pick only those (local) images which
+        match the filtered metadata output so far.
+        Please note: that we pass a pair in,
+            inspect only the label and pass the
+            whole pair out, if file exists
+        """
+        _images_of_interest = []
+        _local_max_dir = os.path.join(self.work_dir_main, 'MAX')
+        for _img, _urn in self.images_4_ocr:
+            _the_file = os.path.join(_local_max_dir, _img)
+            if not os.path.exists(_the_file):
+                raise ODEMException(f"[{self.process_identifier}] missing {_the_file}!")
+            _images_of_interest.append((_the_file, _urn))
+        self.images_4_ocr = _images_of_interest
 
     def run_parallel(self):
         """Run workflow parallel given poolsize"""
@@ -1009,9 +1038,11 @@ class ODEMProcess:
         return self._statistics
 
 
-def images_4_ocr(mets_path, image_paths: List[str], blacklist_structs, blacklist_page_labels):
-    """Generate images that comply to defined rules
-    for blacklisted physical and logical structures
+def images_from_metadata_generator(mets_root, image_paths: List[str], blacklist_structs, blacklist_page_labels):
+    """Generate pairs of image label and URN
+    that comply to defined rules
+    for blacklisted physical and logical structures:
+    
     * first, parse METS and get all required linking groups
     * second, start with file image final part and gather
       from this group all required informations on the way
@@ -1019,30 +1050,18 @@ def images_4_ocr(mets_path, image_paths: List[str], blacklist_structs, blacklist
       => logical structure
     """
 
-    mets_root = ET.parse(mets_path).getroot()
-    _max_images = mets_root.findall('.//mets:fileGrp[@USE="MAX"]/mets:file', XMLNS)
     _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', XMLNS)
     _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', XMLNS)
     _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', XMLNS)
-    for _image_path in image_paths:
-        _image_id = os.path.basename(_image_path).split('.')[0]
-        _file_id = _id_for_image(_max_images, _image_id)
+    _max_images = mets_root.findall('.//mets:fileGrp[@USE="MAX"]/mets:file', XMLNS)
+    for _max_file in _max_images:
+        _local_file_name = _max_file[0].get(Q_XLINK_HREF).split('/')[-1]
+        _file_id = _max_file.get('ID')
         _phys_dict = _phys_container_for_id(_phys_conts, _file_id)
         log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
         if not is_in(blacklist_structs, log_type):
             if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
-                yield _image_path, _phys_dict['URN']
-
-
-def _id_for_image(_image_group, image_id):
-    """Get proper linking ID from file to 
-    physical container"""
-
-    for _image in _image_group:
-        _loc = _image.find('mets:FLocat', XMLNS)
-        _file_link = _loc.attrib[Q_XLINK_HREF]
-        if image_id in _file_link:
-            return _loc.getparent().attrib['ID']
+                yield _local_file_name, _phys_dict['URN']
 
 
 def _phys_container_for_id(_phys_conts, _id):
