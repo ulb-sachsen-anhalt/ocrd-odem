@@ -567,6 +567,8 @@ def test_opendata_record_no_images_for_ocr(tmp_path):
     record = OAIRecord('oai:opendata.uni-halle.de:1981185920/74357')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
+    _model_dir = _prepare_tessdata_dir(path_workdir)
+    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
     oproc.mets_file = str(trgt_mets)
 
     # act
