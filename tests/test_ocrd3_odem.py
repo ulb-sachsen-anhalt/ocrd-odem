@@ -4,7 +4,12 @@
 import datetime
 import os
 import shutil
-from unittest import mock
+from pathlib import (
+    Path
+)
+from unittest import (
+    mock
+) 
 
 import lxml.etree as ET
 import pytest
@@ -48,6 +53,16 @@ def test_odem_local_file_modelconf(file_path, model_conf):
     assert get_modelconf_from(file_path) == model_conf
 
 
+def _prepare_tessdata_dir(tmp_path: Path) -> str:
+    model_dir = tmp_path / 'tessdata'
+    model_dir.mkdir()
+    models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger']
+    for _m in models:
+        with open(str(model_dir / f'{_m}.traineddata'), 'wb') as writer:
+            writer.write(b'abc')
+    return str(model_dir)
+
+
 @pytest.mark.parametrize("img_path,lang_str",
                          [
                              ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
@@ -55,8 +70,8 @@ def test_odem_local_file_modelconf(file_path, model_conf):
                              ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr')
                          ])
 def test_lang_mapping(img_path, lang_str, tmp_path):
-    """Ensure ODEM Object picks also proper
-    proect language mappings"""
+    """Ensure ODEM Object picks 
+    proper project language mappings"""
 
     work_dir = tmp_path / 'work_dir'
     work_dir.mkdir()
@@ -64,16 +79,10 @@ def test_lang_mapping(img_path, lang_str, tmp_path):
     work_2.mkdir()
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
-    model_dir = tmp_path / 'tessdata'
-    model_dir.mkdir()
-    # prepare
-    models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger']
-    for _m in models:
-        with open(str(model_dir / f'{_m}.traineddata'), 'wb') as writer:
-            writer.write(b'abc')
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     odem_processor.cfg = fixture_configuration()
-    odem_processor.cfg.set('ocr', 'tessdir_host', str(tmp_path / 'tessdata'))
+    _tess_dir = _prepare_tessdata_dir(tmp_path)
+    odem_processor.cfg.set('ocr', 'tessdir_host', _tess_dir)
     odem_processor.the_logger = get_odem_logger(str(log_dir))
     odem_processor.local_mode = True
 
@@ -102,10 +111,12 @@ def _fixture_1981185920_44043(tmp_path_factory):
     _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
     odem = ODEMProcess(_record, _workdir)
     odem.cfg = fixture_configuration()
+    _model_dir = _prepare_tessdata_dir(_workdir)
+    odem.cfg.set('ocr', 'tessdir_host', _model_dir)
     odem.the_logger = get_odem_logger(str(_log_dir))
 
     # mock loading of OAI Record
-    # actual load attempt *must* be done 
+    # actual load attempt *must* be done
     # in scope of mocked object to work!
     with mock.patch('digiflow.OAILoader.load') as request_mock:
         request_mock.side_effect = _side_effect
@@ -155,14 +166,12 @@ def _fixture_odem_setup(tmp_path):
     work_2.mkdir()
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
-    model_dir = tmp_path / 'tessdata'
-    model_dir.mkdir()
-    with open(str(model_dir / 'gt4hist.traineddata'), 'wb') as writer:
-        writer.write(b'abc')
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     cfg = get_config()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     odem_processor.cfg = cfg
+    _model_dir = _prepare_tessdata_dir(work_dir)
+    odem_processor.cfg.set('ocr', 'tessdir_host', _model_dir)
     odem_processor.local_mode = True
     odem_processor.the_logger = get_odem_logger(log_dir)
     return odem_processor
@@ -182,7 +191,7 @@ def test_lang_mapping_missing_conf_error(odem_processor: ODEMProcess):
 
 def test_lang_mapping_missing_lang_error(odem_processor: ODEMProcess):
     """Ensure cannot map dummy language 'yyy'"""
-    
+
     # arrange
     img_path = 'resources/urn+nbn+de+gbv+3+1-116899-p0062-3_xxx.jpg'
 
@@ -204,9 +213,11 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     shutil.copyfile(orig_file, trgt_mets)
     shutil.copytree(orig_alto, trgt_alto)
     (path_workdir / 'log').mkdir()
+    _model_dir = _prepare_tessdata_dir(path_workdir)
     record = OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
+    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
     oproc.ocr_files = [os.path.join(trgt_alto, a)
                        for a in os.listdir(trgt_alto)]
     oproc.mets_file = str(trgt_mets)
@@ -298,6 +309,8 @@ def _fixture_123456789_27949(tmp_path):
     record = OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
+    _model_dir = _prepare_tessdata_dir(path_workdir)
+    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
     oproc.ocr_files = [os.path.join(trgt_alto, a)
                        for a in os.listdir(trgt_alto)]
     oproc.mets_file = str(trgt_mets)
@@ -376,7 +389,7 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_one):
 
 @pytest.fixture(name='post_mets', scope='module')
 def _fixture_postprocessing_mets(tmp_path_factory):
-    """Fixture for checks od postprocessing"""
+    """Fixture for checking postprocessing"""
     _workdir = tmp_path_factory.mktemp('workdir')
     orig_file = TEST_RES / '198114125_part_mets.xml'
     trgt_mets = _workdir / 'test.xml'
@@ -528,6 +541,8 @@ def test_opendata_record_unknown_language(tmp_path):
     record = OAIRecord('oai:opendata.uni-halle.de:1981185920/72977')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
+    _model_dir = _prepare_tessdata_dir(tmp_path)
+    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
     oproc.mets_file = str(trgt_mets)
 
     # act
