@@ -104,10 +104,10 @@ class OAIServiceClient:
         result = response.content
         if status == 404:
             # probably nothing more to do?
-            if result and result.startswith(MARK_DATA_EXHAUSTED_PREFIX):
+            if MARK_DATA_EXHAUSTED_PREFIX in str(result):
                 if self.logger is not None:
                     self.logger.info(result)
-                raise OAIRecordExhaustedException(result)
+                raise OAIRecordExhaustedException(result.decode(encoding='utf-8'))
             # otherwise exit anyway
             sys.exit(1)
 
@@ -277,11 +277,19 @@ if __name__ == "__main__":
     CLIENT = OAIServiceClient(OAI_RECORD_FILE_NAME, HOST, PORT)
     CLIENT.logger = LOGGER
 
-    # start!
-    record = CLIENT.get_record()
-    if not record:
-        # if no more open data records, stop worker completely
-        LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE_NAME)
+    # try to get next data record
+    try:
+        record = CLIENT.get_record()
+        if not record:
+            # if no open data records, lock worker and exit
+            LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE_NAME)
+            sys.exit(1)
+    except OAIRecordExhaustedException as _rec_ex:
+        _err_args = _rec_ex.args[0]
+        LOGGER.warning("no data for '%s' from '%s':'%s': %s",
+                       OAI_RECORD_FILE_NAME, HOST, PORT, _err_args)
+        _notify('[OCR-D-ODEM] Date done', _err_args)
+        # don't remove lock file, human interaction required
         sys.exit(1)
 
     STATE = MARK_OCR_OPEN
@@ -389,13 +397,6 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', _err_args)
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
-    except OAIRecordExhaustedException as _rec_ex:
-        _err_args = _rec_ex.args[0]
-        LOGGER.warning("[%s] '%s'", PROCESS.process_identifier, _err_args)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify('[OCR-D-ODEM] Date done', _err_args)
-        # don't remove lock file, human interaction required
-        sys.exit(1)
     except Exception as exc:
         # pick the whole error context, since some exceptions' args are
         # rather mysterious, i.e. "13" for PermissionError

@@ -33,11 +33,14 @@ def test_mark_exhausted_matching(file_path, result):
 def test_exit_on_data_exhausted(mock_request):
     """Ensure dedicated state is communicated 
     to OAIClient when no more records present
+
+    Please note: *real* responses return
+    byte-object rather!
     """
 
     # arrange
     _the_list_label = 'oai-record-test'
-    _rsp = f'{MARK_DATA_EXHAUSTED.format(_the_list_label)}'
+    _rsp = f'{MARK_DATA_EXHAUSTED.format(_the_list_label)}'.encode()
     client = OAIServiceClient(_the_list_label, '1.2.3.4', '9999')
     mock_resp = mock.Mock()
     mock_resp.status_code = 404
