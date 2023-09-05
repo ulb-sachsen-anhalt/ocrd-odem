@@ -9,7 +9,7 @@ from pathlib import (
 )
 from unittest import (
     mock
-) 
+)
 
 import lxml.etree as ET
 import pytest
@@ -178,6 +178,8 @@ def _fixture_odem_setup(tmp_path):
 
 
 def test_lang_mapping_missing_conf_error(odem_processor: ODEMProcess):
+    """Ensure unknown language mapping caught properly"""
+
     # arrange
     img_path = 'resources/urn+nbn+de+gbv+3+1-116899-p0062-3_gop.jpg'
 
@@ -574,7 +576,6 @@ def test_opendata_record_no_images_for_ocr(tmp_path):
     # act
     with pytest.raises(ODEMNoImagesForOCRException) as odem_exc:
         oproc.inspect_metadata()
-        oproc.inspect_metadata_images()
 
     # assert
     assert "1981185920_74357 contains no images for OCR (total: 15)!" ==  odem_exc.value.args[0]

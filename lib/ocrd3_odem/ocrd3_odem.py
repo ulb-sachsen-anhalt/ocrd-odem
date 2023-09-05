@@ -404,9 +404,6 @@ class ODEMProcess:
            i.e., pre-existing evaluation image data
         """
 
-        def is_jpg(f):
-            return str(f).endswith("jpg") or str(f).endswith("jpeg")
-
         image_dir = os.path.join(self.work_dir_main, 'MAX')
         if image_local_dir:
             if not os.path.isdir(image_local_dir):
@@ -450,7 +447,7 @@ class ODEMProcess:
             _msg = f"{self.process_identifier} contains absolutly no images for OCR!"
             raise ODEMNoImagesForOCRException(_msg)
         # gather present images via generator
-        _a_generator = images_from_metadata_generator(mets_root, self.images_4_ocr, blacklist_log, blacklist_lab)
+        _a_generator = images_urn_pairs_from_metadata(mets_root, blacklist_log, blacklist_lab)
         pairs_image_urn = [pair for pair in _a_generator]
         n_images_ocrable = len(pairs_image_urn)
         _ratio = n_images_ocrable / _n_max_images * 100
@@ -524,10 +521,11 @@ class ODEMProcess:
 
     @run_profiled
     def run_ocr_page(self, *args):
-        """wrap ocr container
-        *please note*
-        The trailing dot (".") is cruical, since it means "this directory"
+        """wrap ocr container process
+        *Please note*
+        Trailing dot (".") is cruical, since it means "this directory"
         and is mandatory since 2022 again
+
         """
 
         ocr_dir = args[0]
@@ -1038,18 +1036,18 @@ class ODEMProcess:
         return self._statistics
 
 
-def images_from_metadata_generator(mets_root, image_paths: List[str], blacklist_structs, blacklist_page_labels):
+def images_urn_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page_labels):
     """Generate pairs of image label and URN
-    that comply to defined rules
-    for blacklisted physical and logical structures:
+    that respect defined blacklisted physical
+    and logical structures.
     
-    * first, parse METS and get all required linking groups
+    * first, get all required linking groups
     * second, start with file image final part and gather
       from this group all required informations on the way
       from file location => physical container => structMap
       => logical structure
     """
-
+    _pairs = []
     _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', XMLNS)
     _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', XMLNS)
     _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', XMLNS)
@@ -1061,7 +1059,8 @@ def images_from_metadata_generator(mets_root, image_paths: List[str], blacklist_
         log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
         if not is_in(blacklist_structs, log_type):
             if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
-                yield _local_file_name, _phys_dict['URN']
+                _pairs.append((_local_file_name, _phys_dict['URN']))
+    return _pairs
 
 
 def _phys_container_for_id(_phys_conts, _id):
@@ -1100,6 +1099,13 @@ def _log_type_for_id(phys_id, structmap_links, log_conts):
                 _log_id = _log.attrib['ID']
                 if _log_id == _from_id:
                     return _log.attrib['TYPE']
+
+
+def is_jpg(a_file:str):
+    """Check whether file extension
+    indicates JPG-format"""
+    _as_string = a_file.lower()
+    return _as_string.endswith("jpg") or _as_string.endswith("jpeg")
 
 
 def postprocess_ocr_file(ocr_file, strip_tags):
