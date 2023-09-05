@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:dv="http://dfg-viewer.de/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:b="https://bibliothek.uni-halle.de" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vlz="http://visuallibrary.net/vlz/1.0/" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/mods.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd">
+  <mets:metsHdr CREATEDATE="2022-03-17T19:33:38" LASTMODDATE="2022-03-18T10:31:44Z">
+    <mets:agent ROLE="OTHER" TYPE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>vls/2012</mets:name>
+      <mets:note>legacy vlid: 2299332</mets:note>
+      <mets:note>legacy date: 2010-08-31T08:14:40Z</mets:note>
+    </mets:agent>
+    <mets:agent TYPE="OTHER" ROLE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>ULB Migration 2022</mets:name>
+      <mets:note>2022-03-18 11:27:19</mets:note>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="md2299332">
+    <mets:mdWrap MIMETYPE="text/xml" MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods version="3.7" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd">
+          <mods:titleInfo>
+            <mods:title>Briefe, zur Erinnerung an merkwürdige Zeiten, und rühmliche Personen, aus dem wichtigen Zeitlaufe, von 1740, bis 1778.</mods:title>
+          </mods:titleInfo>
+          <mods:name type="personal" authority="gnd" authorityURI="http://d-nb.info/gnd/" valueURI="http://d-nb.info/gnd/102605610">
+            <mods:namePart type="given">Johann Friedrich</mods:namePart>
+            <mods:namePart type="family">Borchmann</mods:namePart>
+            <mods:namePart type="date">1694-1772</mods:namePart>
+            <mods:role>
+              <mods:roleTerm type="code" authority="marcrelator">aut</mods:roleTerm>
+              <mods:roleTerm type="text">erm. Verf.</mods:roleTerm>
+            </mods:role>
+            <mods:displayForm>Borchmann, Johann Friedrich</mods:displayForm>
+          </mods:name>
+          <mods:name type="personal" authority="gnd" authorityURI="http://d-nb.info/gnd/" valueURI="http://d-nb.info/gnd/13567414X">
+            <mods:namePart type="given">Christian Sigismund</mods:namePart>
+            <mods:namePart type="family">Spener</mods:namePart>
+            <mods:namePart type="date">1753-1813</mods:namePart>
+            <mods:role>
+              <mods:roleTerm type="code" authority="marcrelator">pbl</mods:roleTerm>
+              <mods:roleTerm type="text">Verl.</mods:roleTerm>
+            </mods:role>
+            <mods:displayForm>Spener, Christian Sigismund</mods:displayForm>
+          </mods:name>
+          <mods:name type="personal" authority="gnd" authorityURI="http://d-nb.info/gnd/" valueURI="http://d-nb.info/gnd/12884728X">
+            <mods:namePart type="given">Friederich Wilhelm</mods:namePart>
+            <mods:namePart type="family">Birnstiel</mods:namePart>
+            <mods:role>
+              <mods:roleTerm type="code" authority="marcrelator">pbl</mods:roleTerm>
+              <mods:roleTerm type="text">Verl.</mods:roleTerm>
+            </mods:role>
+            <mods:displayForm>Birnstiel, Friederich Wilhelm</mods:displayForm>
+          </mods:name>
+          <mods:typeOfResource collection="yes">text</mods:typeOfResource>
+          <mods:genre authority="aad">Briefsammlung</mods:genre>
+          <mods:originInfo eventType="publication">
+            <mods:place>
+              <mods:placeTerm type="text">Berlin</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Spener</mods:publisher>
+            <mods:dateIssued encoding="iso8601" keyDate="yes">1778</mods:dateIssued>
+            <mods:place>
+              <mods:placeTerm type="text">Berlin</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Birnstiel</mods:publisher>
+            <mods:issuance>monographic</mods:issuance>
+          </mods:originInfo>
+          <mods:originInfo eventType="digitization">
+            <mods:edition>[Electronic ed.]</mods:edition>
+            <mods:place>
+              <mods:placeTerm type="text">Halle (Saale)</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:publisher>
+            <mods:dateCaptured encoding="iso8601">2010</mods:dateCaptured>
+          </mods:originInfo>
+          <mods:language>
+            <mods:languageTerm authority="iso639-2b" type="code">ger</mods:languageTerm>
+          </mods:language>
+          <mods:note type="statement of responsibility">[Johann Friedrich Borchmann]</mods:note>
+          <mods:subject>
+            <mods:geographic>Berlin</mods:geographic>
+          </mods:subject>
+          <mods:identifier type="vd18">90010558</mods:identifier>
+          <mods:identifier type="gbv">454053967</mods:identifier>
+          <mods:identifier type="urn">urn:nbn:de:gbv:3:1-165375</mods:identifier>
+          <mods:extension>
+            <vlz:info version="2"/>
+            <b:note type="vls-migration">Verf. erm.: Allgem. Literaturzeitung, Jahrg. 1788, Bd. 3, Nr. 192</b:note>
+            <b:dateIssued type="alternative">1778-</b:dateIssued>
+            <b:externalType recordSyntax="pica">Ac</b:externalType>
+          </mods:extension>
+          <mods:recordInfo>
+            <mods:recordCreationDate encoding="marc">01-01-01</mods:recordCreationDate>
+            <mods:recordChangeDate encoding="marc">22-10-20</mods:recordChangeDate>
+            <mods:recordIdentifier source="gvk-ppn">454053967</mods:recordIdentifier>
+            <mods:descriptionStandard>rak</mods:descriptionStandard>
+          </mods:recordInfo>
+          <mods:accessCondition xlink:href="https://creativecommons.org/publicdomain/mark/1.0/" type="use and reproduction">Public Domain Mark 1.0</mods:accessCondition>
+          <mods:classification authority="ddc">090</mods:classification>
+          <mods:identifier type="doi">doi:10.25673/77126</mods:identifier>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="amd2299332">
+    <mets:rightsMD ID="rights2299332">
+      <mets:mdWrap MIMETYPE="text/xml" MDTYPE="OTHER" OTHERMDTYPE="DVRIGHTS">
+        <mets:xmlData>
+          <dv:rights>
+            <dv:ownerLogo>https://opendata.uni-halle.de/image/mets_viewerLogo.gif</dv:ownerLogo>
+            <dv:owner>Universitäts- und Landesbibliothek Sachsen-Anhalt</dv:owner>
+            <dv:ownerSiteURL>http://www.bibliothek.uni-halle.de</dv:ownerSiteURL>
+            <dv:ownerContact>mailto:auskunft@bibliothek.uni-halle.de</dv:ownerContact>
+            <dv:license>https://creativecommons.org/publicdomain/mark/1.0/</dv:license>
+          </dv:rights>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:rightsMD>
+    <mets:digiprovMD ID="digiprov2299332">
+      <mets:mdWrap MIMETYPE="text/xml" MDTYPE="OTHER" OTHERMDTYPE="DVLINKS">
+        <mets:xmlData>
+          <dv:links>
+            <dv:reference>http://opac.bibliothek.uni-halle.de/DB=1/CLK?IKT=12&amp;TRM=454053967</dv:reference>
+            <dv:presentation>https://opendata.uni-halle.de//handle/1981185920/79080</dv:presentation>
+            <dv:iiif>https://digitale.bibliothek.uni-halle.de/vd18/i3f/v20/2299332/manifest</dv:iiif>
+            <dv:iiif>https://opendata.uni-halle.de//json/iiif/1981185920/79080/b4e62518-34ba-46d5-bc50-3db854b58cf4/manifest</dv:iiif>
+          </dv:links>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:digiprovMD>
+  </mets:amdSec>
+  <mets:structMap TYPE="LOGICAL">
+    <mets:div ID="log2299332" DMDID="md2299332" ADMID="amd2299332" LABEL="Briefe, zur Erinnerung an merkwürdige Zeiten, und rühmliche Personen, aus dem wichtigen Zeitlaufe, von 1740, bis 1778." TYPE="multivolume_work" ORDER="29022" CONTENTIDS="urn:nbn:de:gbv:3:1-165375">
+      <mets:div ID="LOG_-184221984" LABEL="[Theil 1] : Briefe, zur Erinnerung an merkwürdige Zeiten, und rühmliche Personen, aus dem wichtigen Zeitlaufe, von 1740, bis 1778." ORDER="1" TYPE="volume">
+        <mets:mptr LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata.uni-halle.de:1981185920/79079"/>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+</mets:mets>

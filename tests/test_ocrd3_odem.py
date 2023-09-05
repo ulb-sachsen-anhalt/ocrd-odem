@@ -27,6 +27,7 @@ from lib.ocrd3_odem import (
     ODEMProcess,
     ODEMException,
     ODEMNoImagesForOCRException,
+    ODEMNoTypeForOCRException,
     XMLNS,
     PUNCTUATIONS,
     IDENTIFIER_CATALOGUE,
@@ -579,3 +580,29 @@ def test_opendata_record_no_images_for_ocr(tmp_path):
 
     # assert
     assert "1981185920_74357 contains no images for OCR (total: 15)!" ==  odem_exc.value.args[0]
+
+
+def test_opendata_record_no_printwork(tmp_path):
+    """Fix behavior when opendata record is a parent
+    struct (c-stage) without any pages/images
+    """
+
+    path_workdir = tmp_path / 'workdir'
+    path_workdir.mkdir()
+    orig_file = TEST_RES / '1981185920_79080.xml'
+    trgt_mets = path_workdir / 'test.xml'
+    shutil.copyfile(orig_file, trgt_mets)
+    (path_workdir / 'log').mkdir()
+    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/79080')
+    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc.cfg = fixture_configuration()
+    _model_dir = _prepare_tessdata_dir(path_workdir)
+    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
+    oproc.mets_file = str(trgt_mets)
+
+    # act
+    with pytest.raises(ODEMNoTypeForOCRException) as odem_exc:
+        oproc.inspect_metadata()
+
+    # assert
+    assert "1981185920_79080 is no print: Ac!" ==  odem_exc.value.args[0]

@@ -59,6 +59,12 @@ XMLNS = {'alto': 'http://www.loc.gov/standards/alto/ns-v4#',
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 FILEGROUP_OCR = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
+# Pica marks for digital types
+# 'a' = 'Aa', 'Ha' - monographic prints / handwritten
+# 'f' = 'Af', 'Hf' - volume prints / handwritten
+# 'F' = 'AF', 'HF' - volume prints / handwritten
+# 'Z' = 'OZ' - issue/additional
+PRINT_WORKS = ['a','f','F','Z']
 IDENTIFIER_CATALOGUE = 'gvk-ppn'
 DROP_ALTO_ELEMENTS = [
     'alto:Shape',
@@ -225,6 +231,14 @@ class ODEMNoImagesForOCRException(ODEMException):
     """
 
 
+class ODEMNoTypeForOCRException(ODEMException):
+    """Mark custom ODEM Workflow Exception
+    when digital object is *not* to be
+    considered to be ocr-able because it
+    contains no pages at all
+    """
+
+
 class ODEMProcess:
     """Create OCR for OAI Records.
 
@@ -315,18 +329,30 @@ class ODEMProcess:
             raise ODEMException(_err.args[0]) from _err
 
     def inspect_metadata(self):
-        """Inspected loaded data and try to
-        make some sense or go nuts if invalid
-        record data detected"""
+        """Inspected record data and try to
+        make sense (or go nuts if invalid)
+
+        Invalid means:
+        * no print work type (i.e. C-stage, newspaper year)
+        * no language
+        * missing links between physical and logical structs
+          (otherwise viewer navigation and PDF outline
+           will be corrupt at this segment)
+        * no page images for OCR
+        """
 
         try:
             reader = MetsReader(self.mets_file)
             report = reader.analyze()
+            # what kind of retro digi is it?
+            # inspect final type mark
+            if not report.type or report.type[-1] not in PRINT_WORKS:
+                raise ODEMNoTypeForOCRException(f"{self.process_identifier} is no print: {report.type}!")
             # detailed inspection of languages
             self.inspect_languages(report.languages)
             self.digi_type = report.type
             self.identifiers = report.identifiers
-            # apply some metadata checks forehand
+            # apply additional metadata checks
             # stop if data corrupt, ill or bad
             reader.check()
             # detailed inspection of image group
