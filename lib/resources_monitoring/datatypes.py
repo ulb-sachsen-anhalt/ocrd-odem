@@ -1,6 +1,8 @@
-from typing import Callable, NamedTuple, List, Optional
+from typing import Callable, NamedTuple, List, Optional, TypeVar
 
 import psutil
+
+Result = TypeVar('Result')
 
 
 class RmMemory(NamedTuple):

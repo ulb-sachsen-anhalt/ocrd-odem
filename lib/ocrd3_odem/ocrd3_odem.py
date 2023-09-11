@@ -513,7 +513,8 @@ class ODEMProcess:
                     thread_name_prefix='odem'
             ) as executor:
                 outcomes = list(executor.map(self.create_single_ocr, self.images_4_ocr))
-                self._calculate_statistics(outcomes)
+                # self._calculate_statistics(outcomes)
+                return outcomes
         except (OSError, AttributeError) as err:
             self.the_logger.error(err)
             raise RuntimeError(f"OCR-D parallel: {err.args[0]}") from err
@@ -530,12 +531,13 @@ class ODEMProcess:
         try:
             outcomes = [self.create_single_ocr(_img)
                         for _img in self.images_4_ocr]
-            self._calculate_statistics(outcomes)
+            # self._calculate_statistics(outcomes)
+            return outcomes
         except (OSError, AttributeError) as err:
             self.the_logger.error(err)
             raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
 
-    def _calculate_statistics(self, outcomes):
+    def calculate_statistics(self, outcomes):
         n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
         _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
         _mod_val_counts = np.unique(_total_mps, return_counts=True)

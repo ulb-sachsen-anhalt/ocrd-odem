@@ -1,17 +1,19 @@
+from __future__ import annotations
+
 import math
-import os
-from typing import Callable, Optional
+import multiprocessing
+from typing import Callable, Optional, Generic
 
 from lib.ocrd3_odem import MARK_OCR_FAIL
 from lib.resources_monitoring import (
     NotEnoughDiskSpaceException, ProcessResourceMonitorConfig, ResourceMonitor,
     RmConfig, RmException, RmMemory, RmResourceData,
-    VirtualMemoryExceededException
+    VirtualMemoryExceededException, Result
 )
 from lib.resources_monitoring.TheProcess import TheProcess
 
 
-class ProcessResourceMonitor:
+class ProcessResourceMonitor(Generic[Result]):
 
     def __init__(
             self,
@@ -61,17 +63,20 @@ class ProcessResourceMonitor:
         else:
             fct_process_load()
 
-    def monit_vmem(self, fct_process_run: Callable):
+    def monit_vmem(self, fct_process_run: Callable[[], Result]) -> Result | None:
+        result_queue: multiprocessing.Queue = multiprocessing.Queue()
         if not self.__config.enable_resource_monitoring:
-            fct_process_run()
+            return fct_process_run()
         else:
             self.__resource_monitor.start()
-            self.__process = TheProcess(fct_process_run)
+            self.__process = TheProcess(fct_process_run, result_queue)
             self.__process.start()
             self.__process.join()
             self.__resource_monitor.stop()
             if self.__process.exception is not None:
                 raise self.__process.exception
+            if not result_queue.empty():
+                return result_queue.get()
 
     def check_vmem(self):
         if self.__config.enable_resource_monitoring:
@@ -94,7 +99,7 @@ class ProcessResourceMonitor:
         vmem_exceeds_bytes: bool = (self.__config.max_vmem_bytes is not None) and \
                                    (ram_used > self.__config.max_vmem_bytes)
 
-        print(ram_percentage, self.__config.max_vmem_percentage, vmem_exceeds_percentage, vmem_exceeds_bytes)
+        # print(ram_percentage, self.__config.max_vmem_percentage, vmem_exceeds_percentage, vmem_exceeds_bytes)
 
         if vmem_exceeds_percentage or vmem_exceeds_bytes:
             exception: VirtualMemoryExceededException = VirtualMemoryExceededException(

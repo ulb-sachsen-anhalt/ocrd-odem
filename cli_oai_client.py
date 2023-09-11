@@ -343,7 +343,8 @@ if __name__ == "__main__":
         PROCESS.inspect_metadata()
         PROCESS.filter_images()
 
-        process_resource_monitor.monit_vmem(PROCESS.run_parallel)
+        outcomes = process_resource_monitor.monit_vmem(PROCESS.run_parallel)
+        PROCESS.calculate_statistics(outcomes)
 
         PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
         PROCESS.to_alto()

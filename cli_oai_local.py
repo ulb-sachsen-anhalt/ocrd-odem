@@ -189,10 +189,10 @@ if __name__ == "__main__":
         PROCESS.inspect_metadata()
         PROCESS.filter_images()
         initLogging()
-        if SEQUENTIAL:
-            process_resource_monitor.monit_vmem(PROCESS.run_sequential)
-        else:
-            process_resource_monitor.monit_vmem(PROCESS.run_parallel)
+        outcomes = process_resource_monitor.monit_vmem(
+            PROCESS.run_sequential if SEQUENTIAL else PROCESS.run_parallel
+        )
+        PROCESS.calculate_statistics(outcomes)
         PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
         PROCESS.to_alto()
         PROCESS.integrate_ocr()
