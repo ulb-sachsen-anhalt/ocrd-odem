@@ -5,7 +5,9 @@ import argparse
 import logging
 import os
 import shutil
+import socket
 import sys
+import time
 
 from ocrd_utils import (
     initLogging
@@ -26,9 +28,12 @@ from lib.ocrd3_odem import (
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
-    IDENTIFIER_CATALOGUE
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
+
+from cli_oai_client import (
+    STATETIME_FORMAT
+)
 
 DEFAULT_EXECUTORS = 2
 
@@ -204,8 +209,12 @@ if __name__ == "__main__":
         PROCESS.export_data()
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)
-        _msg = f"ppn={PROCESS.identifiers[IDENTIFIER_CATALOGUE]},ocr={len(PROCESS.images_4_ocr)},timedelta={PROCESS.duration}"
-        handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_msg)
+        _kwargs = PROCESS.statistics
+        _self_ip_addr = socket.gethostbyname(socket.gethostname())
+        _right_now = time.strftime(STATETIME_FORMAT)
+        _agent = f"{_self_ip_addr}@{_right_now}"
+        _info = f"agent:{_agent},statistics:{_kwargs}"
+        handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_info)
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         PROCESS.the_logger.info("[%s] duration: %s/%s (%s)", PROCESS.process_identifier,
                                 PROCESS.duration, _mode, PROCESS.statistics)

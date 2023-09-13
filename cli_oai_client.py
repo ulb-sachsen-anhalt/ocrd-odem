@@ -138,7 +138,7 @@ class OAIServiceClient:
         # if we have to report somethin' new, then append it
         if kwargs is not None:
             _self_ip_addr = socket.gethostbyname(socket.gethostname())
-            _info = f"{_self_ip_addr}@{right_now},statistics:{kwargs}"
+            _info = f"agent:{_self_ip_addr}@{right_now},statistics:{kwargs}"
             if self.record_data['INFO'] != 'n.a.':
                 _info = f"{self.record_data['INFO']},{_info}"
             self.record_data['INFO'] = _info
