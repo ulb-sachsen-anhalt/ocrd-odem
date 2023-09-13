@@ -385,7 +385,7 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_one):
     # assert
     _txt_bundle_file = tmp_path / '198114125.pdf.txt'
     assert os.path.exists(_txt_bundle_file)
-    assert 77 == odem.statistics['lines']
+    assert 77 == odem.statistics['n_text_lines']
     with open(_txt_bundle_file, encoding='utf-8') as bundle_handle:
         assert 77 == len(bundle_handle.readlines())
 
