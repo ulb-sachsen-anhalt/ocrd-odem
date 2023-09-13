@@ -1,3 +1,4 @@
+"""Specification for OAI Client module"""
 
 from unittest import (
     mock
@@ -12,7 +13,6 @@ from cli_oai_client import (
 
 from cli_oai_server import (
     MARK_DATA_EXHAUSTED,
-    MARK_DATA_EXHAUSTED_PREFIX,
 )
 
 
