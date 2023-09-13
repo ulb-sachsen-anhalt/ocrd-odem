@@ -483,7 +483,8 @@ class ODEMProcess:
             _msg = f"{self.process_identifier} contains no images for OCR (total: {_n_max_images})!"
             raise ODEMNoImagesForOCRException(_msg)
         # else, journey onwards with image name only
-        self.images_4_ocr = pairs_image_urn #[i[0] for i in pairs_image_urn]
+        self.images_4_ocr = pairs_image_urn
+        self._statistics['n_images_pages'] = _n_max_images
         self._statistics['n_images_ocrable'] = len(self.images_4_ocr)
 
     def filter_images(self):
