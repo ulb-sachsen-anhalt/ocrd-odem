@@ -9,6 +9,7 @@ import pytest
 from cli_oai_client import (
     OAIServiceClient,
     OAIRecordExhaustedException,
+    oai_arg_parser,
 )
 
 from cli_oai_server import (
@@ -54,3 +55,20 @@ def test_exit_on_data_exhausted(mock_request):
 
     # assert
     assert 'no open records in oai-record-test, please inspect resource' == exhausted.value.args[0]
+
+
+@pytest.mark.parametrize("value",
+                         [
+                             ('oai-records-sample.csv'),
+                             ('/data/oai-records-sample.csv'),
+                             ('oai-records-sample/next')
+                         ])
+def test_oai_arg_parser(value):
+    """Some formats of how the record list
+    information *must not* be provided
+    """
+
+    # actsert
+    with pytest.raises(SystemExit) as _exit:
+        oai_arg_parser(value)
+    assert 1 == _exit.value.args[0]
