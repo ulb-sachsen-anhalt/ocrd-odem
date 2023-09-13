@@ -922,7 +922,7 @@ class ODEMProcess:
             _writer.write(txt_content)
         self.the_logger.info("[%s] harvested %d lines from %d ocr files to %s",
                              self.process_identifier, len(_txts), len(_ocrs), _out_path)
-        self._statistics['lines'] = len(_txts)
+        self._statistics['n_text_lines'] = len(_txts)
 
     def create_pdf(self):
         """Forward PDF-creation to Derivans"""
