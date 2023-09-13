@@ -59,12 +59,13 @@ XMLNS = {'alto': 'http://www.loc.gov/standards/alto/ns-v4#',
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 FILEGROUP_OCR = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
-# Pica marks for digital types
+# Pica marks of digital types
 # 'a' = 'Aa', 'Ha' - monographic prints / handwritten
 # 'f' = 'Af', 'Hf' - volume prints / handwritten
 # 'F' = 'AF', 'HF' - volume prints / handwritten
 # 'Z' = 'OZ' - issue/additional
-PRINT_WORKS = ['a','f','F','Z']
+# 'B' = 'AB' - periodical volumes
+PRINT_WORKS = ['a', 'f', 'F', 'Z', 'B']
 IDENTIFIER_CATALOGUE = 'gvk-ppn'
 DROP_ALTO_ELEMENTS = [
     'alto:Shape',
