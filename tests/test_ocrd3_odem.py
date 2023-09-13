@@ -57,7 +57,7 @@ def test_odem_local_file_modelconf(file_path, model_conf):
 def _prepare_tessdata_dir(tmp_path: Path) -> str:
     model_dir = tmp_path / 'tessdata'
     model_dir.mkdir()
-    models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger']
+    models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger', 'fas']
     for _m in models:
         with open(str(model_dir / f'{_m}.traineddata'), 'wb') as writer:
             writer.write(b'abc')
@@ -606,3 +606,31 @@ def test_opendata_record_no_printwork(tmp_path):
 
     # assert
     assert "1981185920_79080 is no print: Ac!" ==  odem_exc.value.args[0]
+
+
+def test_opendata_record_no_granular_urn_present(tmp_path):
+    """Fix behavior when opendata record is legacy
+    kitodo2 with zedExporter creation
+    or any other kind of digital object missing
+    granular urn at all
+    """
+
+    path_workdir = tmp_path / 'workdir'
+    path_workdir.mkdir()
+    orig_file = TEST_RES / '1981185920_88132.xml'
+    trgt_mets = path_workdir / 'test.xml'
+    shutil.copyfile(orig_file, trgt_mets)
+    (path_workdir / 'log').mkdir()
+    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/88132')
+    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc.cfg = fixture_configuration()
+    _model_dir = _prepare_tessdata_dir(path_workdir)
+    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
+    oproc.mets_file = str(trgt_mets)
+
+    # act
+    oproc.inspect_metadata()
+
+    # assert
+    for img_entry in oproc.images_4_ocr:
+        assert img_entry[1].startswith('PHYS_00')

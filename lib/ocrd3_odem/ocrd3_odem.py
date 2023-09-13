@@ -474,9 +474,8 @@ class ODEMProcess:
             _msg = f"{self.process_identifier} contains absolutly no images for OCR!"
             raise ODEMNoImagesForOCRException(_msg)
         # gather present images via generator
-        _a_generator = images_urn_pairs_from_metadata(mets_root, blacklist_log, blacklist_lab)
-        pairs_image_urn = [pair for pair in _a_generator]
-        n_images_ocrable = len(pairs_image_urn)
+        pairs_img_id = fname_ident_pairs_from_metadata(mets_root, blacklist_log, blacklist_lab)
+        n_images_ocrable = len(pairs_img_id)
         _ratio = n_images_ocrable / _n_max_images * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
                              self.process_identifier, n_images_ocrable, _ratio, _n_max_images)
@@ -484,7 +483,7 @@ class ODEMProcess:
             _msg = f"{self.process_identifier} contains no images for OCR (total: {_n_max_images})!"
             raise ODEMNoImagesForOCRException(_msg)
         # else, journey onwards with image name only
-        self.images_4_ocr = pairs_image_urn
+        self.images_4_ocr = pairs_img_id
         self._statistics['n_images_pages'] = _n_max_images
         self._statistics['n_images_ocrable'] = len(self.images_4_ocr)
 
@@ -1066,7 +1065,7 @@ class ODEMProcess:
         return self._statistics
 
 
-def images_urn_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page_labels):
+def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page_labels):
     """Generate pairs of image label and URN
     that respect defined blacklisted physical
     and logical structures.
@@ -1089,7 +1088,7 @@ def images_urn_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page_
         log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
         if not is_in(blacklist_structs, log_type):
             if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
-                _pairs.append((_local_file_name, _phys_dict['URN']))
+                _pairs.append((_local_file_name, _phys_dict['ID']))
     return _pairs
 
 
@@ -1103,9 +1102,6 @@ def _phys_container_for_id(_phys_conts, _id):
         if _file_id == _id:
             parent = _cnt.getparent()
             _cnt_id = parent.attrib['ID']
-            # mask ":" with "+" since first
-            # is not welcome in local filenames
-            _cnt_urn = parent.attrib['CONTENTIDS'].replace(':', '+')
             _label = None
             if 'LABEL' in parent.attrib:
                 _label = parent.attrib['LABEL']
@@ -1113,7 +1109,7 @@ def _phys_container_for_id(_phys_conts, _id):
                 _label = parent.attrib['ORDERLABEL']
             else:
                 raise ODEMException(f"Cant handle label: {_label} of '{parent}'")
-            return {'ID': _cnt_id, 'URN': _cnt_urn, 'LABEL': _label}
+            return {'ID': _cnt_id, 'LABEL': _label}
 
 
 def _log_type_for_id(phys_id, structmap_links, log_conts):
