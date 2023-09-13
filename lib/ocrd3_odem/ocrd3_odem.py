@@ -604,7 +604,7 @@ class ODEMProcess:
             PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_makefile'))
 
         # Preprare workspace with makefile
-        (image_path, urn) = image_4_ocr
+        (image_path, ident) = image_4_ocr
         os.chdir(self.work_dir_main)
         file_name = os.path.basename(image_path)
         file_id = file_name.split('.')[0]
@@ -680,7 +680,7 @@ class ODEMProcess:
                                  _ident, page_workdir)
             stored = self._store_fulltext(page_workdir, image_path)
             if stored:
-                self._preserve_process_log(page_workdir, urn)
+                self._preserve_log(page_workdir, ident)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             self.the_logger.error("[%s] image '%s' failed due to subprocess timeout: %s",
                                   _ident, base_image, exc)
@@ -717,7 +717,7 @@ class ODEMProcess:
         input_image.save(output_path, format='png', dpi=res_dpi)
         return output_path
 
-    def _preserve_process_log(self, work_subdir, urn):
+    def _preserve_log(self, work_subdir, image_ident):
         """preserve ocrd.log for later analyzis as
         sub directory identified by adopted local
         identifier (local section of system OAI handle)"""
@@ -731,7 +731,8 @@ class ODEMProcess:
         _org_log = os.path.join(work_subdir, 'ocrd.log')
         if os.path.exists(_org_log):
             _ts = time.strftime(LOG_STORE_FORMAT, time.localtime())
-            _rebranded = os.path.join(work_subdir, f'ocrd_odem_{urn}_{_ts}.log')
+            _log_label = f'ocrd_odem_{self.process_identifier}_{image_ident}_{_ts}.log'
+            _rebranded = os.path.join(work_subdir, _log_label)
             os.rename(_org_log, _rebranded)
             shutil.copy(_rebranded, _local_ocr_log)
         else:
