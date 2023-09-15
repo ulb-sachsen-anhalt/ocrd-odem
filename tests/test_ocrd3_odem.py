@@ -28,6 +28,7 @@ from lib.ocrd3_odem import (
     ODEMException,
     ODEMNoImagesForOCRException,
     ODEMNoTypeForOCRException,
+    ODEMMetadataException,
     XMLNS,
     PUNCTUATIONS,
     IDENTIFIER_CATALOGUE,
@@ -634,3 +635,32 @@ def test_opendata_record_no_granular_urn_present(tmp_path):
     # assert
     for img_entry in oproc.images_4_ocr:
         assert img_entry[1].startswith('PHYS_00')
+
+
+# 1981185920_105290
+def test_opendata_record_type_error(tmp_path):
+    """Fix behavior when opendata record is legacy
+    kitodo2 with zedExporter creation
+    or any other kind of digital object missing
+    granular urn at all
+    """
+
+    path_workdir = tmp_path / 'workdir'
+    path_workdir.mkdir()
+    orig_file = TEST_RES / '1981185920_105290.xml'
+    trgt_mets = path_workdir / 'test.xml'
+    shutil.copyfile(orig_file, trgt_mets)
+    (path_workdir / 'log').mkdir()
+    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/105290')
+    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc.cfg = fixture_configuration()
+    _model_dir = _prepare_tessdata_dir(path_workdir)
+    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
+    oproc.mets_file = str(trgt_mets)
+
+    # act
+    with pytest.raises(ODEMMetadataException) as odem_exc:
+        oproc.inspect_metadata()
+
+    # assert
+    assert "2x: Page PHYS_0112 not linked,Page PHYS_0113 not linked" ==  odem_exc.value.args[0]

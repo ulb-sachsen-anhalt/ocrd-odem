@@ -239,6 +239,14 @@ class ODEMNoTypeForOCRException(ODEMException):
     contains no pages at all
     """
 
+class ODEMMetadataException(ODEMException):
+    """Mark state when inconsistencies exist
+    between linkings of physical and logical
+    print sections, like logical sections
+    without phyiscal pages or pages that
+    refer to no logical section
+    """
+
 
 class ODEMProcess:
     """Create OCR for OAI Records.
@@ -344,7 +352,7 @@ class ODEMProcess:
 
         try:
             reader = MetsReader(self.mets_file)
-            report = reader.analyze()
+            report = reader.report
             # what kind of retro digi is it?
             # inspect final type mark
             if not report.type or report.type[-1] not in PRINT_WORKS:
@@ -1078,6 +1086,7 @@ def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page
       => logical structure
     """
     _pairs = []
+    _problems = []
     _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', XMLNS)
     _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', XMLNS)
     _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', XMLNS)
@@ -1086,10 +1095,17 @@ def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page
         _local_file_name = _max_file[0].get(Q_XLINK_HREF).split('/')[-1]
         _file_id = _max_file.get('ID')
         _phys_dict = _phys_container_for_id(_phys_conts, _file_id)
-        log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
+        try:
+            log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
+        except ODEMMetadataException as ome:
+            _problems.append(ome.args[0])
         if not is_in(blacklist_structs, log_type):
             if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
                 _pairs.append((_local_file_name, _phys_dict['ID']))
+    # re-raise on error
+    if len(_problems) > 0:
+        _n_probs = len(_problems)
+        raise ODEMMetadataException(f"{_n_probs}x: {','.join(_problems)}")
     return _pairs
 
 
@@ -1114,18 +1130,22 @@ def _phys_container_for_id(_phys_conts, _id):
 
 
 def _log_type_for_id(phys_id, structmap_links, log_conts):
-    """Follow link from physical container via 
-    strucmap link to the corresponding logical 
-    structure and grab it's type"""
+    """Follow link from physical container ('to') 
+    via  strucmap link to the corresponding logical 
+    structure ('from') and grab it's type
+
+    Alert if no type found => indicates inconsistend data
+    """
 
     for _link in structmap_links:
-        _from_id = _link.attrib['{http://www.w3.org/1999/xlink}from']
-        _to_id = _link.attrib['{http://www.w3.org/1999/xlink}to']
-        if _to_id == phys_id:
-            for _log in log_conts:
-                _log_id = _log.attrib['ID']
-                if _log_id == _from_id:
-                    return _log.attrib['TYPE']
+        _physical_target_id = _link.attrib['{http://www.w3.org/1999/xlink}to']
+        if _physical_target_id == phys_id:
+            for _logical_section in log_conts:
+                _logical_section_id = _logical_section.attrib['ID']
+                _logical_target_id = _link.attrib['{http://www.w3.org/1999/xlink}from']
+                if _logical_section_id == _logical_target_id:
+                    return _logical_section.attrib['TYPE']
+    raise ODEMMetadataException(f"Page {phys_id} not linked")
 
 
 def is_jpg(a_file:str):
