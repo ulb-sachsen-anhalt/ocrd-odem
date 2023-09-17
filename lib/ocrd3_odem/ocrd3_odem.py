@@ -42,7 +42,6 @@ from digiflow import (
     write_xml_file,
     validate_xml,
     MetsProcessor,
-    MetsReader,
     BaseDerivansManager,
     DerivansResult
 )
@@ -64,17 +63,8 @@ XMLNS = {'alto': 'http://www.loc.gov/standards/alto/ns-v4#',
          'ulb': 'https://bibliothek.uni-halle.de',
          'zvdd': 'https:/zvdd'
          }
-# Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 FILEGROUP_OCR = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
-# # Pica marks of digital types
-# # 'a' = 'Aa', 'Ha' - monographic prints / handwritten
-# # 'f' = 'Af', 'Hf' - volume prints / handwritten
-# # 'F' = 'AF', 'HF' - volume prints / handwritten
-# # 'Z' = 'OZ' - issue/additional
-# # 'B' = 'AB' - periodical volumes
-# PRINT_WORKS = ['a', 'f', 'F', 'Z', 'B']
-# IDENTIFIER_CATALOGUE = 'gvk-ppn'
 DROP_ALTO_ELEMENTS = [
     'alto:Shape',
     'alto:Illustration',
@@ -194,12 +184,6 @@ def ocrd_workspace_setup(path_workspace, image_path):
     return image_path
 
 
-# def is_in(tokens: List[str], label):
-#     """label contained somewhere in a list of tokens?"""
-
-#     return any(t in label for t in tokens)
-
-
 def get_imageinfo(path_img_dir):
     """Calculate image features"""
 
@@ -231,29 +215,6 @@ def get_odem_logger(log_dir, logfile_name=None):
 
 class ODEMException(Exception):
     """Mark custom ODEM Workflow Exceptions"""
-
-
-# class ODEMNoImagesForOCRException(ODEMException):
-#     """Mark custom ODEM Workflow Exception
-#     when print contains no images-of-interest
-#     for OCR, i.e. only maps/illustrations
-#     """
-
-
-# class ODEMNoTypeForOCRException(ODEMException):
-#     """Mark custom ODEM Workflow Exception
-#     when digital object is *not* to be
-#     considered to be ocr-able because it
-#     contains no pages at all
-#     """
-
-# class ODEMMetadataException(ODEMException):
-#     """Mark state when inconsistencies exist
-#     between linkings of physical and logical
-#     print sections, like logical sections
-#     without phyiscal pages or pages that
-#     refer to no logical section
-#     """
 
 
 class ODEMProcess:
@@ -358,37 +319,16 @@ class ODEMProcess:
         * no page images for OCR
         """
 
-        # try:
-        #     reader = MetsReader(self.mets_file)
-        #     report = reader.report
-        #     # what kind of retro digi is it?
-        #     # inspect final type mark
-        #     if not report.type or report.type[-1] not in PRINT_WORKS:
-        #         raise ODEMNoTypeForOCRException(f"{self.process_identifier} is no print: {report.type}!")
-        #     # detailed inspection of languages
-        #     self.inspect_languages(report.languages)
-        #     self.digi_type = report.type
-        #     self.identifiers = report.identifiers
-        #     # apply additional metadata checks
-        #     # stop if data corrupt, ill or bad
-        #     reader.check()
-        #     # detailed inspection of image group
-        #     self.inspect_metadata_images()
-        # except RuntimeError as _err:
-        #     raise ODEMException(_err.args[0]) from _err
-
-        # if IDENTIFIER_CATALOGUE not in report.identifiers:
-        #     raise ODEMException(f"No {IDENTIFIER_CATALOGUE} in {self.record.identifier}")
-
-        # keep track of info we know by now
-        insp = ODEMMetadataInspecteur(self.mets_file, 
-                                      self.record.identifier, 
+        insp = ODEMMetadataInspecteur(self.mets_file,
+                                      self.record.identifier,
                                       cfg=self.cfg,
                                       workdir=self.work_dir_main)
         try:
             insp.inspect()
+            self.images_4_ocr = insp.image_pairs
         except ODEMMetadataException as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
+        self.identifiers = insp.identifiers
         self._statistics[IDENTIFIER_CATALOGUE] = insp.identifiers[IDENTIFIER_CATALOGUE]
         self._statistics['type'] = insp.type
         self._statistics['langs'] = insp.languages
@@ -482,40 +422,6 @@ class ODEMProcess:
         self.the_logger.info("[%s] %d images total",
                              self.process_identifier, len(images))
         return images
-
-    # def inspect_metadata_images(self):
-    #     """Reduce amount of Images passed on to
-    #     OCR by utilizing metadata knowledge.
-    #     Drop images which belong to
-    #     * physical containers (named "Colorchecker")
-    #     * logical structures (type "cover_front")
-
-    #     This can obviously only apply if metadata
-    #     is present at all and structured in-depth
-    #     """
-
-    #     blacklist_log = self.cfg.getlist('mets', 'blacklist_logical_containers')
-    #     blacklist_lab = self.cfg.getlist('mets', 'blacklist_physical_container_labels')
-    #     # are max images present?
-    #     mets_root = ET.parse(self.mets_file).getroot()
-    #     _max_images = mets_root.findall('.//mets:fileGrp[@USE="MAX"]/mets:file', XMLNS)
-    #     _n_max_images = len(_max_images)
-    #     if _n_max_images < 1:
-    #         _msg = f"{self.process_identifier} contains absolutly no images for OCR!"
-    #         raise ODEMNoImagesForOCRException(_msg)
-    #     # gather present images via generator
-    #     pairs_img_id = fname_ident_pairs_from_metadata(mets_root, blacklist_log, blacklist_lab)
-    #     n_images_ocrable = len(pairs_img_id)
-    #     _ratio = n_images_ocrable / _n_max_images * 100
-    #     self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
-    #                          self.process_identifier, n_images_ocrable, _ratio, _n_max_images)
-    #     if n_images_ocrable < 1:
-    #         _msg = f"{self.process_identifier} contains no images for OCR (total: {_n_max_images})!"
-    #         raise ODEMNoImagesForOCRException(_msg)
-    #     # else, journey onwards with image name only
-    #     self.images_4_ocr = pairs_img_id
-    #     self._statistics['n_images_pages'] = _n_max_images
-    #     self._statistics['n_images_ocrable'] = len(self.images_4_ocr)
 
     def filter_images(self):
         """Pick only those (local) images which
@@ -1094,80 +1000,6 @@ class ODEMProcess:
 
         self._statistics['timedelta'] = f'{self.duration}'
         return self._statistics
-
-
-# def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page_labels):
-#     """Generate pairs of image label and URN
-#     that respect defined blacklisted physical
-#     and logical structures.
-    
-#     * first, get all required linking groups
-#     * second, start with file image final part and gather
-#       from this group all required informations on the way
-#       from file location => physical container => structMap
-#       => logical structure
-#     """
-#     _pairs = []
-#     _problems = []
-#     _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', XMLNS)
-#     _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', XMLNS)
-#     _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', XMLNS)
-#     _max_images = mets_root.findall('.//mets:fileGrp[@USE="MAX"]/mets:file', XMLNS)
-#     for _max_file in _max_images:
-#         _local_file_name = _max_file[0].get(Q_XLINK_HREF).split('/')[-1]
-#         _file_id = _max_file.get('ID')
-#         _phys_dict = _phys_container_for_id(_phys_conts, _file_id)
-#         try:
-#             log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
-#         except ODEMMetadataException as ome:
-#             _problems.append(ome.args[0])
-#         if not is_in(blacklist_structs, log_type):
-#             if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
-#                 _pairs.append((_local_file_name, _phys_dict['ID']))
-#     # re-raise on error
-#     if len(_problems) > 0:
-#         _n_probs = len(_problems)
-#         raise ODEMMetadataException(f"{_n_probs}x: {','.join(_problems)}")
-#     return _pairs
-
-
-# def _phys_container_for_id(_phys_conts, _id):
-#     """Collect and prepare all required 
-#     data from matching physical container 
-#     for later analyzis or processing"""
-
-#     for _cnt in _phys_conts:
-#         _file_id = _cnt.attrib['FILEID']
-#         if _file_id == _id:
-#             parent = _cnt.getparent()
-#             _cnt_id = parent.attrib['ID']
-#             _label = None
-#             if 'LABEL' in parent.attrib:
-#                 _label = parent.attrib['LABEL']
-#             elif 'ORDERLABEL' in parent.attrib:
-#                 _label = parent.attrib['ORDERLABEL']
-#             else:
-#                 raise ODEMException(f"Cant handle label: {_label} of '{parent}'")
-#             return {'ID': _cnt_id, 'LABEL': _label}
-
-
-# def _log_type_for_id(phys_id, structmap_links, log_conts):
-#     """Follow link from physical container ('to') 
-#     via  strucmap link to the corresponding logical 
-#     structure ('from') and grab it's type
-
-#     Alert if no type found => indicates inconsistend data
-#     """
-
-#     for _link in structmap_links:
-#         _physical_target_id = _link.attrib['{http://www.w3.org/1999/xlink}to']
-#         if _physical_target_id == phys_id:
-#             for _logical_section in log_conts:
-#                 _logical_section_id = _logical_section.attrib['ID']
-#                 _logical_target_id = _link.attrib['{http://www.w3.org/1999/xlink}from']
-#                 if _logical_section_id == _logical_target_id:
-#                     return _logical_section.attrib['TYPE']
-#     raise ODEMMetadataException(f"Page {phys_id} not linked")
 
 
 def is_jpg(a_file:str):

@@ -26,9 +26,6 @@ from lib.ocrd3_odem import (
     postprocess_ocr_file,
     ODEMProcess,
     ODEMException,
-    ODEMNoImagesForOCRException,
-    ODEMNoTypeForOCRException,
-    ODEMMetadataException,
     XMLNS,
     PUNCTUATIONS,
     IDENTIFIER_CATALOGUE,
@@ -123,7 +120,8 @@ def _fixture_1981185920_44043(tmp_path_factory):
     with mock.patch('digiflow.OAILoader.load') as request_mock:
         request_mock.side_effect = _side_effect
         odem.load()
-        yield odem
+    odem.inspect_metadata()
+    yield odem
 
 
 def test_odem_process_internal_identifier(init_odem: ODEMProcess):
@@ -139,7 +137,7 @@ def test_odem_process_catalog_identifier(init_odem: ODEMProcess):
     """
 
     # act
-    init_odem.inspect_metadata()
+    # init_odem.inspect_metadata()
 
     # assert
     assert init_odem.identifiers[IDENTIFIER_CATALOGUE] == '265982944'
@@ -293,7 +291,7 @@ def test_module_fixture_one_images_4_ocr_by_metadata(module_fixture_one):
     ResourceGenerator(tmp_path / 'MAX', number=9).get_batch()
 
     # act
-    odem_123456789_27949.inspect_metadata_images()
+    odem_123456789_27949.inspect_metadata()
 
     # assert
     assert len(odem_123456789_27949.images_4_ocr) == 4
@@ -479,7 +477,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     odem_processor.the_logger = get_odem_logger(str(_log_dir))
 
     # act
-    odem_processor.inspect_metadata_images()
+    odem_processor.inspect_metadata()
     odem_processor.filter_images()
 
     # assert
@@ -576,11 +574,11 @@ def test_opendata_record_no_images_for_ocr(tmp_path):
     oproc.mets_file = str(trgt_mets)
 
     # act
-    with pytest.raises(ODEMNoImagesForOCRException) as odem_exc:
+    with pytest.raises(ODEMException) as odem_exc:
         oproc.inspect_metadata()
 
     # assert
-    assert "1981185920_74357 contains no images for OCR (total: 15)!" ==  odem_exc.value.args[0]
+    assert "oai:opendata.uni-halle.de:1981185920/74357 contains no images for OCR (total: 15)!" ==  odem_exc.value.args[0]
 
 
 def test_opendata_record_no_printwork(tmp_path):
@@ -588,13 +586,14 @@ def test_opendata_record_no_printwork(tmp_path):
     struct (c-stage) without any pages/images
     """
 
+    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/79080'
     path_workdir = tmp_path / 'workdir'
     path_workdir.mkdir()
     orig_file = TEST_RES / '1981185920_79080.xml'
     trgt_mets = path_workdir / 'test.xml'
     shutil.copyfile(orig_file, trgt_mets)
     (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/79080')
+    record = OAIRecord(_oai_urn)
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
     _model_dir = _prepare_tessdata_dir(path_workdir)
@@ -602,11 +601,11 @@ def test_opendata_record_no_printwork(tmp_path):
     oproc.mets_file = str(trgt_mets)
 
     # act
-    with pytest.raises(ODEMNoTypeForOCRException) as odem_exc:
+    with pytest.raises(ODEMException) as odem_exc:
         oproc.inspect_metadata()
 
     # assert
-    assert "1981185920_79080 is no print: Ac!" ==  odem_exc.value.args[0]
+    assert f"{_oai_urn} no type for OCR: Ac" ==  odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present(tmp_path):
@@ -659,7 +658,7 @@ def test_opendata_record_type_error(tmp_path):
     oproc.mets_file = str(trgt_mets)
 
     # act
-    with pytest.raises(ODEMMetadataException) as odem_exc:
+    with pytest.raises(ODEMException) as odem_exc:
         oproc.inspect_metadata()
 
     # assert
