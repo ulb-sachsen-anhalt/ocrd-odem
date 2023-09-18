@@ -192,6 +192,7 @@ if __name__ == "__main__":
         process_resource_monitor.monit_disk_space(PROCESS.load)
 
         PROCESS.inspect_metadata()
+        PROCESS.set_modelconfig_for()
         PROCESS.filter_images()
         initLogging()
         outcomes = process_resource_monitor.monit_vmem(

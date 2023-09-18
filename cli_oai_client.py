@@ -341,6 +341,7 @@ if __name__ == "__main__":
 
         # go on
         PROCESS.inspect_metadata()
+        PROCESS.set_modelconfig_for()
         PROCESS.filter_images()
 
         outcomes = process_resource_monitor.monit_vmem(PROCESS.run_parallel)

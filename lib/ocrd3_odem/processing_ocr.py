@@ -37,6 +37,11 @@ COMBINING_SMALL_E = '\u0364'
 #   * Quotations    \u2018-201F
 PUNCTUATIONS = string.punctuation + '\u2012' + '\u2013' + '\u2014' + '\u2015' + '\u2016' + '\u2017' + '\u2018' + '\u2019' + '\u201A' + '\u201B' + '\u201C' + '\u201D' + '\u201E' + '\u201F'
 
+DROP_ALTO_ELEMENTS = [
+    'alto:Shape',
+    'alto:Illustration',
+    'alto:GraphicalElement']
+
 
 class ODEMMetadataOcrException(Exception):
     """Mark any problems related to OCR

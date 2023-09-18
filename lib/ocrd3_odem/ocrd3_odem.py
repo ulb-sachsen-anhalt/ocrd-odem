@@ -28,17 +28,19 @@ from digiflow import (
     OAILoader,
     OAIRecord,
     run_profiled,
-    post_oai_extract_metsdata,
     export_data_from,
-    write_xml_file,
     MetsProcessor,
     BaseDerivansManager,
     DerivansResult
 )
+
 from .processing_mets import (
+    FILEGROUP_OCR,
     IDENTIFIER_CATALOGUE,
+    XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
+    extract_mets_data,
     integrate_ocr_file,
     postprocess_mets,
     validate_mets,
@@ -57,13 +59,7 @@ from .processing_image import (
 #
 # python process-wrapper limit
 os.environ['OMP_THREAD_LIMIT'] = '1'
-XMLNS = {'alto': 'http://www.loc.gov/standards/alto/ns-v4#',
-         'dv': 'http://dfg-viewer.de/',
-         'mets': 'http://www.loc.gov/METS/',
-         'ulb': 'https://bibliothek.uni-halle.de',
-         'zvdd': 'https:/zvdd'
-         }
-FILEGROUP_OCR = 'FULLTEXT'
+STATS_KEY_LANGS = 'langs'
 DROP_ALTO_ELEMENTS = [
     'alto:Shape',
     'alto:Illustration',
@@ -122,18 +118,14 @@ def get_config():
         })
 
 
-def post_download(the_self, the_data):
-    """
-    Migration Post-recive OAI METS/MODS callback
-    """
+def get_modelconf_from(file_path) -> List[str]:
+    """Determine model from file name extension
+    marked with'_' at the end"""
 
-    xml_root = ET.fromstring(the_data)
-
-    # extract OAI response body
-    mets_tree = post_oai_extract_metsdata(xml_root)
-
-    # exchange MAX image URL
-    write_xml_file(mets_tree, the_self.path_mets)
+    file_name = os.path.basename(file_path)
+    if '_' not in file_name:
+        raise ODEMException(f"Miss language in '{file_path}'!")
+    return file_name.split('.')[0].split('_')[-1].split('+')
 
 
 def ocrd_workspace_setup(path_workspace, image_path):
@@ -202,7 +194,7 @@ class ODEMProcess:
         Args:
             record (OAIRecord): OAI Record dataset
             work_dir (_type_): required local work path
-            executors (int, optional): Process pooling when running parallel. 
+            executors (int, optional): Process pooling when running parallel.
                 Defaults to 2.
             log_dir (_type_, optional): Path to store log file.
                 Defaults to None.
@@ -267,7 +259,7 @@ class ODEMProcess:
                               self.process_identifier, request_identifier, req_dst)
         base_url = self.cfg.get('global', 'base_url')
         try:
-            loader = OAILoader(req_dst_dir, base_url=base_url, post_oai=post_download)
+            loader = OAILoader(req_dst_dir, base_url=base_url, post_oai=extract_mets_data)
             loader.store = self.store
             loader.load(request_identifier, local_dst=req_dst)
         except RuntimeError as _err:
@@ -288,8 +280,7 @@ class ODEMProcess:
 
         insp = ODEMMetadataInspecteur(self.mets_file,
                                       self.record.identifier,
-                                      cfg=self.cfg,
-                                      workdir=self.work_dir_main)
+                                      cfg=self.cfg)
         try:
             insp.inspect()
             self.images_4_ocr = insp.image_pairs
@@ -298,19 +289,19 @@ class ODEMProcess:
         self.identifiers = insp.identifiers
         self._statistics[IDENTIFIER_CATALOGUE] = insp.identifiers[IDENTIFIER_CATALOGUE]
         self._statistics['type'] = insp.type
-        self._statistics['langs'] = insp.languages
+        self._statistics[STATS_KEY_LANGS] = insp.languages
         self._statistics['n_images_pages'] = insp.n_images_pages
         self._statistics['n_images_ocrable'] = insp.n_images_ocrable
         _ratio = insp.n_images_ocrable / insp.n_images_pages * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
-                        self.process_identifier, insp.n_images_ocrable, _ratio, insp.n_images_pages)
-        self.search_model_for(insp.languages)
+                             self.process_identifier, insp.n_images_ocrable, _ratio, 
+                             insp.n_images_pages)
         self._statistics['host'] = socket.gethostname()
 
-    def search_model_for(self, languages:List[str]):
+    def set_modelconfig_for(self, languages=None):
         """compose tesseract-ocr model config
         from metadata language entries.
-        
+
         Please note: Configured model mappings
         might also contain compositions, therefore
         the additional inner loop
@@ -321,6 +312,8 @@ class ODEMProcess:
             'ocr', 'model_mapping')
         self.the_logger.info("[%s] inspect languages '%s'",
                              self.process_identifier, languages)
+        if languages is None:
+            languages = self._statistics.get(STATS_KEY_LANGS)
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
@@ -346,7 +339,7 @@ class ODEMProcess:
                                         self.process_identifier, oxc.args[0],
                                         image_path, DEFAULT_LANG)
                 _file_lang_suffix = DEFAULT_LANG
-            self.search_model_for(_file_lang_suffix)
+            self.set_modelconfig_for(_file_lang_suffix)
         return '+'.join(self.languages)
 
     def _is_lang_available(self, lang) -> bool:
@@ -488,7 +481,7 @@ class ODEMProcess:
         subprocess.run(cmd, shell=True, check=True, timeout=docker_container_timeout)
 
     @staticmethod
-    def get_recognition_level(model_config:str) -> str:
+    def get_recognition_level(model_config: str) -> str:
         """Determine tesseract recognition level
         with respect to language order by model
         configuration"""
@@ -656,27 +649,24 @@ class ODEMProcess:
             shutil.copy(renamed, target_path)
         return 1
 
-    def has_already_any_ocr(self) -> bool:
-        """
-        Forward OCR data to store management
-        * if FULLTEXT dir not in store, return False
-        * if FULLTEXT dir doesn't contain any *.xml files, return False
-        *No* check whether all required pages contain ocr data!
-        """
-
-        ocr_dir = os.path.join(self.work_dir_main, FILEGROUP_OCR)
-        if self.store is None:
-            return False
-        store_dir_ocr = self.store.get(ocr_dir)
-        if store_dir_ocr is None:
-            return False
-
-        ocr_dir = os.path.join(self.work_dir_main, 'FULLTEXT')
-        ocr_files = [o for o in os.listdir(ocr_dir) if str(o).endswith('.xml')]
-        if len(ocr_files) > 0:
-            return True
-
-        return False
+    # def has_already_any_ocr(self) -> bool:
+    #     """
+    #     Forward OCR data to store management
+    #     * if FULLTEXT dir not in store, return False
+    #     * if FULLTEXT dir doesn't contain any *.xml files, return False
+    #     *No* check whether all required pages contain ocr data!
+    #     """
+    #     ocr_dir = os.path.join(self.work_dir_main, FILEGROUP_OCR)
+    #     if self.store is None:
+    #         return False
+    #     store_dir_ocr = self.store.get(ocr_dir)
+    #     if store_dir_ocr is None:
+    #         return False
+    #     ocr_dir = os.path.join(self.work_dir_main, 'FULLTEXT')
+    #     ocr_files = [o for o in os.listdir(ocr_dir) if str(o).endswith('.xml')]
+    #     if len(ocr_files) > 0:
+    #         return True
+    #     return False
 
     def to_alto(self) -> int:
         """Forward OCR data storage to data management
@@ -781,7 +771,7 @@ class ODEMProcess:
         derivans.init()
         # be cautious
         try:
-            dresult:DerivansResult = derivans.start()
+            dresult: DerivansResult = derivans.start()
             self.the_logger.info("[%s] create derivates in %s",
                                  self.process_identifier, dresult.duration)
         except subprocess.CalledProcessError as _sub_err:
@@ -807,7 +797,7 @@ class ODEMProcess:
         """wrap work related to processing METS/MODS"""
 
         postprocess_mets(self.mets_file, self.cfg.get('ocr', 'ocrd_baseimage'))
- 
+
     def validate_mets(self):
         """Forward METS-schema validation"""
 
@@ -858,13 +848,3 @@ class ODEMProcess:
 
         self._statistics['timedelta'] = f'{self.duration}'
         return self._statistics
-
-
-def get_modelconf_from(file_path) -> List[str]:
-    """Determine model from file name extension
-    marked with'_' at the end"""
-
-    file_name = os.path.basename(file_path)
-    if '_' not in file_name:
-        raise ODEMException(f"Miss language in '{file_path}'!")
-    return file_name.split('.')[0].split('_')[-1].split('+')

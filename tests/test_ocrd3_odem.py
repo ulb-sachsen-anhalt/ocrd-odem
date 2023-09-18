@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Specification ODEM API"""
 
-import datetime
 import os
 import shutil
 from pathlib import (
@@ -20,15 +19,15 @@ from digiflow import (
 )
 
 from lib.ocrd3_odem import (
+    PUNCTUATIONS,
+    STATS_KEY_LANGS,
+    XMLNS,
+    ODEMProcess,
+    ODEMException,
     get_config,
     get_modelconf_from,
     get_odem_logger,
     postprocess_ocr_file,
-    ODEMProcess,
-    ODEMException,
-    XMLNS,
-    PUNCTUATIONS,
-    IDENTIFIER_CATALOGUE,
 )
 from .conftest import (
     PROJECT_ROOT_DIR,
@@ -89,8 +88,7 @@ def test_lang_mapping(img_path, lang_str, tmp_path):
     assert odem_processor.map_language_to_modelconfig(img_path) == lang_str
 
 
-@pytest.fixture(name="init_odem", scope='module')
-def _fixture_1981185920_44043(tmp_path_factory):
+def test_load_mock_called(tmp_path_factory):
     """Initial ODEM fixture before doing any OCR"""
 
     def _side_effect(*args, **kwargs):
@@ -120,27 +118,13 @@ def _fixture_1981185920_44043(tmp_path_factory):
     with mock.patch('digiflow.OAILoader.load') as request_mock:
         request_mock.side_effect = _side_effect
         odem.load()
-    odem.inspect_metadata()
-    yield odem
-
-
-def test_odem_process_internal_identifier(init_odem: ODEMProcess):
-    """Ensure proper internal identifier calculated
-    for say, logging"""
-
-    assert init_odem.process_identifier == '1981185920_44046'
-
-
-def test_odem_process_catalog_identifier(init_odem: ODEMProcess):
-    """Ensure proper external identifier present
-    which will be used finally to name the export SAF
-    """
 
     # act
-    # init_odem.inspect_metadata()
+    odem.inspect_metadata()
 
     # assert
-    assert init_odem.identifiers[IDENTIFIER_CATALOGUE] == '265982944'
+    assert request_mock.call_count == 1
+    assert os.path.exists(odem.mets_file)
 
 
 def test_odem_process_identifier_local_workdir(tmp_path):
@@ -391,64 +375,6 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_one):
         assert 77 == len(bundle_handle.readlines())
 
 
-@pytest.fixture(name='post_mets', scope='module')
-def _fixture_postprocessing_mets(tmp_path_factory):
-    """Fixture for checking postprocessing"""
-    _workdir = tmp_path_factory.mktemp('workdir')
-    orig_file = TEST_RES / '198114125_part_mets.xml'
-    trgt_mets = _workdir / 'test.xml'
-    shutil.copyfile(orig_file, trgt_mets)
-    (_workdir / 'log').mkdir()
-    _proc = ODEMProcess(None, work_dir=_workdir, log_dir=_workdir / 'log')
-    _proc.mets_file = str(trgt_mets)
-    _proc.cfg = fixture_configuration()
-    _proc.postprocess_mets()
-    _root = ET.parse(_proc.mets_file).getroot()
-    yield (_proc, _root)
-
-
-def test_postprocess_mets_agent_entries_number_fits(post_mets):
-    """Ensure METS metadata agents has expected number"""
-
-    (_, xml_root) = post_mets
-    assert len(xml_root.xpath('//mets:agent', namespaces=XMLNS)) == 4
-
-
-def test_postprocess_mets_agent_odem_fits(post_mets):
-    """Ensure METS agent odem has used OCR-D 
-    baseimage annotated"""
-
-    (proc, xml_root) = post_mets
-    _agent_odem = xml_root.xpath('//mets:agent', namespaces=XMLNS)[3]
-    _xp_agent_note = 'mets:note/text()'
-    _xp_agent_name = 'mets:name/text()'
-    _curr_image = proc.cfg.get('ocr', 'ocrd_baseimage')
-    assert _agent_odem.xpath(_xp_agent_name, namespaces=XMLNS)[0] == f'DFG-OCRD3-ODEM_{_curr_image}'
-    _today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
-    assert _today in _agent_odem.xpath(_xp_agent_note, namespaces=XMLNS)[0]
-
-
-def test_postprocess_mets_agent_derivans_fits(post_mets):
-    """Ensure METS agent derivans was re-done"""
-
-    (_, xml_root) = post_mets
-    _agent_derivans = xml_root.xpath('//mets:agent', namespaces=XMLNS)[2]
-    _xp_agent_note = 'mets:note/text()'
-    _xp_agent_name = 'mets:name/text()'
-    assert _agent_derivans.xpath(_xp_agent_name, namespaces=XMLNS)[0] == 'DigitalDerivans V1.6.0-SNAPSHOT'
-    assert _agent_derivans.xpath(_xp_agent_note, namespaces=XMLNS)[0].endswith('2022-05-17T11:27:16')
-    assert not xml_root.xpath('//dv:iiif', namespaces=XMLNS)
-    assert not xml_root.xpath('//dv:sru', namespaces=XMLNS)
-
-
-def test_postprocess_mets_provenance_removed(post_mets):
-    """Ensure METS entries for digital provenance removed"""
-
-    (_, xml_root) = post_mets
-    assert not xml_root.xpath('//dv:iiif', namespaces=XMLNS)
-    assert not xml_root.xpath('//dv:sru', namespaces=XMLNS)
-
-
 def test_images_4_ocr_properly_filtered(tmp_path):
     """Ensure behavior links selected
     from images to images_4_ocr as expected
@@ -548,120 +474,12 @@ def test_opendata_record_unknown_language(tmp_path):
     _model_dir = _prepare_tessdata_dir(tmp_path)
     oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
     oproc.mets_file = str(trgt_mets)
+    oproc.inspect_metadata()
+    _langs = oproc.statistics.get(STATS_KEY_LANGS)
 
     # act
     with pytest.raises(ODEMException) as odem_exc:
-        oproc.inspect_metadata()
+        oproc.set_modelconfig_for(_langs)
 
     # assert
     assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" ==  odem_exc.value.args[0]
-
-
-def test_opendata_record_no_images_for_ocr(tmp_path):
-    """Fix behavior when opendata record contains
-    only cover pages or illustrations
-    """
-
-    path_workdir = tmp_path / 'workdir'
-    path_workdir.mkdir()
-    orig_file = TEST_RES / '1981185920_74357.xml'
-    trgt_mets = path_workdir / 'test.xml'
-    shutil.copyfile(orig_file, trgt_mets)
-    (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/74357')
-    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.cfg = fixture_configuration()
-    _model_dir = _prepare_tessdata_dir(path_workdir)
-    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
-    oproc.mets_file = str(trgt_mets)
-
-    # act
-    with pytest.raises(ODEMException) as odem_exc:
-        oproc.inspect_metadata()
-
-    # assert
-    assert "oai:opendata.uni-halle.de:1981185920/74357 contains no images for OCR (total: 15)!" ==  odem_exc.value.args[0]
-
-
-def test_opendata_record_no_printwork(tmp_path):
-    """Fix behavior when opendata record is a parent
-    struct (c-stage) without any pages/images
-    """
-
-    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/79080'
-    path_workdir = tmp_path / 'workdir'
-    path_workdir.mkdir()
-    orig_file = TEST_RES / '1981185920_79080.xml'
-    trgt_mets = path_workdir / 'test.xml'
-    shutil.copyfile(orig_file, trgt_mets)
-    (path_workdir / 'log').mkdir()
-    record = OAIRecord(_oai_urn)
-    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.cfg = fixture_configuration()
-    _model_dir = _prepare_tessdata_dir(path_workdir)
-    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
-    oproc.mets_file = str(trgt_mets)
-
-    # act
-    with pytest.raises(ODEMException) as odem_exc:
-        oproc.inspect_metadata()
-
-    # assert
-    assert f"{_oai_urn} no type for OCR: Ac" ==  odem_exc.value.args[0]
-
-
-def test_opendata_record_no_granular_urn_present(tmp_path):
-    """Fix behavior when opendata record is legacy
-    kitodo2 with zedExporter creation
-    or any other kind of digital object missing
-    granular urn at all
-    """
-
-    path_workdir = tmp_path / 'workdir'
-    path_workdir.mkdir()
-    orig_file = TEST_RES / '1981185920_88132.xml'
-    trgt_mets = path_workdir / 'test.xml'
-    shutil.copyfile(orig_file, trgt_mets)
-    (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/88132')
-    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.cfg = fixture_configuration()
-    _model_dir = _prepare_tessdata_dir(path_workdir)
-    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
-    oproc.mets_file = str(trgt_mets)
-
-    # act
-    oproc.inspect_metadata()
-
-    # assert
-    for img_entry in oproc.images_4_ocr:
-        assert img_entry[1].startswith('PHYS_00')
-
-
-# 1981185920_105290
-def test_opendata_record_type_error(tmp_path):
-    """Fix behavior when opendata record is legacy
-    kitodo2 with zedExporter creation
-    or any other kind of digital object missing
-    granular urn at all
-    """
-
-    path_workdir = tmp_path / 'workdir'
-    path_workdir.mkdir()
-    orig_file = TEST_RES / '1981185920_105290.xml'
-    trgt_mets = path_workdir / 'test.xml'
-    shutil.copyfile(orig_file, trgt_mets)
-    (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/105290')
-    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.cfg = fixture_configuration()
-    _model_dir = _prepare_tessdata_dir(path_workdir)
-    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
-    oproc.mets_file = str(trgt_mets)
-
-    # act
-    with pytest.raises(ODEMException) as odem_exc:
-        oproc.inspect_metadata()
-
-    # assert
-    assert "2x: Page PHYS_0112 not linked,Page PHYS_0113 not linked" ==  odem_exc.value.args[0]

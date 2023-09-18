@@ -12,8 +12,11 @@ from digiflow import (
     MetsReader,
     MetsProcessor,
     XMLNS,
+    post_oai_extract_metsdata,
     validate_xml,
+    write_xml_file,
 )
+
 
 PRINT_WORKS = ['a', 'f', 'F', 'Z', 'B']
 IDENTIFIER_CATALOGUE = 'gvk-ppn'
@@ -21,6 +24,16 @@ Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 FILEGROUP_OCR = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
 METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
+
+
+def extract_mets_data(the_self, the_data):
+    """
+    Migration Post-recive OAI METS/MODS callback
+    """
+
+    xml_root = ET.fromstring(the_data)
+    mets_tree = post_oai_extract_metsdata(xml_root)
+    write_xml_file(mets_tree, the_self.path_mets)
 
 
 class ODEMMetadataMetsException(Exception):
@@ -39,6 +52,7 @@ class ODEMNoTypeForOCRException(ODEMMetadataMetsException):
     contains no pages at all
     """
 
+
 class ODEMNoImagesForOCRException(ODEMMetadataMetsException):
     """Mark custom ODEM Workflow Exception
     when print metadata contains no images-of-interest
@@ -50,11 +64,10 @@ class ODEMMetadataInspecteur:
     """Take a look into print's metadata"""
 
     def __init__(self, input_data, process_identifier: str,
-                 cfg, workdir):
+                 cfg):
         self.process_identifier = process_identifier
         self._data = input_data
         self._cfg = cfg
-        self._work_dir_main = workdir
         self._report = None
         self.image_pairs = []
         self.n_images_pages = 0
