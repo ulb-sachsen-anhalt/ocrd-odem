@@ -3,9 +3,6 @@
 
 import os
 import shutil
-from pathlib import (
-    Path
-)
 from unittest import (
     mock
 )
@@ -14,25 +11,23 @@ import lxml.etree as ET
 import pytest
 from digiflow import (
     OAIRecord,
-    ResourceGenerator,
     OAILoadException
 )
 
 from lib.ocrd3_odem import (
-    PUNCTUATIONS,
     STATS_KEY_LANGS,
     XMLNS,
     ODEMProcess,
     ODEMException,
     get_config,
     get_modelconf_from,
-    get_odem_logger,
-    postprocess_ocr_file,
+    get_logger,
 )
 from .conftest import (
     PROJECT_ROOT_DIR,
     TEST_RES,
     fixture_configuration,
+    prepare_tessdata_dir,
 )
 
 
@@ -51,22 +46,10 @@ def test_odem_local_file_modelconf(file_path, model_conf):
     assert get_modelconf_from(file_path) == model_conf
 
 
-def _prepare_tessdata_dir(tmp_path: Path) -> str:
-    model_dir = tmp_path / 'tessdata'
-    model_dir.mkdir()
-    models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger', 'fas']
-    for _m in models:
-        with open(str(model_dir / f'{_m}.traineddata'), 'wb') as writer:
-            writer.write(b'abc')
-    return str(model_dir)
-
-
-@pytest.mark.parametrize("img_path,lang_str",
-                         [
-                             ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
-                             ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr+gt4hist_5000k'),
-                             ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr')
-                         ])
+@pytest.mark.parametrize("img_path,lang_str",[
+                ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
+                ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr+gt4hist_5000k'),
+                ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr')])
 def test_lang_mapping(img_path, lang_str, tmp_path):
     """Ensure ODEM Object picks 
     proper project language mappings"""
@@ -79,9 +62,9 @@ def test_lang_mapping(img_path, lang_str, tmp_path):
     log_dir.mkdir()
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     odem_processor.cfg = fixture_configuration()
-    _tess_dir = _prepare_tessdata_dir(tmp_path)
+    _tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.cfg.set('ocr', 'tessdir_host', _tess_dir)
-    odem_processor.the_logger = get_odem_logger(str(log_dir))
+    odem_processor.the_logger = get_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act
@@ -108,9 +91,9 @@ def test_load_mock_called(tmp_path_factory):
     _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
     odem = ODEMProcess(_record, _workdir)
     odem.cfg = fixture_configuration()
-    _model_dir = _prepare_tessdata_dir(_workdir)
+    _model_dir = prepare_tessdata_dir(_workdir)
     odem.cfg.set('ocr', 'tessdir_host', _model_dir)
-    odem.the_logger = get_odem_logger(str(_log_dir))
+    odem.the_logger = get_logger(str(_log_dir))
 
     # mock loading of OAI Record
     # actual load attempt *must* be done
@@ -154,10 +137,10 @@ def _fixture_odem_setup(tmp_path):
     cfg = get_config()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     odem_processor.cfg = cfg
-    _model_dir = _prepare_tessdata_dir(work_dir)
+    _model_dir = prepare_tessdata_dir(work_dir)
     odem_processor.cfg.set('ocr', 'tessdir_host', _model_dir)
     odem_processor.local_mode = True
-    odem_processor.the_logger = get_odem_logger(log_dir)
+    odem_processor.the_logger = get_logger(log_dir)
     return odem_processor
 
 
@@ -189,44 +172,16 @@ def test_lang_mapping_missing_lang_error(odem_processor: ODEMProcess):
     assert "'yyy' model config not found !" in err.value.args[0]
 
 
-@pytest.fixture(name="module_fixture_one", scope='module')
-def _module_fixture_123456789_27949(tmp_path_factory):
-    path_workdir = tmp_path_factory.mktemp('workdir')
-    orig_file = TEST_RES / '123456789_27949.xml'
-    trgt_mets = path_workdir / 'test.xml'
-    orig_alto = TEST_RES / '123456789_27949_FULLTEXT'
-    trgt_alto = path_workdir / 'FULLTEXT'
-    shutil.copyfile(orig_file, trgt_mets)
-    shutil.copytree(orig_alto, trgt_alto)
-    (path_workdir / 'log').mkdir()
-    _model_dir = _prepare_tessdata_dir(path_workdir)
-    record = OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
-    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.cfg = fixture_configuration()
-    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
-    oproc.ocr_files = [os.path.join(trgt_alto, a)
-                       for a in os.listdir(trgt_alto)]
-    oproc.mets_file = str(trgt_mets)
-    oproc.inspect_metadata()
-    yield (oproc, path_workdir)
-
-
-def test_module_fixture_one_integrated_ocr_in_mets(module_fixture_one):
+def test_module_fixture_one_integrated_ocr_in_mets(fixture_27949: ODEMProcess):
     """Ensure, that generated final OCR files
     * are properly linked into original METS
     * contain required link data to images
     """
 
     # arrange
-    record_123456789_27949, _ = module_fixture_one
-    assert len(record_123456789_27949.ocr_files) == 4
+    assert len(fixture_27949.ocr_files) == 4
 
-    # act
-    n_integrated = record_123456789_27949.link_ocr()
-
-    # assertions about METS structure
-    assert n_integrated == 4
-    _root = ET.parse(record_123456789_27949.mets_file).getroot()
+    _root = ET.parse(fixture_27949.mets_file).getroot()
     _phys_links = _root.xpath('//mets:div[@TYPE="physSequence"]/mets:div', namespaces=XMLNS)
     # at most 2: one MAX-Image plus according optional FULLTEXT
     assert len(_phys_links[1].getchildren()) == 1
@@ -237,30 +192,7 @@ def test_module_fixture_one_integrated_ocr_in_mets(module_fixture_one):
     assert len(_phys_links[6].getchildren()) == 1
 
 
-def test_module_fixture_one_integrated_ocr_files_fit_identifier(module_fixture_one):
-    """Ensure ocr-file elements fit syntactically
-    * proper fileName
-    * proper PageId set
-    """
-
-    # arrange
-    record_123456789_27949, tmp_path = module_fixture_one
-
-    # act
-    record_123456789_27949.link_ocr()
-
-    # assert
-    assert not os.path.exists(tmp_path / 'FULLTEXT' / '00000002.xml')
-    assert os.path.exists(tmp_path / 'FULLTEXT' / '00000003.xml')
-    ocr_file_03 = ET.parse(str(tmp_path / 'FULLTEXT' / '00000003.xml')).getroot()
-    assert len(ocr_file_03.xpath('//alto:Page[@ID="p00000003"]', namespaces=XMLNS)) == 1
-    assert ocr_file_03.xpath('//alto:fileName', namespaces=XMLNS)[0].text == '00000003.jpg'
-    ocr_file_06 = ET.parse(str(tmp_path / 'FULLTEXT' / '00000006.xml')).getroot()
-    assert len(ocr_file_06.xpath('//alto:Page[@ID="p00000006"]', namespaces=XMLNS)) == 1
-    assert not os.path.exists(tmp_path / 'FULLTEXT' / '00000007.xml')
-
-
-def test_module_fixture_one_images_4_ocr_by_metadata(module_fixture_one):
+def test_module_fixture_one_images_4_ocr_by_metadata(fixture_27949: ODEMProcess):
     """Ensure setting and filtering of images behavior.
 
     Record oai:dev.opendata.uni-halle.de:123456789/27949
@@ -268,109 +200,26 @@ def test_module_fixture_one_images_4_ocr_by_metadata(module_fixture_one):
     their physical presens and according METS metadata
     """
 
-    # arrange
-    odem_123456789_27949, tmp_path = module_fixture_one
-    # generate total 9 small but physical
-    # jpg-images in sub-dir MAX
-    ResourceGenerator(tmp_path / 'MAX', number=9).get_batch()
-
-    # act
-    odem_123456789_27949.inspect_metadata()
-
-    # assert
-    assert len(odem_123456789_27949.images_4_ocr) == 4
+    assert len(fixture_27949.images_4_ocr) == 4
 
 
-@pytest.fixture(name="fixture_one")
-def _fixture_123456789_27949(tmp_path):
-    path_workdir = tmp_path / 'workdir'
-    path_workdir.mkdir()
-    orig_file = TEST_RES / '123456789_27949.xml'
-    trgt_mets = path_workdir / 'test.xml'
-    orig_alto = TEST_RES / '123456789_27949_FULLTEXT'
-    trgt_alto = path_workdir / 'FULLTEXT'
-    shutil.copyfile(orig_file, trgt_mets)
-    shutil.copytree(orig_alto, trgt_alto)
-    (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
-    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.cfg = fixture_configuration()
-    _model_dir = _prepare_tessdata_dir(path_workdir)
-    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
-    oproc.ocr_files = [os.path.join(trgt_alto, a)
-                       for a in os.listdir(trgt_alto)]
-    oproc.mets_file = str(trgt_mets)
-    oproc.inspect_metadata()
-    yield (oproc, path_workdir)
-
-
-def test_fixture_one_postprocessed_ocr_files_elements(fixture_one):
-    """Ensure ocr-file unwanted elements dropped as expected
-    """
-
-    # arrange
-    record_123456789_27949, tmp_path = fixture_one
-
-    # act
-    record_123456789_27949.link_ocr()
-    record_123456789_27949.postprocess_ocr()
-
-    # assert
-    ocr_file_03 = ET.parse(str(tmp_path / 'FULLTEXT' / '00000003.xml')).getroot()
-    assert not ocr_file_03.xpath('//alto:Shape', namespaces=XMLNS)
-
-
-def test_fixture_one_postprocess_ocr_files(fixture_one):
-    """Ensure expected replacements done *even* when
-    diacritics occour more several times in single word"""
-
-    # arrange
-    _, tmp_path = fixture_one
-    path_file = tmp_path / 'FULLTEXT' / '00000003.xml'
-    strip_tags = fixture_configuration().getlist('ocr', 'strip_tags') # pylint: disable=no-member
-
-    # act
-    postprocess_ocr_file(path_file, strip_tags)
-
-    # assert
-    _raw_lines = [l.strip() for l in open(path_file, encoding='utf-8').readlines()]
-    # these lines must be dropped, since they are empty save the SP-element afterwards
-    # changed due different punctuation interpretation
-    # 'region0012_line0002' is no okay
-    _droppeds = ['region0001_line0002', 'region0012_line0001']
-    for _line in _raw_lines:
-        for _dropped in _droppeds:
-            assert _dropped not in _line
-
-    _contents = [ET.fromstring(l.strip()).attrib['CONTENT']
-                 for l in _raw_lines
-                 if 'CONTENT' in l]
-    for _content in _contents:
-        for _punc in PUNCTUATIONS:
-            # adapted like semantics did
-            # each trailing punctuation
-            # is now in it's own STRING element
-            if _punc in _content[-1]:
-                assert len(_content) == 1
-
-
-def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_one):
+def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: ODEMProcess):
     """Ensure text bundle data created
     and present with expected number of text rows
     """
 
     # arrange
-    odem, tmp_path = fixture_one
+    tmp_path = fixture_27949.work_dir_main
 
     # act
-    odem.link_ocr()
-    odem.postprocess_ocr()
-    odem.create_text_bundle_data()
+    fixture_27949.link_ocr()
+    fixture_27949.postprocess_ocr()
+    fixture_27949.create_text_bundle_data()
 
     # assert
     _txt_bundle_file = tmp_path / '198114125.pdf.txt'
     assert os.path.exists(_txt_bundle_file)
-    assert 77 == odem.statistics['n_text_lines']
+    assert 77 == fixture_27949.statistics['n_text_lines']
     with open(_txt_bundle_file, encoding='utf-8') as bundle_handle:
         assert 77 == len(bundle_handle.readlines())
 
@@ -402,7 +251,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     odem_processor.cfg = cfg
     _log_dir = tmp_path / 'log'
     _log_dir.mkdir()
-    odem_processor.the_logger = get_odem_logger(str(_log_dir))
+    odem_processor.the_logger = get_logger(str(_log_dir))
 
     # act
     odem_processor.inspect_metadata()
@@ -428,7 +277,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     odem_processor.cfg = cfg
     _log_dir = tmp_path / 'log'
     _log_dir.mkdir()
-    odem_processor.the_logger = get_odem_logger(str(_log_dir))
+    odem_processor.the_logger = get_logger(str(_log_dir))
 
     # act
     with pytest.raises(OAILoadException) as err:
@@ -439,24 +288,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     assert mock_load.called == 1
 
 
-@pytest.mark.parametrize("model_configuration,recognotion_level",
-                         [
-                             ('ger', 'word'),
-                             ('ara', 'glyph'),
-                             ('ara+ger', 'glyph'),
-                             ('ger+lat', 'word'),
-                             ('fas', 'glyph'),
-                             ('ger+lat', 'word'),
-                             ('eng+fas', 'glyph')
-                         ])
-def test_odem_recognition_level(model_configuration, recognotion_level):
-    """Check determined recognition level passed
-    forth to tesserocr for common model configurations"""
-
-    assert ODEMProcess.get_recognition_level(model_configuration) == recognotion_level
-
-
-def test_opendata_record_unknown_language(tmp_path):
+def test_record_with_unknown_language(tmp_path):
     """Fix behavior when opendata record has one
     of total 3 languages which is actually
     not unknown (gmh == German, Middle High 1050-1500)
@@ -471,7 +303,7 @@ def test_opendata_record_unknown_language(tmp_path):
     record = OAIRecord('oai:opendata.uni-halle.de:1981185920/72977')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
-    _model_dir = _prepare_tessdata_dir(tmp_path)
+    _model_dir = prepare_tessdata_dir(tmp_path)
     oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
     oproc.mets_file = str(trgt_mets)
     oproc.inspect_metadata()

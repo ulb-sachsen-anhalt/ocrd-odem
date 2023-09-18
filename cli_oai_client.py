@@ -27,15 +27,18 @@ from ocrd_utils import (
 
 from lib.resources_monitoring import ProcessResourceMonitorConfig
 from lib.resources_monitoring.ProcessResourceMonitor import ProcessResourceMonitor
-from lib.resources_monitoring.exceptions import NotEnoughDiskSpaceException, VirtualMemoryExceededException
+from lib.resources_monitoring.exceptions import (
+	NotEnoughDiskSpaceException,
+	VirtualMemoryExceededException,
+)	
 from lib.ocrd3_odem import (
-    get_config,
-    get_odem_logger,
-    ODEMProcess,
-    ODEMException,
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
+    ODEMProcess,
+    ODEMException,
+    get_config,
+    get_logger,
 )
 
 from cli_oai_server import (
@@ -243,7 +246,7 @@ if __name__ == "__main__":
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
-    LOGGER = get_odem_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
+    LOGGER = get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # respect possible lock
     if MUST_LOCK:
@@ -341,6 +344,7 @@ if __name__ == "__main__":
 
         # go on
         PROCESS.inspect_metadata()
+        PROCESS.clear_existing_entries()
         PROCESS.set_modelconfig_for()
         PROCESS.filter_images()
 

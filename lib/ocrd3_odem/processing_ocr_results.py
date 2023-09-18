@@ -105,7 +105,7 @@ def convert_to_output_format(work_dir_root):
     """Convert created OCR-Files to required presentation
     format (i.e. ALTO)
     """
-    
+
     _converted = []
     ocr_dir = os.path.join(work_dir_root, LOCAL_DIR_RESULT)
     page_files = [

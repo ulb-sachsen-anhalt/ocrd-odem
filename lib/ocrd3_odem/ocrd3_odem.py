@@ -18,16 +18,9 @@ from typing import (
 )
 import lxml.etree as ET
 import numpy as np
-from ocrd.resolver import (
-    Resolver
-)
-# from ocrd_page_to_alto.convert import (
-#     OcrdPageAltoConverter
-# )
 from digiflow import (
     OAILoader,
     OAIRecord,
-    run_profiled,
     export_data_from,
     MetsProcessor,
     BaseDerivansManager,
@@ -35,12 +28,10 @@ from digiflow import (
 )
 
 from .odem_commons import (
-    RTL_LANGUAGES,
     STATS_KEY_LANGS,
     ODEMException,
 )
 from .processing_mets import (
-    FILEGROUP_IMG,
     IDENTIFIER_CATALOGUE,
     XMLNS,
     ODEMMetadataInspecteur,
@@ -49,6 +40,9 @@ from .processing_mets import (
     integrate_ocr_file,
     postprocess_mets,
     validate_mets,
+)
+from .processing_ocrd import (
+    run_ocr_page,
 )
 from .processing_ocr_results import (
     convert_to_output_format,
@@ -59,10 +53,10 @@ from .processing_image import (
     sanitize_image,
     get_imageinfo,
 )
+from .processing_ocrd import (
+    ocrd_workspace_setup,
+)
 
-#
-# Module constants
-#
 # python process-wrapper limit
 os.environ['OMP_THREAD_LIMIT'] = '1'
 # default language for fallback
@@ -73,20 +67,13 @@ DEFAULT_LANG = 'ger'
 DEFAULT_RUNTIME_PAGE = 1.0
 # process duration format
 LOG_STORE_FORMAT = '%Y-%m-%d_%H-%m-%S'
-# how will be allow a single page
-# to be processed?
+# how long to process single page?
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
 
-#
-# States
-#
-MARK_OCR_OPEN = 'n.a.'
-MARK_OCR_BUSY = 'ocr_busy'
-MARK_OCR_FAIL = 'ocr_fail'
-MARK_OCR_DONE = 'ocr_done'
-MARK_OCR_SKIP = 'ocr_skip'
+
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
+DEFAULT_LOG_CONFIG =  os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
 
 
 def get_modelconf_from(file_path) -> List[str]:
@@ -99,47 +86,22 @@ def get_modelconf_from(file_path) -> List[str]:
     return file_name.split('.')[0].split('_')[-1].split('+')
 
 
-def ocrd_workspace_setup(path_workspace, image_path):
-    """Wrap ocrd workspace init and add single file"""
-
-    # init clean workspace
-    the_dir = os.path.abspath(path_workspace)
-    resolver = Resolver()
-    workspace = resolver.workspace_from_nothing(
-        directory=the_dir
-    )
-    workspace.save_mets()
-
-    # add the one image which resides
-    # already inside 'MAX' directory
-    image_name = os.path.basename(image_path)
-    resolver.download_to_directory(
-        the_dir,
-        image_path,
-        subdir=FILEGROUP_IMG)
-    kwargs = {
-        'fileGrp': FILEGROUP_IMG,
-        'ID': 'MAX_01',
-        'mimetype': 'image/png',
-        'pageId': 'PHYS_01',
-        'url': f"{FILEGROUP_IMG}/{image_name}"}
-    workspace.mets.add_file(**kwargs)
-    workspace.save_mets()
-    return image_path
-
-
-def get_odem_logger(log_dir, logfile_name=None):
-    """Create logger using log_dir"""
+def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
+    """Create logger with log_infix to divide several
+    instances running on same host and
+    using configuration from path_log_config
+    in log_dir"""
 
     _today = time.strftime('%Y-%m-%d', time.localtime())
     _host = socket.gethostname()
-    _label = logfile_name if logfile_name is not None else ''
+    _label = log_infix if log_infix is not None else ''
     _logfile_name = os.path.join(
         log_dir, f"odem_{_host}{_label}_{_today}.log")
     conf_logname = {'logname': _logfile_name}
-    conf_file_location = os.path.join(
-        PROJECT_ROOT, 'resources', 'odem_logging.ini')
-    logging.config.fileConfig(conf_file_location, defaults=conf_logname)
+    _conf_path = DEFAULT_LOG_CONFIG
+    if path_log_config is not None and os.path.isfile(path_log_config):
+        _conf_path = path_log_config
+    logging.config.fileConfig(_conf_path, defaults=conf_logname)
     return logging.getLogger('odem')
 
 
@@ -180,8 +142,8 @@ class ODEMProcess:
         if record is not None and record.local_identifier is not None:
             self.process_identifier = record.local_identifier
         self.export_dir = None
-        self.the_logger = None
-        self.cfg = None
+        self.the_logger: logging.Logger = None
+        self.cfg: configparser.ConfigParser = None
         self.store = None
         self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
@@ -264,6 +226,17 @@ class ODEMProcess:
                              self.process_identifier, insp.n_images_ocrable, _ratio,
                              insp.n_images_pages)
         self._statistics['host'] = socket.gethostname()
+
+    def clear_existing_entries(self):
+        """Clear METS/MODS of configured file groups"""
+
+        if self.cfg:
+            _blacklisted = self.cfg.getlist('mets', 'blacklist_file_groups')
+            _ident = self.process_identifier
+            self.the_logger.info("[%s] remove %s", _ident, _blacklisted)
+            _proc = MetsProcessor(self.mets_file)
+            _proc.clear_filegroups(_blacklisted)
+            _proc.write()
 
     def set_modelconfig_for(self, languages=None):
         """compose tesseract-ocr model config
@@ -412,52 +385,6 @@ class ODEMProcess:
         self._statistics['mb'] = round(total_mb, 2)
         self._statistics['mps'] = mps
 
-    @run_profiled
-    def run_ocr_page(self, *args):
-        """wrap ocr container process
-        *Please note*
-        Trailing dot (".") is cruical, since it means "this directory"
-        and is mandatory since 2022 again
-        """
-
-        ocr_dir = args[0]
-        model = args[1]
-        base_image = args[2]
-        makefile = args[3]
-        tess_host = args[4]
-        tess_cntn = args[5]
-        tess_level = args[6]
-        docker_container_memory_limit: str = args[7]
-        docker_container_timeout: int = args[8]
-        os.chdir(ocr_dir)
-        user_id = os.getuid()
-        container_name: str = f'{self.process_identifier}_{os.path.basename(ocr_dir)}'
-        if self.local_mode:
-            container_name = os.path.basename(ocr_dir)
-        # replace not allowed chars
-        container_name = container_name.replace('+', '-')
-        cmd: str = f"docker run --rm -u {user_id}"
-        cmd += f" --name {container_name}"
-        if docker_container_memory_limit is not None:
-            cmd += f" --memory {docker_container_memory_limit}"
-            cmd += f" --memory-swap {docker_container_memory_limit}"  # disables swap, because of same value
-        cmd += f" -w /data -v {ocr_dir}:/data"
-        cmd += f" -v {tess_host}:{tess_cntn} {base_image}"
-        cmd += f" ocrd-make TESSERACT_CONFIG={model} TESSERACT_LEVEL={tess_level} -f {makefile} . "
-        self.the_logger.info("[%s] run ocrd/all with '%s'",
-                             self.process_identifier, cmd)
-        subprocess.run(cmd, shell=True, check=True, timeout=docker_container_timeout)
-
-    @staticmethod
-    def get_recognition_level(model_config: str) -> str:
-        """Determine tesseract recognition level
-        with respect to language order by model
-        configuration"""
-
-        if any((m for m in model_config.split('+') if m in RTL_LANGUAGES)):
-            return 'glyph'
-        return 'word'
-
     def create_single_ocr(self, image_4_ocr):
         """Create OCR Data"""
 
@@ -487,19 +414,15 @@ class ODEMProcess:
         # init ocr-d workspace
         ocrd_workspace_setup(page_workdir, processed_image_path)
 
-        # find out the needed model config for tesseract
+        # # find out the needed model config for tesseract
         model_config = self.map_language_to_modelconfig(image_path)
         self.the_logger.info("[%s] use '%s' for '%s'",
                              self.process_identifier, model_config, self.languages)
-
-        # if one of the languages is RTL use glyph level for ocr
-        ocr_level = ODEMProcess.get_recognition_level(model_config)
-
         stored = 0
         mps = 0
         filesize_mb = 0
-        # use the original image rather than
-        # transformed one since the PNG is
+        # use original image rather than
+        # transformed one since PNG is
         # usually 2-5 times larger than JPG
         filestat = os.stat(image_path)
         if filestat:
@@ -523,17 +446,20 @@ class ODEMProcess:
             'docker_container_timeout',
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
+        container_name: str = f'{self.process_identifier}_{os.path.basename(page_workdir)}'
+        if self.local_mode:
+            container_name = os.path.basename(page_workdir)
         try:
-            profiling = self.run_ocr_page(
+            profiling = run_ocr_page(
                 page_workdir,
                 model_config,
                 base_image,
                 makefile,
                 tess_host,
                 tess_cntn,
-                ocr_level,
                 docker_container_memory_limit,
                 docker_container_timeout,
+                container_name,
             )
             # will be unset in case of magic mocking for test
             if profiling:
@@ -595,12 +521,10 @@ class ODEMProcess:
         self.the_logger.debug("[%s] %s ocr files",
                               self.process_identifier, ocrs)
         if ocrs and len(ocrs) == 1:
-
             # propably need to rename
             # since file now is like 'PAGE_01.xml'
             renamed = os.path.join(ocr_result_dir, old_id + '.xml')
             os.rename(ocrs[0], renamed)
-
             # regular case: OAI Workflow
             if not self.local_mode:
                 # export to 'PAGE' dir
@@ -624,20 +548,16 @@ class ODEMProcess:
         n_candidates = len(self.images_4_ocr)
         if len(_cnv) == 0 and n_candidates > 0:
             raise ODEMException(f"No OCR result for {n_candidates} candidates created!")
+        self.ocr_files = _cnv
         self.the_logger.info("[%s] converted '%d' files page-to-alto",
                                  self.process_identifier, len(_cnv))
 
-    def link_ocr(self):
+    def link_ocr(self) -> int:
         """Prepare and link OCR-data"""
 
         if not self.ocr_files:
             return 0
-        _n_linked_ocr = 0
-
         proc = MetsProcessor(self.mets_file)
-        if self.cfg:
-            blacklisted = self.cfg.getlist('mets', 'blacklist_file_groups')
-            proc.clear_filegroups(black_list=blacklisted)
         _n_linked_ocr = integrate_ocr_file(proc.tree, self.ocr_files)
         proc.write()
         return _n_linked_ocr

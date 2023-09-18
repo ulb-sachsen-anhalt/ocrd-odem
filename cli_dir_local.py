@@ -13,7 +13,7 @@ from ocrd_utils import (
 
 from lib.ocrd3_odem import (
     get_config,
-    get_odem_logger,
+    get_logger,
     ODEMProcess,
 )
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     if not os.path.exists(log_dir) or not os.access(
             log_dir, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {log_dir}")
-    LOGGER = get_odem_logger(log_dir)
+    LOGGER = get_logger(log_dir)
 
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set

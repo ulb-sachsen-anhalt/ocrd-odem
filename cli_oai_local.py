@@ -20,14 +20,14 @@ from digiflow import (
 )
 
 from lib.ocrd3_odem import (
-    get_config,
-    get_odem_logger,
-    ODEMProcess,
-    ODEMException,
     MARK_OCR_BUSY,
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
+    ODEMProcess,
+    ODEMException,
+    get_config,
+    get_logger,
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     LOG_FILE_NAME = None
     if CFG.has_option('global', 'logfile_name'):
         LOG_FILE_NAME = CFG.get('global', 'logfile_name')
-    LOGGER = get_odem_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
+    LOGGER = get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set
@@ -192,6 +192,7 @@ if __name__ == "__main__":
         process_resource_monitor.monit_disk_space(PROCESS.load)
 
         PROCESS.inspect_metadata()
+        PROCESS.clear_existing_entries()
         PROCESS.set_modelconfig_for()
         PROCESS.filter_images()
         initLogging()

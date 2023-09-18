@@ -2,6 +2,16 @@
 
 import configparser
 
+
+# ODEM States
+MARK_OCR_OPEN = 'n.a.'
+MARK_OCR_BUSY = 'ocr_busy'
+MARK_OCR_FAIL = 'ocr_fail'
+MARK_OCR_DONE = 'ocr_done'
+MARK_OCR_SKIP = 'ocr_skip'
+# important file groups
+FILEGROUP_OCR = 'FULLTEXT'
+FILEGROUP_IMG = 'MAX'
 # statistic keys
 STATS_KEY_LANGS = 'langs'
 # default language for fallback

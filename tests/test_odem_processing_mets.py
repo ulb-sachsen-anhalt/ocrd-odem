@@ -122,7 +122,8 @@ def test_opendata_record_no_images_for_ocr():
         inspc.inspect()
 
     # assert
-    assert "oai:opendata.uni-halle.de:1981185920/74357 contains no images for OCR (total: 15)!" ==  odem_exc.value.args[0]
+    _alert = "oai:opendata.uni-halle.de:1981185920/74357 contains no images for OCR (total: 15)!"
+    assert _alert == odem_exc.value.args[0]
 
 
 def test_opendata_record_no_printwork():

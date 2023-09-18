@@ -17,12 +17,14 @@ from digiflow import (
     write_xml_file,
 )
 
+from .odem_commons import (
+    FILEGROUP_IMG,
+    FILEGROUP_OCR,
+)
 
 PRINT_WORKS = ['a', 'f', 'F', 'Z', 'B']
 IDENTIFIER_CATALOGUE = 'gvk-ppn'
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
-FILEGROUP_OCR = 'FULLTEXT'
-FILEGROUP_IMG = 'MAX'
 METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
 
 
@@ -82,23 +84,18 @@ class ODEMMetadataInspecteur:
         return self._report
 
     def inspect(self):
-        """Gather knowledge about digital object's
+        """Gather knowledge about digital object's.
+        First, try to determin what kind of retro-digit
+        we are handling by inspecting it's final PICA mark
         actual metadata from METS/MODS
+        Stop if data corrupt, ill or bad
         """
         try:
             report = self._get_report()
-            # what kind of retro digi is it?
-            # inspect final type mark
             if not report.type or report.type[-1] not in PRINT_WORKS:
                 raise ODEMNoTypeForOCRException(f"{self.process_identifier} no type for OCR: {report.type}")
-            # detailed inspection of languages
-            # self.type = report.type
-            # self.identifiers = report.identifiers
-            # apply additional metadata checks
-            # stop if data corrupt, ill or bad
             reader = MetsReader(self._data)
             reader.check()
-            # detailed inspection of image group
             self.inspect_metadata_images()
         except RuntimeError as _err:
             raise ODEMMetadataMetsException(_err.args[0]) from _err
@@ -223,6 +220,19 @@ def _log_type_for_id(phys_id, structmap_links, log_conts):
                 if _logical_section_id == _logical_target_id:
                     return _logical_section.attrib['TYPE']
     raise ODEMMetadataMetsException(f"Page {phys_id} not linked")
+
+
+def clear_filegroups(xml_file, removals):
+    """Drop existing file group entries
+    and unlink them properly like
+    * DOWNLOAD (created within common ODEM workflow)
+    * THUMBS (created by Share_it)
+    * DEFAULT (created by Share_it)
+    """
+
+    proc = MetsProcessor(xml_file)
+    proc.clear_filegroups(black_list=removals)
+    proc.write()
 
 
 def integrate_ocr_file(xml_tree, ocr_files: List) -> int:
