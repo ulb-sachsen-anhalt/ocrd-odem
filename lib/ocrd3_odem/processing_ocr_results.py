@@ -1,5 +1,6 @@
 """Implementation related to OCR data handling"""
 
+import os
 import string
 import unicodedata
 
@@ -9,11 +10,18 @@ from math import (
 
 import lxml.etree as ET
 
+from ocrd_page_to_alto.convert import (
+    OcrdPageAltoConverter
+)
+
 from digiflow import (
     XMLNS,
 	MetsProcessor,
 )
 
+from .processing_mets import (
+    FILEGROUP_OCR
+)
 
 # define propably difficult characters
 # very common separator '⸗'
@@ -41,6 +49,8 @@ DROP_ALTO_ELEMENTS = [
     'alto:Shape',
     'alto:Illustration',
     'alto:GraphicalElement']
+
+LOCAL_DIR_RESULT = 'PAGE'
 
 
 class ODEMMetadataOcrException(Exception):
@@ -90,6 +100,31 @@ def postprocess_ocr_file(ocr_file, strip_tags):
             _uplete(_string_el, _string_el.getparent())
     mproc.write()
 
+
+def convert_to_output_format(work_dir_root):
+    """Convert created OCR-Files to required presentation
+    format (i.e. ALTO)
+    """
+    
+    _converted = []
+    ocr_dir = os.path.join(work_dir_root, LOCAL_DIR_RESULT)
+    page_files = [
+        os.path.join(curr_dir, page_file)
+        for curr_dir, _, files in os.walk(ocr_dir)
+        for page_file in files
+        if str(page_file).endswith('.xml')
+    ]
+    alto_dir = os.path.join(work_dir_root, FILEGROUP_OCR)
+    if not os.path.isdir(alto_dir):
+        os.makedirs(alto_dir, exist_ok=True)
+    for page_file in page_files:
+        the_id = os.path.basename(page_file)
+        output_file = os.path.join(alto_dir, the_id)
+        converter = OcrdPageAltoConverter(page_filename=page_file).convert()
+        with open(output_file, 'w', encoding='utf-8') as output:
+            output.write(str(converter))
+        _converted.append(output_file)
+    return _converted
 
 
 def _is_completely_punctuated(a_string):

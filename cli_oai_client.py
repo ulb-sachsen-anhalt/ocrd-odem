@@ -349,7 +349,7 @@ if __name__ == "__main__":
 
         PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
         PROCESS.to_alto()
-        PROCESS.integrate_ocr()
+        PROCESS.link_ocr()
         PROCESS.create_pdf()
         PROCESS.postprocess_ocr()
         PROCESS.create_text_bundle_data()

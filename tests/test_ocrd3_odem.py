@@ -222,7 +222,7 @@ def test_module_fixture_one_integrated_ocr_in_mets(module_fixture_one):
     assert len(record_123456789_27949.ocr_files) == 4
 
     # act
-    n_integrated = record_123456789_27949.integrate_ocr()
+    n_integrated = record_123456789_27949.link_ocr()
 
     # assertions about METS structure
     assert n_integrated == 4
@@ -247,7 +247,7 @@ def test_module_fixture_one_integrated_ocr_files_fit_identifier(module_fixture_o
     record_123456789_27949, tmp_path = module_fixture_one
 
     # act
-    record_123456789_27949.integrate_ocr()
+    record_123456789_27949.link_ocr()
 
     # assert
     assert not os.path.exists(tmp_path / 'FULLTEXT' / '00000002.xml')
@@ -312,7 +312,7 @@ def test_fixture_one_postprocessed_ocr_files_elements(fixture_one):
     record_123456789_27949, tmp_path = fixture_one
 
     # act
-    record_123456789_27949.integrate_ocr()
+    record_123456789_27949.link_ocr()
     record_123456789_27949.postprocess_ocr()
 
     # assert
@@ -363,7 +363,7 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_one):
     odem, tmp_path = fixture_one
 
     # act
-    odem.integrate_ocr()
+    odem.link_ocr()
     odem.postprocess_ocr()
     odem.create_text_bundle_data()
 

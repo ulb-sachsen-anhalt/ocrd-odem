@@ -21,9 +21,9 @@ import numpy as np
 from ocrd.resolver import (
     Resolver
 )
-from ocrd_page_to_alto.convert import (
-    OcrdPageAltoConverter
-)
+# from ocrd_page_to_alto.convert import (
+#     OcrdPageAltoConverter
+# )
 from digiflow import (
     OAILoader,
     OAIRecord,
@@ -34,8 +34,13 @@ from digiflow import (
     DerivansResult
 )
 
+from .odem_commons import (
+    RTL_LANGUAGES,
+    STATS_KEY_LANGS,
+    ODEMException,
+)
 from .processing_mets import (
-    FILEGROUP_OCR,
+    FILEGROUP_IMG,
     IDENTIFIER_CATALOGUE,
     XMLNS,
     ODEMMetadataInspecteur,
@@ -45,7 +50,8 @@ from .processing_mets import (
     postprocess_mets,
     validate_mets,
 )
-from .processing_ocr import (
+from .processing_ocr_results import (
+    convert_to_output_format,
     postprocess_ocr_file,
 )
 from .processing_image import (
@@ -59,30 +65,17 @@ from .processing_image import (
 #
 # python process-wrapper limit
 os.environ['OMP_THREAD_LIMIT'] = '1'
-STATS_KEY_LANGS = 'langs'
-DROP_ALTO_ELEMENTS = [
-    'alto:Shape',
-    'alto:Illustration',
-    'alto:GraphicalElement']
 # default language for fallback
 # when processing local images
 DEFAULT_LANG = 'ger'
-
 # estimated ocr-d runtime
 # for a regular page (A4, 1MB)
 DEFAULT_RUNTIME_PAGE = 1.0
-
 # process duration format
 LOG_STORE_FORMAT = '%Y-%m-%d_%H-%m-%S'
-
 # how will be allow a single page
 # to be processed?
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
-
-# recognition level for tesserocr
-# must switch otherwise glyphs are reverted
-# for each word
-RTL_LANGUAGES = ['ara', 'fas', 'heb']
 
 #
 # States
@@ -94,28 +87,6 @@ MARK_OCR_DONE = 'ocr_done'
 MARK_OCR_SKIP = 'ocr_skip'
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
-
-
-def get_config():
-    """init plain configparser"""
-
-    def _parse_dict(row):
-        """
-        Custom config converter to create a dictionary represented as string
-        lambda s: {e[0]:e[1] for p in s.split(',') for e in zip(*p.strip().split(':'))}
-        """
-        a_dict = {}
-        for pairs in row.split(','):
-            pair = pairs.split(':')
-            a_dict[pair[0].strip()] = pair[1].strip()
-        return a_dict
-
-    return configparser.ConfigParser(
-        interpolation=configparser.ExtendedInterpolation(),
-        converters={
-            'list': lambda s: [e.strip() for e in s.split(',')],
-            'dict': _parse_dict
-        })
 
 
 def get_modelconf_from(file_path) -> List[str]:
@@ -145,13 +116,13 @@ def ocrd_workspace_setup(path_workspace, image_path):
     resolver.download_to_directory(
         the_dir,
         image_path,
-        subdir='MAX')
+        subdir=FILEGROUP_IMG)
     kwargs = {
-        'fileGrp': 'MAX',
+        'fileGrp': FILEGROUP_IMG,
         'ID': 'MAX_01',
         'mimetype': 'image/png',
         'pageId': 'PHYS_01',
-        'url': f"MAX/{image_name}"}
+        'url': f"{FILEGROUP_IMG}/{image_name}"}
     workspace.mets.add_file(**kwargs)
     workspace.save_mets()
     return image_path
@@ -170,10 +141,6 @@ def get_odem_logger(log_dir, logfile_name=None):
         PROJECT_ROOT, 'resources', 'odem_logging.ini')
     logging.config.fileConfig(conf_file_location, defaults=conf_logname)
     return logging.getLogger('odem')
-
-
-class ODEMException(Exception):
-    """Mark custom ODEM Workflow Exceptions"""
 
 
 class ODEMProcess:
@@ -294,7 +261,7 @@ class ODEMProcess:
         self._statistics['n_images_ocrable'] = insp.n_images_ocrable
         _ratio = insp.n_images_ocrable / insp.n_images_pages * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
-                             self.process_identifier, insp.n_images_ocrable, _ratio, 
+                             self.process_identifier, insp.n_images_ocrable, _ratio,
                              insp.n_images_pages)
         self._statistics['host'] = socket.gethostname()
 
@@ -435,6 +402,7 @@ class ODEMProcess:
             raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
 
     def calculate_statistics(self, outcomes):
+        """Calculate and aggregate runtime stats"""
         n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
         _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
         _mod_val_counts = np.unique(_total_mps, return_counts=True)
@@ -649,56 +617,17 @@ class ODEMProcess:
             shutil.copy(renamed, target_path)
         return 1
 
-    # def has_already_any_ocr(self) -> bool:
-    #     """
-    #     Forward OCR data to store management
-    #     * if FULLTEXT dir not in store, return False
-    #     * if FULLTEXT dir doesn't contain any *.xml files, return False
-    #     *No* check whether all required pages contain ocr data!
-    #     """
-    #     ocr_dir = os.path.join(self.work_dir_main, FILEGROUP_OCR)
-    #     if self.store is None:
-    #         return False
-    #     store_dir_ocr = self.store.get(ocr_dir)
-    #     if store_dir_ocr is None:
-    #         return False
-    #     ocr_dir = os.path.join(self.work_dir_main, 'FULLTEXT')
-    #     ocr_files = [o for o in os.listdir(ocr_dir) if str(o).endswith('.xml')]
-    #     if len(ocr_files) > 0:
-    #         return True
-    #     return False
-
     def to_alto(self) -> int:
-        """Forward OCR data storage to data management
-        feat. check for results"""
+        """Forward OCR format conversion"""
 
-        ocr_dir = os.path.join(self.work_dir_main, 'PAGE')
-        page_files = [
-            os.path.join(curr_dir, page_file)
-            for curr_dir, _, files in os.walk(ocr_dir)
-            for page_file in files
-            if str(page_file).endswith('.xml')
-        ]
+        _cnv = convert_to_output_format(self.work_dir_main)
         n_candidates = len(self.images_4_ocr)
-        if len(page_files) == 0 and n_candidates > 0:
+        if len(_cnv) == 0 and n_candidates > 0:
             raise ODEMException(f"No OCR result for {n_candidates} candidates created!")
+        self.the_logger.info("[%s] converted '%d' files page-to-alto",
+                                 self.process_identifier, len(_cnv))
 
-        # check output path
-        alto_dir = os.path.join(self.work_dir_main, 'FULLTEXT')
-        if not os.path.isdir(alto_dir):
-            os.makedirs(alto_dir, exist_ok=True)
-
-        for page_file in page_files:
-            the_id = os.path.basename(page_file)
-            output_file = os.path.join(alto_dir, the_id)
-            converter = OcrdPageAltoConverter(page_filename=page_file).convert()
-            with open(output_file, 'w', encoding='utf-8') as output:
-                output.write(str(converter))
-            self.ocr_files.append(output_file)
-            self.the_logger.info("[%s] page-to-alto '%s'",
-                                 self.process_identifier, output_file)
-
-    def integrate_ocr(self):
+    def link_ocr(self):
         """Prepare and link OCR-data"""
 
         if not self.ocr_files:
