@@ -328,6 +328,7 @@ def test_fixture_one_postprocessed_ocr_files_elements(fixture_one):
     record_123456789_27949, tmp_path = fixture_one
 
     # act
+    record_123456789_27949.integrate_ocr()
     record_123456789_27949.postprocess_ocr()
 
     # assert
@@ -378,6 +379,7 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_one):
     odem, tmp_path = fixture_one
 
     # act
+    odem.integrate_ocr()
     odem.postprocess_ocr()
     odem.create_text_bundle_data()
 

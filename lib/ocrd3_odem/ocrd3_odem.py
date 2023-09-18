@@ -9,24 +9,15 @@ import os
 import pathlib
 import shutil
 import socket
-import string
 import subprocess
 import time
-import unicodedata
-from math import (
-    ceil
-)
 from typing import (
     Dict,
     List,
     Optional,
 )
-
 import lxml.etree as ET
 import numpy as np
-from PIL import (
-    Image
-)
 from ocrd.resolver import (
     Resolver
 )
@@ -40,16 +31,25 @@ from digiflow import (
     post_oai_extract_metsdata,
     export_data_from,
     write_xml_file,
-    validate_xml,
     MetsProcessor,
     BaseDerivansManager,
     DerivansResult
 )
-from .metadata import (
+from .processing_mets import (
     IDENTIFIER_CATALOGUE,
     ODEMMetadataInspecteur,
-    ODEMMetadataException,
-    Q_XLINK_HREF,
+    ODEMMetadataMetsException,
+    integrate_ocr_file,
+    postprocess_mets,
+    validate_mets,
+)
+from .processing_ocr import (
+    postprocess_ocr_file,
+)
+from .processing_image import (
+    is_jpg,
+    sanitize_image,
+    get_imageinfo,
 )
 
 #
@@ -64,21 +64,13 @@ XMLNS = {'alto': 'http://www.loc.gov/standards/alto/ns-v4#',
          'zvdd': 'https:/zvdd'
          }
 FILEGROUP_OCR = 'FULLTEXT'
-FILEGROUP_IMG = 'MAX'
 DROP_ALTO_ELEMENTS = [
     'alto:Shape',
     'alto:Illustration',
     'alto:GraphicalElement']
-METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
-EXT_JPG = '.jpg'
-EXT_PNG = '.png'
 # default language for fallback
 # when processing local images
 DEFAULT_LANG = 'ger'
-
-# default resolution if not provided
-# for both dimensions
-DEFAULT_DPI = (300, 300)
 
 # estimated ocr-d runtime
 # for a regular page (A4, 1MB)
@@ -90,17 +82,6 @@ LOG_STORE_FORMAT = '%Y-%m-%d_%H-%m-%S'
 # how will be allow a single page
 # to be processed?
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
-
-# diacritica to take care of
-COMBINING_SMALL_E = '\u0364'
-# we want all words to be at least 2 chars
-MINIMUM_WORD_LEN = 2
-# punctuations to take into account
-# includes
-#   * regular ASCII-punctuations
-#   * Dashes        \u2012-2017
-#   * Quotations    \u2018-201F
-PUNCTUATIONS = string.punctuation + '\u2012' + '\u2013' + '\u2014' + '\u2015' + '\u2016' + '\u2017' + '\u2018' + '\u2019' + '\u201A' + '\u201B' + '\u201C' + '\u201D' + '\u201E' + '\u201F'
 
 # recognition level for tesserocr
 # must switch otherwise glyphs are reverted
@@ -182,20 +163,6 @@ def ocrd_workspace_setup(path_workspace, image_path):
     workspace.mets.add_file(**kwargs)
     workspace.save_mets()
     return image_path
-
-
-def get_imageinfo(path_img_dir):
-    """Calculate image features"""
-
-    mps = 0
-    dpi = 0
-    if os.path.exists(path_img_dir):
-        imag = Image.open(path_img_dir)
-        (width, height) = imag.size
-        mps = (width * height) / 1000000
-        if 'dpi' in imag.info:
-            dpi = imag.info['dpi'][0]
-    return mps, dpi
 
 
 def get_odem_logger(log_dir, logfile_name=None):
@@ -326,7 +293,7 @@ class ODEMProcess:
         try:
             insp.inspect()
             self.images_4_ocr = insp.image_pairs
-        except ODEMMetadataException as mde:
+        except ODEMMetadataMetsException as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
         self.identifiers = insp.identifiers
         self._statistics[IDENTIFIER_CATALOGUE] = insp.identifiers[IDENTIFIER_CATALOGUE]
@@ -490,7 +457,6 @@ class ODEMProcess:
         *Please note*
         Trailing dot (".") is cruical, since it means "this directory"
         and is mandatory since 2022 again
-
         """
 
         ocr_dir = args[0]
@@ -555,7 +521,7 @@ class ODEMProcess:
         os.chdir(page_workdir)
 
         # move and convert image data at once
-        processed_image_path = self._preprocess_image(image_path, page_workdir)
+        processed_image_path = sanitize_image(image_path, page_workdir)
 
         # init ocr-d workspace
         ocrd_workspace_setup(page_workdir, processed_image_path)
@@ -628,30 +594,6 @@ class ODEMProcess:
         if self.cfg.getboolean('ocr', 'keep_temp_orcd_data', fallback=False) is False:
             shutil.rmtree(page_workdir, ignore_errors=True)
         return stored, 1, mps, filesize_mb
-
-    def _preprocess_image(self, image_file_path, work_dir_sub):
-        """Preprocess image data
-        * store from source dir into future OCR-D workspace
-        * convert into PNG format
-        """
-
-        # sanitize file extension
-        if not str(image_file_path).endswith(EXT_JPG):
-            image_file_path = f"{image_file_path}{EXT_JPG}"
-
-        input_image = Image.open(image_file_path)
-        file_name = os.path.basename(image_file_path)
-        # store image one level inside the workspace
-        image_max_dir = os.path.join(work_dir_sub, 'MAX')
-        if not os.path.isdir(image_max_dir):
-            os.mkdir(image_max_dir)
-        output_path = os.path.join(image_max_dir, file_name).replace(EXT_JPG, EXT_PNG)
-        res_dpi = DEFAULT_DPI
-        if 'dpi' in input_image.info:
-            res_dpi = input_image.info['dpi']
-        # store resolution for PNG image in both x,y dimensions
-        input_image.save(output_path, format='png', dpi=res_dpi)
-        return output_path
 
     def _preserve_log(self, work_subdir, image_ident):
         """preserve ocrd.log for later analyzis as
@@ -777,57 +719,9 @@ class ODEMProcess:
         if self.cfg:
             blacklisted = self.cfg.getlist('mets', 'blacklist_file_groups')
             proc.clear_filegroups(black_list=blacklisted)
-        xml_tree = proc.tree
-        file_sec = xml_tree.find('.//mets:fileSec', XMLNS)
-        tag_file_group = f'{{{XMLNS["mets"]}}}fileGrp'
-        tag_file = f'{{{XMLNS["mets"]}}}file'
-        tag_flocat = f'{{{XMLNS["mets"]}}}FLocat'
-
-        file_grp_fulltext = ET.Element(tag_file_group, USE=FILEGROUP_OCR)
-        for _ocr_file in self.ocr_files:
-            _file_name = os.path.basename(_ocr_file).split('.')[0]
-            new_id = FILEGROUP_OCR + '_' + _file_name
-            file_ocr = ET.Element(
-                tag_file, MIMETYPE="application/alto+xml", ID=new_id)
-            flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
-            flocat_href.set(Q_XLINK_HREF, _ocr_file)
-            file_ocr.append(flocat_href)
-            file_grp_fulltext.append(file_ocr)
-
-            # Referencing / linking the ALTO data as a file pointer in
-            # the sequence container of the physical structMap
-            # Assignment takes place via the name of the corresponding
-            # image (= name ALTO file)
-            _mproc = MetsProcessor(_ocr_file)
-            src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=XMLNS)[0]
-            src_info.text = f'{_file_name}.jpg'
-            first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=XMLNS)[0]
-            first_page_el.attrib['ID'] = f'p{_file_name}'
-            _mproc.write()
-            _n_linked_ocr += self._link_fulltext(new_id, xml_tree)
-
-        file_sec.append(file_grp_fulltext)
+        _n_linked_ocr = integrate_ocr_file(proc.tree, self.ocr_files)
         proc.write()
         return _n_linked_ocr
-
-    def _link_fulltext(self, file_ident, xml_tree):
-        file_name = file_ident.split('_')[-1]
-        xp_files = f'.//mets:fileGrp[@USE="{FILEGROUP_IMG}"]/mets:file'
-        file_grp_max_files = xml_tree.findall(xp_files, XMLNS)
-        for file_grp_max_file in file_grp_max_files:
-            _file_link = file_grp_max_file[0].attrib['{http://www.w3.org/1999/xlink}href']
-            _file_label = _file_link.split('/')[-1]
-            if file_name in _file_label:
-                max_file_id = file_grp_max_file.attrib['ID']
-                xp_phys = f'//mets:div/mets:fptr[@FILEID="{max_file_id}"]/..'
-                parents = xml_tree.xpath(xp_phys, namespaces=XMLNS)
-                if len(parents) == 1:
-                    ET.SubElement(parents[0], f"{{{XMLNS['mets']}}}fptr", {
-                        "FILEID": file_ident})
-                    # add only once, therefore return
-                    return 1
-        # if not linked, return zero
-        return 0
 
     def postprocess_ocr(self):
         """Apply additional postprocessing to OCR data"""
@@ -912,48 +806,12 @@ class ODEMProcess:
     def postprocess_mets(self):
         """wrap work related to processing METS/MODS"""
 
-        mproc = MetsProcessor(self.mets_file)
-        self._process_agents(mproc)
-        self._clear_provenance_links(mproc)
-        mproc.write()
-
-    def _process_agents(self, mproc):
-        # drop existing ODEM marks
-        # enrich *only* latest run
-        xp_txt_odem = f'//mets:agent[contains(mets:name,"{METS_AGENT_ODEM}")]'
-        agents_odem = mproc.tree.xpath(xp_txt_odem, namespaces=XMLNS)
-        for old_odem in agents_odem:
-            parent = old_odem.getparent()
-            parent.remove(old_odem)
-        _cnt_img = self.cfg.get('ocr', 'ocrd_baseimage')
-        mproc.enrich_agent(f"{METS_AGENT_ODEM}_{_cnt_img}")
-
-        # ensure only very recent derivans agent entry exists
-        xp_txt_derivans = '//mets:agent[contains(mets:name,"DigitalDerivans")]'
-        derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=XMLNS)
-        if len(derivanses) < 1:
-            raise RuntimeError(f"Missing METS agent entry for {xp_txt_derivans}!")
-        # sort by latest token in agent note ascending
-        # note is assumed to be a date
-        # like: "PDF FileGroup for PDF_198114125 created at 2022-04-29T12:40:30"
-        _sorts = sorted(derivanses, key=lambda e: e[1].text.split()[-1])
-        _sorts.pop()
-        for i, _retired_agent in enumerate(_sorts):
-            _parent = _retired_agent.getparent()
-            _parent.remove(_sorts[i])
-
-    def _clear_provenance_links(self, mproc):
-        xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
-        old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=XMLNS)
-        for old_dv in old_dvs:
-            parent = old_dv.getparent()
-            parent.remove(old_dv)
-
+        postprocess_mets(self.mets_file, self.cfg.get('ocr', 'ocrd_baseimage'))
+ 
     def validate_mets(self):
         """Forward METS-schema validation"""
 
-        xml_root = ET.parse(self.mets_file).getroot()
-        validate_xml(xml_root)
+        validate_mets(self.mets_file)
 
     def export_data(self):
         """re-do metadata and transform into output format"""
@@ -1002,141 +860,6 @@ class ODEMProcess:
         return self._statistics
 
 
-def is_jpg(a_file:str):
-    """Check whether file extension
-    indicates JPG-format"""
-    _as_string = a_file.lower()
-    return _as_string.endswith("jpg") or _as_string.endswith("jpeg")
-
-
-def postprocess_ocr_file(ocr_file, strip_tags):
-    """
-    Correct data in actual ocr_file
-    * sourceImage file_name (ensure ends with '.jpg')
-    * page ID using pattern "p0000000n"
-    * strip non-alphabetial chars and if this clears
-      String-Elements completely, drop them all
-    * drop interpunctuations
-    """
-
-    # the xml cleanup
-    mproc = MetsProcessor(str(ocr_file))
-    if strip_tags:
-        mproc.remove(strip_tags)
-
-    # inspect transformation artifacts
-    _all_text_blocks = mproc.tree.xpath('//alto:TextBlock', namespaces=XMLNS)
-    for _block in _all_text_blocks:
-        if 'IDNEXT' in _block.attrib:
-            del _block.attrib['IDNEXT']
-
-    # inspect textual content
-    # _all_strings = mproc.tree.xpath('//alto:String', namespaces=XMLNS)
-    _all_strings = mproc.tree.findall('.//alto:String', XMLNS)
-    for _string_el in _all_strings:
-        _content = _string_el.attrib['CONTENT'].strip()
-        if _is_completely_punctuated(_content):
-            # only common punctuations, nothing else
-            _uplete(_string_el, _string_el.getparent())
-            continue
-        if len(_content) > 0:
-            try:
-                _handle_trailing_puncts(_string_el)
-                _content = _string_el.attrib['CONTENT']
-            except ODEMException as oexc:
-                raise ODEMException(f"ocr postproc: {oexc.args[0]} from {ocr_file}!") from oexc
-        if len(_content) < MINIMUM_WORD_LEN:
-            # too few content, remove element bottom-up
-            _uplete(_string_el, _string_el.getparent())
-    mproc.write()
-
-
-def _normalize_string_content(the_content):
-    """normalize textual content
-    * -try to normalize vocal ligatures via unicode-
-      currently disabled
-    * if contains at least one non-alphabetical char
-      remove digits and punctuation chars
-      => also remove the "Geviertstrich": u2014 (UTF-8)
-    Args:
-        the_content (str): text as is from alto:String@CONTENT
-    """
-
-    if not str(the_content).isalpha():
-        punct_translator = str.maketrans('', '', PUNCTUATIONS)
-        the_content = the_content.translate(punct_translator)
-        # maybe someone searches for years - won't be possible
-        # if digits are completely dropped
-        # digit_translator = str.maketrans('','',string.digits)
-        # the_content = the_content.translate(digit_translator)
-    return the_content
-
-
-# define propably difficult characters
-# very common separator '⸗'
-DOUBLE_OBLIQUE_HYPHEN = '\u2E17'
-# rare Geviertstrich '—'
-EM_DASH = '\u2014'
-ODEM_PUNCTUATIONS = string.punctuation + EM_DASH + DOUBLE_OBLIQUE_HYPHEN
-
-
-def _handle_trailing_puncts(string_element):
-    """Split off final character if considered to be
-    ODEM punctuation and not the only content
-    """
-
-    _content = string_element.attrib['CONTENT']
-    if _content[-1] in ODEM_PUNCTUATIONS and len(_content) > 1:
-        # gather information
-        _id = string_element.attrib['ID']
-        _left = int(string_element.attrib['HPOS'])
-        _top = int(string_element.attrib['VPOS'])
-        _width = int(string_element.attrib['WIDTH'])
-        _height = int(string_element.attrib['HEIGHT'])
-        _w_per_char = ceil(_width / len(_content))
-
-        # cut off last punctuation char
-        # shrink by calculated char width
-        _new_width = (len(_content) - 1) * _w_per_char
-        _new_content = _content[:-1]
-        string_element.attrib['WIDTH'] = str(_new_width)
-        string_element.attrib['CONTENT'] = _new_content
-
-        # create new string element with final char
-        _tag = string_element.tag
-        _attr = {'ID': f'{_id}_p1',
-                 'HPOS': str(_left + _new_width),
-                 'VPOS': str(_top),
-                 'WIDTH': str(_w_per_char),
-                 'HEIGHT': str(_height),
-                 'CONTENT': _content[-1]
-                 }
-        _new_string = ET.Element(_tag, _attr)
-        string_element.addnext(_new_string)
-
-
-# create module-wide translator
-PUNCT_TRANSLATOR = str.maketrans('', '', ODEM_PUNCTUATIONS)
-
-
-def _is_completely_punctuated(a_string):
-    """Check if only punctuations are contained
-    but nothing else"""
-
-    return len(a_string.translate(PUNCT_TRANSLATOR)) == 0
-
-
-def _uplete(curr_el: ET._Element, parent: ET._Element):
-    """delete empty elements up-the-tree"""
-
-    parent.remove(curr_el)
-    _content_childs = [kid
-                       for kid in parent.getchildren()
-                       if kid is not None and 'SP' not in kid.tag]
-    if len(_content_childs) == 0 and parent.getparent() is not None:
-        _uplete(parent, parent.getparent())
-
-
 def get_modelconf_from(file_path) -> List[str]:
     """Determine model from file name extension
     marked with'_' at the end"""
@@ -1145,32 +868,3 @@ def get_modelconf_from(file_path) -> List[str]:
     if '_' not in file_name:
         raise ODEMException(f"Miss language in '{file_path}'!")
     return file_name.split('.')[0].split('_')[-1].split('+')
-
-
-def _normalize_vocal_ligatures(a_string):
-    """Replace vocal ligatures, which otherwise
-    may confuse the index component workflow,
-    especially COMBINING SMALL LETTER E : \u0364
-    a^e, o^e, u^e => (u0364) => ä, ö, ü
-    """
-
-    _out = []
-    for i, _c in enumerate(a_string):
-        if _c == COMBINING_SMALL_E:
-            _preceeding_vocal = _out[i - 1]
-            _vocal_name = unicodedata.name(_preceeding_vocal)
-            _replacement = ''
-            if 'LETTER A' in _vocal_name:
-                _replacement = 'ä'
-            elif 'LETTER O' in _vocal_name:
-                _replacement = 'ö'
-            elif 'LETTER U' in _vocal_name:
-                _replacement = 'ü'
-            else:
-                _msg = f"No conversion for {_preceeding_vocal} ('{a_string}')!"
-                raise ODEMException(f"normalize vocal ligatures: {_msg}")
-            _out[i - 1] = _replacement
-        _out.append(_c)
-
-    # strip all combining e's anyway
-    return ''.join(_out).replace(COMBINING_SMALL_E, '')

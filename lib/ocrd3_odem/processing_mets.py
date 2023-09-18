@@ -1,5 +1,7 @@
 """Encapsulate Implementations concerning METS/MODS handling"""
 
+import os
+
 from typing import (
     List,
 )
@@ -8,15 +10,20 @@ import lxml.etree as ET
 
 from digiflow import (
     MetsReader,
+    MetsProcessor,
     XMLNS,
+    validate_xml,
 )
 
 PRINT_WORKS = ['a', 'f', 'F', 'Z', 'B']
 IDENTIFIER_CATALOGUE = 'gvk-ppn'
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
+FILEGROUP_OCR = 'FULLTEXT'
+FILEGROUP_IMG = 'MAX'
+METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
 
 
-class ODEMMetadataException(Exception):
+class ODEMMetadataMetsException(Exception):
     """Mark state when inconsistencies exist
     between linkings of physical and logical
     print sections, like logical sections
@@ -25,14 +32,14 @@ class ODEMMetadataException(Exception):
     """
 
 
-class ODEMNoTypeForOCRException(ODEMMetadataException):
+class ODEMNoTypeForOCRException(ODEMMetadataMetsException):
     """Mark custom ODEM Workflow Exception
     when print because of metadata is *not* to be
     considered to be ocr-able because it
     contains no pages at all
     """
 
-class ODEMNoImagesForOCRException(ODEMMetadataException):
+class ODEMNoImagesForOCRException(ODEMMetadataMetsException):
     """Mark custom ODEM Workflow Exception
     when print metadata contains no images-of-interest
     for OCR, i.e. only maps/illustrations
@@ -58,7 +65,7 @@ class ODEMMetadataInspecteur:
             try:
                 self._report = MetsReader(self._data).report
             except RuntimeError as _err:
-                raise ODEMMetadataException(_err) from _err
+                raise ODEMMetadataMetsException(_err) from _err
         return self._report
 
     def inspect(self):
@@ -81,9 +88,9 @@ class ODEMMetadataInspecteur:
             # detailed inspection of image group
             self.inspect_metadata_images()
         except RuntimeError as _err:
-            raise ODEMMetadataException(_err.args[0]) from _err
+            raise ODEMMetadataMetsException(_err.args[0]) from _err
         if IDENTIFIER_CATALOGUE not in report.identifiers:
-            raise ODEMMetadataException(f"No {IDENTIFIER_CATALOGUE} in {self.process_identifier}")
+            raise ODEMMetadataMetsException(f"No {IDENTIFIER_CATALOGUE} in {self.process_identifier}")
 
     @property
     def identifiers(self):
@@ -154,7 +161,7 @@ def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page
         _phys_dict = _phys_container_for_id(_phys_conts, _file_id)
         try:
             log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
-        except ODEMMetadataException as ome:
+        except ODEMMetadataMetsException as ome:
             _problems.append(ome.args[0])
         if not is_in(blacklist_structs, log_type):
             if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
@@ -162,8 +169,9 @@ def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page
     # re-raise on error
     if len(_problems) > 0:
         _n_probs = len(_problems)
-        raise ODEMMetadataException(f"{_n_probs}x: {','.join(_problems)}")
+        raise ODEMMetadataMetsException(f"{_n_probs}x: {','.join(_problems)}")
     return _pairs
+
 
 def _phys_container_for_id(_phys_conts, _id):
     """Collect and prepare all required 
@@ -181,7 +189,7 @@ def _phys_container_for_id(_phys_conts, _id):
             elif 'ORDERLABEL' in parent.attrib:
                 _label = parent.attrib['ORDERLABEL']
             else:
-                raise ODEMMetadataException(f"Cant handle label: {_label} of '{parent}'")
+                raise ODEMMetadataMetsException(f"Cant handle label: {_label} of '{parent}'")
             return {'ID': _cnt_id, 'LABEL': _label}
 
 
@@ -201,10 +209,116 @@ def _log_type_for_id(phys_id, structmap_links, log_conts):
                 _logical_target_id = _link.attrib['{http://www.w3.org/1999/xlink}from']
                 if _logical_section_id == _logical_target_id:
                     return _logical_section.attrib['TYPE']
-    raise ODEMMetadataException(f"Page {phys_id} not linked")
+    raise ODEMMetadataMetsException(f"Page {phys_id} not linked")
+
+
+def integrate_ocr_file(xml_tree, ocr_files: List) -> int:
+    """Enrich given OCR-Files into XML tree
+    
+    Returns number of linked files
+    """
+
+    _n_linked_ocr = 0
+    file_sec = xml_tree.find('.//mets:fileSec', XMLNS)
+    tag_file_group = f'{{{XMLNS["mets"]}}}fileGrp'
+    tag_file = f'{{{XMLNS["mets"]}}}file'
+    tag_flocat = f'{{{XMLNS["mets"]}}}FLocat'
+
+    file_grp_fulltext = ET.Element(tag_file_group, USE=FILEGROUP_OCR)
+    for _ocr_file in ocr_files:
+        _file_name = os.path.basename(_ocr_file).split('.')[0]
+        new_id = FILEGROUP_OCR + '_' + _file_name
+        file_ocr = ET.Element(
+            tag_file, MIMETYPE="application/alto+xml", ID=new_id)
+        flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
+        flocat_href.set(Q_XLINK_HREF, _ocr_file)
+        file_ocr.append(flocat_href)
+        file_grp_fulltext.append(file_ocr)
+
+        # Referencing / linking the ALTO data as a file pointer in
+        # the sequence container of the physical structMap
+        # Assignment takes place via the name of the corresponding
+        # image (= name ALTO file)
+        _mproc = MetsProcessor(_ocr_file)
+        src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=XMLNS)[0]
+        src_info.text = f'{_file_name}.jpg'
+        first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=XMLNS)[0]
+        first_page_el.attrib['ID'] = f'p{_file_name}'
+        _mproc.write()
+        _n_linked_ocr += _link_fulltext(new_id, xml_tree)
+    file_sec.append(file_grp_fulltext)
+    return _n_linked_ocr
+
+
+def _link_fulltext(file_ident, xml_tree):
+    file_name = file_ident.split('_')[-1]
+    xp_files = f'.//mets:fileGrp[@USE="{FILEGROUP_IMG}"]/mets:file'
+    file_grp_max_files = xml_tree.findall(xp_files, XMLNS)
+    for file_grp_max_file in file_grp_max_files:
+        _file_link = file_grp_max_file[0].attrib['{http://www.w3.org/1999/xlink}href']
+        _file_label = _file_link.split('/')[-1]
+        if file_name in _file_label:
+            max_file_id = file_grp_max_file.attrib['ID']
+            xp_phys = f'//mets:div/mets:fptr[@FILEID="{max_file_id}"]/..'
+            parents = xml_tree.xpath(xp_phys, namespaces=XMLNS)
+            if len(parents) == 1:
+                ET.SubElement(parents[0], f"{{{XMLNS['mets']}}}fptr", {
+                    "FILEID": file_ident})
+                # add only once, therefore return
+                return 1
+    # if not linked, return zero
+    return 0
 
 
 def is_in(tokens: List[str], label):
     """label contained somewhere in a list of tokens?"""
 
     return any(t in label for t in tokens)
+
+
+def postprocess_mets(mets_file, label_base_image):
+    """wrap work related to processing METS/MODS"""
+
+    mproc = MetsProcessor(mets_file)
+    _process_agents(mproc, label_base_image)
+    _clear_provenance_links(mproc)
+    mproc.write()
+
+def _process_agents(mproc, label_base_image):
+    # drop existing ODEM marks
+    # enrich *only* latest run
+    xp_txt_odem = f'//mets:agent[contains(mets:name,"{METS_AGENT_ODEM}")]'
+    agents_odem = mproc.tree.xpath(xp_txt_odem, namespaces=XMLNS)
+    for old_odem in agents_odem:
+        parent = old_odem.getparent()
+        parent.remove(old_odem)
+    mproc.enrich_agent(f"{METS_AGENT_ODEM}_{label_base_image}")
+
+    # ensure only very recent derivans agent entry exists
+    xp_txt_derivans = '//mets:agent[contains(mets:name,"DigitalDerivans")]'
+    derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=XMLNS)
+    if len(derivanses) < 1:
+        raise RuntimeError(f"Missing METS agent entry for {xp_txt_derivans}!")
+    # sort by latest token in agent note ascending
+    # note is assumed to be a date
+    # like: "PDF FileGroup for PDF_198114125 created at 2022-04-29T12:40:30"
+    _sorts = sorted(derivanses, key=lambda e: e[1].text.split()[-1])
+    _sorts.pop()
+    for i, _retired_agent in enumerate(_sorts):
+        _parent = _retired_agent.getparent()
+        _parent.remove(_sorts[i])
+
+
+def _clear_provenance_links(mproc):
+    xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
+    old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=XMLNS)
+    for old_dv in old_dvs:
+        parent = old_dv.getparent()
+        parent.remove(old_dv)
+
+
+def validate_mets(mets_file:str):
+    """Forward METS-schema validation"""
+
+    xml_root = ET.parse(mets_file).getroot()
+    validate_xml(xml_root)
