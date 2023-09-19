@@ -19,8 +19,7 @@ from lib.ocrd3_odem import (
     XMLNS,
     ODEMProcess,
     ODEMException,
-    get_config,
-    get_modelconf_from,
+    get_configparser,
     get_logger,
 )
 from .conftest import (
@@ -31,28 +30,17 @@ from .conftest import (
 )
 
 
-@pytest.mark.parametrize("file_path,model_conf",
-                         [
-                             ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', ['ger']),
-                             ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', ['lat']),
-                             ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', ['ger','lat'])
-                         ])
-def test_odem_local_file_modelconf(file_path, model_conf):
-    """Ensure that expected models picked
-    from image name language suffix
-    """
-
-    # act
-    assert get_modelconf_from(file_path) == model_conf
-
-
 @pytest.mark.parametrize("img_path,lang_str",[
-                ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
-                ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr+gt4hist_5000k'),
-                ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr')])
+            ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
+            ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr+gt4hist_5000k'),
+            ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr'),
+            ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
+            ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat_ocr'),
+            ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'gt4hist_5000k+lat_ocr')])
 def test_lang_mapping(img_path, lang_str, tmp_path):
     """Ensure ODEM Object picks 
-    proper project language mappings"""
+    proper project language mappings
+    """
 
     work_dir = tmp_path / 'work_dir'
     work_dir.mkdir()
@@ -134,7 +122,7 @@ def _fixture_odem_setup(tmp_path):
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
-    cfg = get_config()
+    cfg = get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     odem_processor.cfg = cfg
     _model_dir = prepare_tessdata_dir(work_dir)
@@ -246,7 +234,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     _orig_mets = TEST_RES / '1981185920_44046.xml'
     shutil.copyfile(_orig_mets, _work_dir / '1981185920_44046.xml')
     odem_processor = ODEMProcess(_record, work_dir=_work_dir)
-    cfg = get_config()
+    cfg = get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     odem_processor.cfg = cfg
     _log_dir = tmp_path / 'log'
@@ -272,7 +260,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     _work_dir = tmp_path / '1981185920_44046'
     _work_dir.mkdir()
     odem_processor = ODEMProcess(_record, work_dir=_work_dir)
-    cfg = get_config()
+    cfg = get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     odem_processor.cfg = cfg
     _log_dir = tmp_path / 'log'

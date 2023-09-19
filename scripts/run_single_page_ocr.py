@@ -8,7 +8,7 @@ from PIL import Image
 from ocrd.resolver import Resolver
 from ocrd_utils import initLogging
 
-from lib.ocrd3_odem import get_config
+from lib.ocrd3_odem import get_configparser
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 EXT_JPG = '.jpg'
@@ -30,7 +30,7 @@ arg_parser.add_argument(
 )
 args = arg_parser.parse_args()
 conf_file = os.path.abspath(args.config)
-cfg_parser: configparser.ConfigParser = get_config()
+cfg_parser: configparser.ConfigParser = get_configparser()
 cfg_parser.read(conf_file)
 
 ocr_log_conf = os.path.join(PROJECT_ROOT, cfg_parser.get('ocr', 'ocrd_logging'))

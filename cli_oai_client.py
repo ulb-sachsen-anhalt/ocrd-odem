@@ -30,14 +30,14 @@ from lib.resources_monitoring.ProcessResourceMonitor import ProcessResourceMonit
 from lib.resources_monitoring.exceptions import (
 	NotEnoughDiskSpaceException,
 	VirtualMemoryExceededException,
-)	
+)
 from lib.ocrd3_odem import (
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
     ODEMProcess,
     ODEMException,
-    get_config,
+    get_configparser,
     get_logger,
 )
 
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     if not os.path.exists(CONF_FILE):
         print(f"[ERROR] no config at '{CONF_FILE}'! Halt execution!")
         sys.exit(1)
-    CFG = get_config()
+    CFG = get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"[ERROR] unable to read config from '{CONF_FILE}! exit!")

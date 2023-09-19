@@ -6,11 +6,13 @@ import configparser
 import datetime
 import logging
 import os
-import pathlib
 import shutil
 import socket
 import subprocess
 import time
+from pathlib import (
+    Path
+)
 from typing import (
     Dict,
     List,
@@ -29,6 +31,7 @@ from digiflow import (
 
 from .odem_commons import (
     STATS_KEY_LANGS,
+    PROJECT_ROOT,
     ODEMException,
 )
 from .processing_mets import (
@@ -59,50 +62,16 @@ from .processing_ocrd import (
 
 # python process-wrapper limit
 os.environ['OMP_THREAD_LIMIT'] = '1'
-# default language for fallback
-# when processing local images
+# default language fallback
+# (only when processing local images)
 DEFAULT_LANG = 'ger'
 # estimated ocr-d runtime
 # for a regular page (A4, 1MB)
 DEFAULT_RUNTIME_PAGE = 1.0
 # process duration format
-LOG_STORE_FORMAT = '%Y-%m-%d_%H-%m-%S'
+ODEM_PAGE_TIME_FORMAT = '%Y-%m-%d_%H-%m-%S'
 # how long to process single page?
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
-
-
-
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
-DEFAULT_LOG_CONFIG =  os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
-
-
-def get_modelconf_from(file_path) -> List[str]:
-    """Determine model from file name extension
-    marked with'_' at the end"""
-
-    file_name = os.path.basename(file_path)
-    if '_' not in file_name:
-        raise ODEMException(f"Miss language in '{file_path}'!")
-    return file_name.split('.')[0].split('_')[-1].split('+')
-
-
-def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
-    """Create logger with log_infix to divide several
-    instances running on same host and
-    using configuration from path_log_config
-    in log_dir"""
-
-    _today = time.strftime('%Y-%m-%d', time.localtime())
-    _host = socket.gethostname()
-    _label = log_infix if log_infix is not None else ''
-    _logfile_name = os.path.join(
-        log_dir, f"odem_{_host}{_label}_{_today}.log")
-    conf_logname = {'logname': _logfile_name}
-    _conf_path = DEFAULT_LOG_CONFIG
-    if path_log_config is not None and os.path.isfile(path_log_config):
-        _conf_path = path_log_config
-    logging.config.fileConfig(_conf_path, defaults=conf_logname)
-    return logging.getLogger('odem')
 
 
 class ODEMProcess:
@@ -247,7 +216,6 @@ class ODEMProcess:
         the additional inner loop
         """
 
-        # disable warning since converter got added
         model_mappings: dict = self.cfg.getdict(  # pylint: disable=no-member
             'ocr', 'model_mapping')
         self.the_logger.info("[%s] inspect languages '%s'",
@@ -273,13 +241,16 @@ class ODEMProcess:
         """
         if self.local_mode:
             try:
-                _file_lang_suffix = get_modelconf_from(image_path)
+                _image_name = Path(image_path).stem
+                if '_' not in _image_name:
+                    raise ODEMException(f"Miss language mark for '{_image_name}'!")
+                _file_lang_suffixes = _image_name.split('_')[-1].split('+')
             except ODEMException as oxc:
                 self.the_logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
                                         self.process_identifier, oxc.args[0],
                                         image_path, DEFAULT_LANG)
-                _file_lang_suffix = DEFAULT_LANG
-            self.set_modelconfig_for(_file_lang_suffix)
+                _file_lang_suffixes = DEFAULT_LANG
+            self.set_modelconfig_for(_file_lang_suffixes)
         return '+'.join(self.languages)
 
     def _is_lang_available(self, lang) -> bool:
@@ -495,7 +466,7 @@ class ODEMProcess:
 
         _org_log = os.path.join(work_subdir, 'ocrd.log')
         if os.path.exists(_org_log):
-            _ts = time.strftime(LOG_STORE_FORMAT, time.localtime())
+            _ts = time.strftime(ODEM_PAGE_TIME_FORMAT, time.localtime())
             _log_label = f'ocrd_odem_{self.process_identifier}_{image_ident}_{_ts}.log'
             _rebranded = os.path.join(work_subdir, _log_label)
             os.rename(_org_log, _rebranded)

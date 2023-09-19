@@ -1,9 +1,18 @@
 """ODEM Core"""
 
 import configparser
+import logging
+import os
+import socket
+import time
 
+from pathlib import (
+    Path
+)
 
+#
 # ODEM States
+#
 MARK_OCR_OPEN = 'n.a.'
 MARK_OCR_BUSY = 'ocr_busy'
 MARK_OCR_FAIL = 'ocr_fail'
@@ -22,8 +31,15 @@ DEFAULT_LANG = 'ger'
 # for each word
 RTL_LANGUAGES = ['ara', 'fas', 'heb']
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_LOG_CONFIG =  os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
 
-def get_config():
+
+class ODEMException(Exception):
+    """Mark custom ODEM Workflow Exceptions"""
+
+
+def get_configparser():
     """init plain configparser"""
 
     def _parse_dict(row):
@@ -45,5 +61,20 @@ def get_config():
         })
 
 
-class ODEMException(Exception):
-    """Mark custom ODEM Workflow Exceptions"""
+def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
+    """Create logger with log_infix to divide several
+    instances running on same host and
+    using configuration from path_log_config
+    in log_dir"""
+
+    _today = time.strftime('%Y-%m-%d', time.localtime())
+    _host = socket.gethostname()
+    _label = log_infix if log_infix is not None else ''
+    _logfile_name = os.path.join(
+        log_dir, f"odem_{_host}{_label}_{_today}.log")
+    conf_logname = {'logname': _logfile_name}
+    _conf_path = DEFAULT_LOG_CONFIG
+    if path_log_config is not None and os.path.isfile(path_log_config):
+        _conf_path = path_log_config
+    logging.config.fileConfig(_conf_path, defaults=conf_logname)
+    return logging.getLogger('odem')

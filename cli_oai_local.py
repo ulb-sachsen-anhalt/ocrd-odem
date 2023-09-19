@@ -26,7 +26,7 @@ from lib.ocrd3_odem import (
     MARK_OCR_FAIL,
     ODEMProcess,
     ODEMException,
-    get_config,
+    get_configparser,
     get_logger,
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     MUST_LOCK = ARGS.lock_mode
     EXECUTOR_ARGS = ARGS.executors
 
-    CFG = get_config()
+    CFG = get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"unable to read config from '{CONF_FILE}! exit!")

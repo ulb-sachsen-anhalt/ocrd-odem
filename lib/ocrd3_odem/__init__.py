@@ -7,12 +7,11 @@ from .odem_commons import (
     MARK_OCR_FAIL,
 	STATS_KEY_LANGS,
 	ODEMException,
-	get_config
+	get_configparser,
+	get_logger,
 )
 from .ocrd3_odem import (
 	ODEMProcess,
-	get_modelconf_from,
-	get_logger
 )
 from .processing_ocrd import (
 	get_recognition_level,

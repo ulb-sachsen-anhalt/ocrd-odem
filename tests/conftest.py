@@ -17,7 +17,7 @@ from digiflow import (
 
 from lib.ocrd3_odem import (
     ODEMProcess,
-    get_config,
+    get_configparser,
 )
 
 # store path
@@ -31,7 +31,7 @@ def fixture_configuration():
          => dc (say: 'default configuration')
     """
 
-    config = get_config()
+    config = get_configparser()
     config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     config.set('global', 'data_fields', 'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
     config.set('mets', 'blacklist_file_groups', 'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')

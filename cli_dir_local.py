@@ -12,7 +12,7 @@ from ocrd_utils import (
 )
 
 from lib.ocrd3_odem import (
-    get_config,
+    get_configparser,
     get_logger,
     ODEMProcess,
 )
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     EXECUTOR_ARGS = ARGS.executors
     RUN_MODE = ARGS.mode_sequential
 
-    CFG = get_config()
+    CFG = get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"unable to read config from '{CONF_FILE}! exit!")
