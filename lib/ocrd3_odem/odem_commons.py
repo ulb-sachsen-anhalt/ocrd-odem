@@ -10,6 +10,10 @@ from pathlib import (
     Path
 )
 
+from ocrd_utils import (
+    initLogging
+)
+
 #
 # ODEM States
 #
@@ -65,8 +69,22 @@ def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
     """Create logger with log_infix to divide several
     instances running on same host and
     using configuration from path_log_config
-    in log_dir"""
+    in log_dir.
+    Log output from "page-to-alto" set to disable WARNING:
+        "PAGE-XML has Border but no PrintSpace - Margins will be empty"
+    
+    please note:
+    call of OCR-D initLogging() required, otherwise something like this pops up:
 
+    CRITICAL root - getLogger was called before initLogging. Source of the call:
+    CRITICAL root -   File "<odem-path>/venv/lib/python3.8/site-packages/ocrd/resolver.py",
+                      line 231, in workspace_from_nothing
+    CRITICAL root -     log = getLogger('ocrd.resolver.workspace_from_nothing')
+    ...
+    """
+
+    initLogging()
+    logging.getLogger('page-to-alto').setLevel('CRITICAL')
     _today = time.strftime('%Y-%m-%d', time.localtime())
     _host = socket.gethostname()
     _label = log_infix if log_infix is not None else ''

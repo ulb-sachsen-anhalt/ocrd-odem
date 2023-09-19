@@ -2,16 +2,11 @@
 """MAIN CLI ODEM"""
 
 import argparse
-import logging
 import os
 import shutil
 import socket
 import sys
 import time
-
-from ocrd_utils import (
-    initLogging
-)
 
 from digiflow import (
     OAIRecordHandler,
@@ -107,11 +102,6 @@ if __name__ == "__main__":
 
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
-
-    # test
-    # initLogging()
-    logging.getLogger('ocrd').addHandler(logging.NullHandler())
-    logging.getLogger('page-to-alto').addHandler(logging.NullHandler())
     LOCAL_DELETE_BEVOR_EXPORT = []
     if CFG.has_option('global', 'delete_bevor_export'):
         LOCAL_DELETE_BEVOR_EXPORT = CFG.getlist('global', 'delete_bevor_export')
@@ -195,7 +185,6 @@ if __name__ == "__main__":
         PROCESS.clear_existing_entries()
         PROCESS.set_modelconfig_for()
         PROCESS.filter_images()
-        initLogging()
         outcomes = process_resource_monitor.monit_vmem(
             PROCESS.run_sequential if SEQUENTIAL else PROCESS.run_parallel
         )

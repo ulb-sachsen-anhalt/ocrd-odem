@@ -21,9 +21,6 @@ from digiflow import (
     LocalStore,
     send_mail,
 )
-from ocrd_utils import (
-    initLogging
-)
 
 from lib.resources_monitoring import ProcessResourceMonitorConfig
 from lib.resources_monitoring.ProcessResourceMonitor import ProcessResourceMonitor
@@ -230,9 +227,6 @@ if __name__ == "__main__":
     if not configurations_read:
         print(f"[ERROR] unable to read config from '{CONF_FILE}! exit!")
         sys.exit(1)
-
-    # init OCR-D logging
-    initLogging()
 
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
