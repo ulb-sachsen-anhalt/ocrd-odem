@@ -30,13 +30,13 @@ from .conftest import (
 )
 
 
-@pytest.mark.parametrize("img_path,lang_str",[
-            ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
-            ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr+gt4hist_5000k'),
-            ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr'),
-            ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
-            ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat_ocr'),
-            ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'gt4hist_5000k+lat_ocr')])
+@pytest.mark.parametrize("img_path,lang_str", [
+    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr+gt4hist_5000k'),
+    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr'),
+    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat_ocr'),
+    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'gt4hist_5000k+lat_ocr')])
 def test_lang_mapping(img_path, lang_str, tmp_path):
     """Ensure ODEM Object picks 
     proper project language mappings
@@ -212,6 +212,26 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: ODEMProce
         assert 77 == len(bundle_handle.readlines())
 
 
+def test_validate_mets(tmp_path):
+    """
+    if is invalid mets file, throw according exception
+    """
+    _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/105054')
+    _work_dir = tmp_path / '1981185920_105054'
+    _work_dir.mkdir()
+    _max_dir = _work_dir / 'MAX'
+    _max_dir.mkdir()
+    for i in range(1, 6):
+        _file_path = f"{_max_dir}/{i:08d}.jpg"
+        with open(_file_path, 'wb') as _writer:
+            _writer.write(b'0x00')
+    _orig_mets = TEST_RES / '1981185920_105054.xml'
+    shutil.copyfile(_orig_mets, _work_dir / '1981185920_105054.xml')
+    odem_processor = ODEMProcess(_record, work_dir=_work_dir)
+    with pytest.raises(ODEMException):
+        odem_processor.validate_mets()
+
+
 def test_images_4_ocr_properly_filtered(tmp_path):
     """Ensure behavior links selected
     from images to images_4_ocr as expected
@@ -302,4 +322,4 @@ def test_record_with_unknown_language(tmp_path):
         oproc.set_modelconfig_for(_langs)
 
     # assert
-    assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" ==  odem_exc.value.args[0]
+    assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" == odem_exc.value.args[0]

@@ -181,6 +181,7 @@ if __name__ == "__main__":
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
 
+        PROCESS.validate_mets()
         PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.set_modelconfig_for()

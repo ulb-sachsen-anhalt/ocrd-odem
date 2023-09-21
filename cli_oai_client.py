@@ -12,7 +12,7 @@ from logging import (
     Logger
 )
 from typing import (
-	Optional
+    Optional
 )
 import requests
 
@@ -25,8 +25,8 @@ from digiflow import (
 from lib.resources_monitoring import ProcessResourceMonitorConfig
 from lib.resources_monitoring.ProcessResourceMonitor import ProcessResourceMonitor
 from lib.resources_monitoring.exceptions import (
-	NotEnoughDiskSpaceException,
-	VirtualMemoryExceededException,
+    NotEnoughDiskSpaceException,
+    VirtualMemoryExceededException,
 )
 from lib.ocrd3_odem import (
     MARK_OCR_DONE,
@@ -337,6 +337,7 @@ if __name__ == "__main__":
         process_resource_monitor.monit_disk_space(PROCESS.load)
 
         # go on
+        PROCESS.validate_mets()
         PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.set_modelconfig_for()

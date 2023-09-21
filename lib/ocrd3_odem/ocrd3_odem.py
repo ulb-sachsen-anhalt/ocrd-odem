@@ -521,7 +521,7 @@ class ODEMProcess:
             raise ODEMException(f"No OCR result for {n_candidates} candidates created!")
         self.ocr_files = _cnv
         self.the_logger.info("[%s] converted '%d' files page-to-alto",
-                                 self.process_identifier, len(_cnv))
+                             self.process_identifier, len(_cnv))
 
     def link_ocr(self) -> int:
         """Prepare and link OCR-data"""
@@ -620,8 +620,12 @@ class ODEMProcess:
 
     def validate_mets(self):
         """Forward METS-schema validation"""
-
-        validate_mets(self.mets_file)
+        try:
+            validate_mets(self.mets_file)
+        except RuntimeError as err:
+            if len(err.args) > 0 and str(err.args[0]).startswith('invalid schema'):
+                raise ODEMException(str(err.args[0]))
+            raise err
 
     def export_data(self):
         """re-do metadata and transform into output format"""
