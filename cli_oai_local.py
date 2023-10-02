@@ -60,7 +60,7 @@ if __name__ == "__main__":
         help="Number of OCR-D Executors in parallel mode")
     PARSER.add_argument(
         "-s",
-        "--sequential",
+        "--sequential-mode",
         required=False,
         default=False,
         action="store_true",
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # pick common args
-    SEQUENTIAL = ARGS.sequential
+    SEQUENTIAL = ARGS.sequential_mode
     MUST_KEEP_RESOURCES = ARGS.keep_resources
     MUST_LOCK = ARGS.lock_mode
     EXECUTOR_ARGS = ARGS.executors

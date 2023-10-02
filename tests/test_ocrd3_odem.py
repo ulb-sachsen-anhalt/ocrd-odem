@@ -15,6 +15,8 @@ from digiflow import (
 )
 
 from lib.ocrd3_odem import (
+    CFG_SEC_OCR,
+    KEY_LANGUAGES,
     STATS_KEY_LANGS,
     XMLNS,
     ODEMProcess,
@@ -37,7 +39,7 @@ from .conftest import (
     ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
     ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat_ocr'),
     ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'gt4hist_5000k+lat_ocr')])
-def test_lang_mapping(img_path, lang_str, tmp_path):
+def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     """Ensure ODEM Object picks 
     proper project language mappings
     """
@@ -51,12 +53,40 @@ def test_lang_mapping(img_path, lang_str, tmp_path):
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     odem_processor.cfg = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
-    odem_processor.cfg.set('ocr', 'tessdir_host', _tess_dir)
+    odem_processor.cfg.set(CFG_SEC_OCR, 'tessdir_host', _tess_dir)
     odem_processor.the_logger = get_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act
     assert odem_processor.map_language_to_modelconfig(img_path) == lang_str
+
+
+@pytest.mark.parametrize("img_path,langs,models",[
+    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_fre.jpg','lat', 'lat_ocr'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'ger+lat', 'gt4hist_5000k+lat_ocr'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'ger', 'gt4hist_5000k'),])
+def test_exchange_language(img_path, langs, models, tmp_path):
+    """Ensure: ODEM can be forced to use different
+    languages than are present via file name
+    """
+
+    # arrange
+    work_dir = tmp_path / 'work_dir'
+    work_dir.mkdir()
+    work_2 = work_dir / 'test2'
+    work_2.mkdir()
+    log_dir = tmp_path / 'log'
+    log_dir.mkdir()
+    odem_processor = ODEMProcess(None, work_dir=str(work_2))
+    odem_processor.cfg = fixture_configuration()
+    _tess_dir = prepare_tessdata_dir(tmp_path)
+    odem_processor.cfg.set(CFG_SEC_OCR, 'tessdir_host', _tess_dir)
+    odem_processor.cfg.set(CFG_SEC_OCR, KEY_LANGUAGES, langs)
+    odem_processor.the_logger = get_logger(str(log_dir))
+    odem_processor.local_mode = True
+
+    # act
+    assert odem_processor.map_language_to_modelconfig(img_path) == models
 
 
 def test_load_mock_called(tmp_path_factory):
@@ -80,7 +110,7 @@ def test_load_mock_called(tmp_path_factory):
     odem = ODEMProcess(_record, _workdir)
     odem.cfg = fixture_configuration()
     _model_dir = prepare_tessdata_dir(_workdir)
-    odem.cfg.set('ocr', 'tessdir_host', _model_dir)
+    odem.cfg.set(CFG_SEC_OCR, 'tessdir_host', _model_dir)
     odem.the_logger = get_logger(str(_log_dir))
 
     # mock loading of OAI Record
@@ -126,7 +156,7 @@ def _fixture_odem_setup(tmp_path):
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
     odem_processor.cfg = cfg
     _model_dir = prepare_tessdata_dir(work_dir)
-    odem_processor.cfg.set('ocr', 'tessdir_host', _model_dir)
+    odem_processor.cfg.set(CFG_SEC_OCR, 'tessdir_host', _model_dir)
     odem_processor.local_mode = True
     odem_processor.the_logger = get_logger(log_dir)
     return odem_processor
@@ -312,7 +342,7 @@ def test_record_with_unknown_language(tmp_path):
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
-    oproc.cfg.set('ocr', 'tessdir_host', _model_dir)
+    oproc.cfg.set(CFG_SEC_OCR, 'tessdir_host', _model_dir)
     oproc.mets_file = str(trgt_mets)
     oproc.inspect_metadata()
     _langs = oproc.statistics.get(STATS_KEY_LANGS)

@@ -30,6 +30,8 @@ from digiflow import (
 )
 
 from .odem_commons import (
+    CFG_SEC_OCR,
+    KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
     ODEMException,
@@ -208,11 +210,13 @@ class ODEMProcess:
             _proc.write()
 
     def set_modelconfig_for(self, languages=None):
-        """compose tesseract-ocr model config
-        from metadata language entries.
+        """Compose tesseract-ocr model config
+        from 
+        * provided "languages" parameter
+        * else use metadata language entries.
 
         Please note: Configured model mappings
-        might also contain compositions, therefore
+        might contain compositions, therefore
         the additional inner loop
         """
 
@@ -236,9 +240,23 @@ class ODEMProcess:
 
     def map_language_to_modelconfig(self, image_path) -> str:
         """Determine Tesseract config from forehead
-        processed print metadata or file name suffix
-        if run in local mode
+        processed print metadata or file name suffix.
+
+        Please note, that more than one config
+        can be required, each glued with a '+' sign.
+        (Therefore the splitting.)
+        
+        Resolving order
+        #1: inspect provided language flag
+        #2: inspect local filenames
+        #3: inspect metadata
         """
+
+        _file_lang_suffixes = DEFAULT_LANG
+        if self.cfg.has_option(CFG_SEC_OCR, KEY_LANGUAGES):
+            _file_lang_suffixes = self.cfg.get(CFG_SEC_OCR, KEY_LANGUAGES).split('+')
+            self.set_modelconfig_for(_file_lang_suffixes)
+            return '+'.join(self.languages)
         if self.local_mode:
             try:
                 _image_name = Path(image_path).stem
@@ -249,7 +267,6 @@ class ODEMProcess:
                 self.the_logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
                                         self.process_identifier, oxc.args[0],
                                         image_path, DEFAULT_LANG)
-                _file_lang_suffixes = DEFAULT_LANG
             self.set_modelconfig_for(_file_lang_suffixes)
         return '+'.join(self.languages)
 

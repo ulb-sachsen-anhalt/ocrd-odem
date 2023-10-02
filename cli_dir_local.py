@@ -7,17 +7,32 @@ import pathlib
 import shutil
 import sys
 
+from configparser import (
+    ConfigParser,
+)
+
 from ocrd_utils import (
     initLogging
 )
 
 from lib.ocrd3_odem import (
+    ARG_S_EXECS,
+    ARG_S_LANGUAGES,
+    ARG_S_MODEL_MAP,
+    ARG_S_SEQUENTIAL_MODE,
+    ARG_L_EXECS,
+    ARG_L_LANGUAGES,
+    ARG_L_MODEL_MAP,
+    ARG_L_SEQUENTIAL_MODE,
+    CFG_SEC_OCR,
+    DEFAULT_EXECUTORS,
+    KEY_EXECS,
+    ODEMProcess,
     get_configparser,
     get_logger,
-    ODEMProcess,
+    merge_args,
 )
 
-DEFAULT_EXECUTORS = 2
 
 ########
 # MAIN #
@@ -35,17 +50,28 @@ if __name__ == "__main__":
         default="resources/odem.ini",
         help="path to configuration file")
     PARSER.add_argument(
-        "-e",
-        "--executors",
+        f"-{ARG_S_EXECS}",
+        f"--{ARG_L_EXECS}",
         required=False,
-        help="Number of OCR-D Executors in parallel mode")
+        default=DEFAULT_EXECUTORS,
+        type=int,
+        help="Number of parallel OCR-D Executors")
     PARSER.add_argument(
-        "-m",
-        "--mode-sequential",
+        f"-{ARG_S_SEQUENTIAL_MODE}",
+        f"--{ARG_L_SEQUENTIAL_MODE}",
         required=False,
         default=False,
         action="store_true",
-        help="Disable parallel mode, just run sequential")
+        help="Disable parallel workflow and run each image sequential")
+    PARSER.add_argument(
+        f"-{ARG_S_LANGUAGES}",
+        f"--{ARG_L_LANGUAGES}",
+        required=False,
+        help="ISO 639-3 language code (default:unset)")
+    PARSER.add_argument(
+        f"-{ARG_S_MODEL_MAP}",
+        f"--{ARG_L_MODEL_MAP}",
+        help="List of comma-separated pairs <ISO 639-3 language code>: <ocr-model> (default:unset)")
     ARGS = PARSER.parse_args()
 
     # check some pre-conditions
@@ -54,10 +80,8 @@ if __name__ == "__main__":
     if not os.path.exists(CONF_FILE):
         print(f"[ERROR] no config at '{CONF_FILE}'! Halt execution!")
         sys.exit(1)
-    EXECUTOR_ARGS = ARGS.executors
-    RUN_MODE = ARGS.mode_sequential
 
-    CFG = get_configparser()
+    CFG: ConfigParser = get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"unable to read config from '{CONF_FILE}! exit!")
@@ -75,11 +99,10 @@ if __name__ == "__main__":
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set
     ROOT_PATH = ARGS.path
-
-    # if valid part_by via cli, use it's value
-    if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
-        CFG.set('ocr', 'n_executors', str(EXECUTOR_ARGS))
-    EXECUTORS = CFG.getint('ocr', 'n_executors', fallback=DEFAULT_EXECUTORS)
+    MERGED = merge_args(CFG, ARGS)
+    LOGGER.info("merged '%s' config entries with args", MERGED)
+    EXECUTORS = CFG.getint(CFG_SEC_OCR, KEY_EXECS)
+    RUN_MODE = ARGS.sequential_mode
     LOGGER.info("process data in '%s' with %s executors in mode %s",
                 LOCAL_WORK_ROOT, EXECUTORS, RUN_MODE)
 

@@ -6,8 +6,14 @@ import os
 import socket
 import time
 
+from configparser import (
+    ConfigParser,
+)
 from pathlib import (
     Path
+)
+from typing import (
+    List
 )
 
 from ocrd_utils import (
@@ -22,7 +28,36 @@ MARK_OCR_BUSY = 'ocr_busy'
 MARK_OCR_FAIL = 'ocr_fail'
 MARK_OCR_DONE = 'ocr_done'
 MARK_OCR_SKIP = 'ocr_skip'
-# important file groups
+
+# how many parallel procs
+DEFAULT_EXECUTORS = 2
+
+#
+# ODEM configuration keys
+CFG_SEC_OCR = 'ocr'
+KEY_EXECS = 'n_executors'
+KEY_LANGUAGES = 'language_model'
+KEY_MODEL_MAP = 'model_mapping'
+KEY_SEQUENTIAL_MODE = 'sequential_mode'
+#
+# ODEM arguments
+# = shortform, longform
+#   where keyform is also used as
+#   pythonic configuration key
+ARG_S_SEQUENTIAL_MODE = 's'
+ARG_L_SEQUENTIAL_MODE = 'sequential-mode'
+ARG_S_LANGUAGES = 'l'
+ARG_L_LANGUAGES = 'language-model'
+ARG_S_MODEL_MAP = 'm'
+ARG_L_MODEL_MAP = 'model-mapping'
+ARG_S_EXECS = 'e'
+ARG_L_EXECS = 'executors'
+
+
+#
+# ODEM metadata
+#
+# file groups
 FILEGROUP_OCR = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
 # statistic keys
@@ -96,3 +131,27 @@ def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
         _conf_path = path_log_config
     logging.config.fileConfig(_conf_path, defaults=conf_logname)
     return logging.getLogger('odem')
+
+
+def merge_args(the_configuration: ConfigParser, the_args) -> List:
+    """Merge additionally provided arguements into
+    existing configurations, overwrite these and
+    communication the replaced options
+    """
+
+    _repls = []
+    if not isinstance(the_args, dict):
+        the_args = vars(the_args)
+    if KEY_EXECS in the_args and int(the_args[KEY_EXECS]) > 0:
+        _upd01 = (CFG_SEC_OCR, KEY_EXECS, str(the_args[KEY_EXECS]))
+        the_configuration.set(*_upd01)
+        _repls.append(_upd01)
+    if KEY_LANGUAGES in the_args and the_args[KEY_LANGUAGES] is not None:
+        _upd02 = (CFG_SEC_OCR, KEY_LANGUAGES, the_args[KEY_LANGUAGES])
+        the_configuration.set(*_upd02)
+        _repls.append(_upd02)
+    if KEY_MODEL_MAP in the_args and the_args[KEY_MODEL_MAP] is not None:
+        _upd03 = (CFG_SEC_OCR, KEY_MODEL_MAP, the_args[KEY_MODEL_MAP])
+        the_configuration.set(*_upd03)
+        _repls.append(_upd03)
+    return _repls
