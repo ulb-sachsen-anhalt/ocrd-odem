@@ -2,13 +2,20 @@
 
 import os
 
+from pathlib import (
+    Path,
+)
+
 from PIL import (
     Image
 )
 
-
+# local file extension concerning image data
 EXT_JPG = '.jpg'
+EXT_JPEG = '.jpeg'
 EXT_PNG = '.png'
+EXT_TIF = '.tif'
+IMAGE_EXTS = [EXT_JPG, EXT_JPEG, EXT_PNG, EXT_TIF]
 
 # default resolution if not provided
 # for both dimensions
@@ -36,8 +43,8 @@ def sanitize_image(image_file_path, work_dir_sub):
     * convert into PNG format
     """
 
-    # sanitize file extension
-    if not str(image_file_path).endswith(EXT_JPG):
+    # sanitize file extension only if missing
+    if not Path(image_file_path).suffix:
         image_file_path = f"{image_file_path}{EXT_JPG}"
 
     input_image = Image.open(image_file_path)
@@ -55,8 +62,9 @@ def sanitize_image(image_file_path, work_dir_sub):
     return output_path
 
 
-def is_jpg(a_file:str):
+def has_image_ext(a_file:str):
     """Check whether file extension
     indicates JPG-format"""
     _as_string = a_file.lower()
-    return _as_string.endswith("jpg") or _as_string.endswith("jpeg")
+    _suffix = Path(_as_string).suffix
+    return len(_suffix) > 0 and _suffix in IMAGE_EXTS

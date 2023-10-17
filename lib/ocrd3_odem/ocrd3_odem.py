@@ -54,7 +54,7 @@ from .processing_ocr_results import (
     postprocess_ocr_file,
 )
 from .processing_image import (
-    is_jpg,
+    has_image_ext,
     sanitize_image,
     get_imageinfo,
 )
@@ -295,12 +295,12 @@ class ODEMProcess:
                 raise RuntimeError(f"invalid path: {image_local_dir}!")
             image_dir = image_local_dir
 
-        # gather images, propably recursive
+        # gather local images, propably recursive
         images: List[str] = sorted([
             os.path.join(curr, the_file)
             for curr, _, the_files in os.walk(image_dir)
             for the_file in the_files
-            if is_jpg(the_file)
+            if has_image_ext(the_file)
         ])
 
         # this shouldn't happen
