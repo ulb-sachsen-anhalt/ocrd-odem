@@ -17,6 +17,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Tuple,
 )
 import lxml.etree as ET
 import numpy as np
@@ -105,7 +106,6 @@ class ODEMProcess:
         self.n_executors = executors
         self.work_dir_main = work_dir
         self.digi_type = None
-        self.languages = []
         self.local_mode = record is None
         self.process_identifier = None
         if self.local_mode:
@@ -209,7 +209,7 @@ class ODEMProcess:
             _proc.clear_filegroups(_blacklisted)
             _proc.write()
 
-    def set_modelconfig_for(self, languages=None):
+    def language_modelconfig(self, languages=None) -> str:
         """Compose tesseract-ocr model config
         from 
         * provided "languages" parameter
@@ -220,6 +220,7 @@ class ODEMProcess:
         the additional inner loop
         """
 
+        _models = []
         model_mappings: dict = self.cfg.getdict(  # pylint: disable=no-member
             'ocr', 'model_mapping')
         self.the_logger.info("[%s] inspect languages '%s'",
@@ -232,11 +233,13 @@ class ODEMProcess:
                 raise ODEMException(f"'{lang}' mapping not found (languages: {languages})!")
             for model in model_entry.split('+'):
                 if self._is_lang_available(model):
-                    self.languages.append(model)
+                    _models.append(model)
                 else:
                     raise ODEMException(f"'{model}' model config not found !")
+        _model_conf = '+'.join(_models)
         self.the_logger.info("[%s] map languages '%s' => '%s'",
-                             self.process_identifier, languages, self.languages)
+                             self.process_identifier, languages, _model_conf)
+        return _model_conf
 
     def map_language_to_modelconfig(self, image_path) -> str:
         """Determine Tesseract config from forehead
@@ -247,16 +250,17 @@ class ODEMProcess:
         (Therefore the splitting.)
         
         Resolving order
-        #1: inspect provided language flag
+        #1: inspect language flag
         #2: inspect local filenames
         #3: inspect metadata
         """
 
         _file_lang_suffixes = DEFAULT_LANG
+        # inspect language arg
         if self.cfg.has_option(CFG_SEC_OCR, KEY_LANGUAGES):
             _file_lang_suffixes = self.cfg.get(CFG_SEC_OCR, KEY_LANGUAGES).split('+')
-            self.set_modelconfig_for(_file_lang_suffixes)
-            return '+'.join(self.languages)
+            return self.language_modelconfig(_file_lang_suffixes)
+        # inspect final '_' segment of local file names
         if self.local_mode:
             try:
                 _image_name = Path(image_path).stem
@@ -267,8 +271,9 @@ class ODEMProcess:
                 self.the_logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
                                         self.process_identifier, oxc.args[0],
                                         image_path, DEFAULT_LANG)
-            self.set_modelconfig_for(_file_lang_suffixes)
-        return '+'.join(self.languages)
+            return self.language_modelconfig(_file_lang_suffixes)
+        # inspect language information from MODS metadata
+        return self.language_modelconfig()
 
     def _is_lang_available(self, lang) -> bool:
         """Determine whether model is available"""
@@ -404,8 +409,6 @@ class ODEMProcess:
 
         # # find out the needed model config for tesseract
         model_config = self.map_language_to_modelconfig(image_path)
-        self.the_logger.info("[%s] use '%s' for '%s'",
-                             self.process_identifier, model_config, self.languages)
         stored = 0
         mps = 0
         filesize_mb = 0
@@ -641,7 +644,7 @@ class ODEMProcess:
             validate_mets(self.mets_file)
         except RuntimeError as err:
             if len(err.args) > 0 and str(err.args[0]).startswith('invalid schema'):
-                raise ODEMException(str(err.args[0]))
+                raise ODEMException(str(err.args[0])) from err
             raise err
 
     def export_data(self):

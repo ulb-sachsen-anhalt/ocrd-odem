@@ -63,3 +63,26 @@ def test_merge_args_from_cli():
     assert _n_merged == [(CFG_SEC_OCR, KEY_LANGUAGES, 'ulb-fas-123')]
     # lat still present, only persian mapping was affected
     assert 'lat' in _conf_parser.get(CFG_SEC_OCR, KEY_MODEL_MAP)
+
+
+def test_merge_model_mappings_with_subsequent_calls():
+    """Behavior when CLI arg for a specific is called
+    more than once => ensure nothing is duplicated
+    """
+
+    # arrange
+    _conf_parser = get_configparser()
+    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini')
+    assert os.path.isfile(_default_ini_file)
+    assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
+    _prev_mapping = _conf_parser.getdict(CFG_SEC_OCR, KEY_MODEL_MAP)
+    assert 'per' in _prev_mapping
+    assert _prev_mapping['per'] == 'fas'
+
+    # act
+    _args = {KEY_MODEL_MAP: 'fas: ulb-fas-123'}
+    merge_args(_conf_parser, _args)
+    merge_args(_conf_parser, _args)
+
+    # assert
+    assert _conf_parser.get(CFG_SEC_OCR, KEY_MODEL_MAP) == 'fas: ulb-fas-123'

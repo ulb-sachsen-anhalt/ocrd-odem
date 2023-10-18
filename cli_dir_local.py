@@ -102,9 +102,9 @@ if __name__ == "__main__":
     MERGED = merge_args(CFG, ARGS)
     LOGGER.info("merged '%s' config entries with args", MERGED)
     EXECUTORS = CFG.getint(CFG_SEC_OCR, KEY_EXECS)
-    RUN_MODE = ARGS.sequential_mode
+    RUN_SEQUENTIAL = ARGS.sequential_mode
     LOGGER.info("process data in '%s' with %s executors in mode %s",
-                LOCAL_WORK_ROOT, EXECUTORS, RUN_MODE)
+                LOCAL_WORK_ROOT, EXECUTORS, RUN_SEQUENTIAL)
 
     req_idn = 'n.a.'
     try:
@@ -126,7 +126,7 @@ if __name__ == "__main__":
         # this is assigned to "PROCESS.images_4_ocr" in ODEMProcess.filter_images()
         # thats why we have to manually fit that requirement
         PROCESS.images_4_ocr = list(zip(PROCESS.images_4_ocr, [pathlib.Path(i).stem for i in PROCESS.images_4_ocr]))
-        if RUN_MODE:
+        if RUN_SEQUENTIAL:
             PROCESS.run_sequential()
         else:
             PROCESS.run_parallel()

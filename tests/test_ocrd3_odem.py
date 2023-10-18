@@ -17,6 +17,7 @@ from digiflow import (
 from lib.ocrd3_odem import (
     CFG_SEC_OCR,
     KEY_LANGUAGES,
+    KEY_MODEL_MAP,
     STATS_KEY_LANGS,
     XMLNS,
     ODEMProcess,
@@ -87,6 +88,39 @@ def test_exchange_language(img_path, langs, models, tmp_path):
 
     # act
     assert odem_processor.map_language_to_modelconfig(img_path) == models
+
+
+def test_enforce_language_and_model_mapping(tmp_path):
+    """Behavior when both language and model
+    mapping are provided via configuration
+    for several local files
+
+    Rationale: prevent subsequent language
+    additions like 'fas+fas+fas'
+    """
+
+    # arrange
+    work_dir = tmp_path / 'work_dir'
+    work_dir.mkdir()
+    work_2 = work_dir / 'test2'
+    work_2.mkdir()
+    log_dir = tmp_path / 'log'
+    log_dir.mkdir()
+    odem_processor = ODEMProcess(None, work_dir=str(work_2))
+    odem_processor.cfg = fixture_configuration()
+    _tess_dir = prepare_tessdata_dir(tmp_path)
+    odem_processor.cfg.set(CFG_SEC_OCR, 'tessdir_host', _tess_dir)
+    odem_processor.cfg.set(CFG_SEC_OCR, KEY_LANGUAGES, 'fas')
+    odem_processor.cfg.set(CFG_SEC_OCR, KEY_MODEL_MAP, 'fas: fas')
+    odem_processor.the_logger = get_logger(str(log_dir))
+    odem_processor.local_mode = True
+
+    # act 1st
+    assert odem_processor.map_language_to_modelconfig('/data/img/0001.tif') == 'fas'
+    # act 2nd
+    assert odem_processor.map_language_to_modelconfig('/data/img/0002.tif') == 'fas'
+    # act 3rd call. still only fas:fas
+    assert odem_processor.map_language_to_modelconfig('/data/img/0003.tif') == 'fas'
 
 
 def test_load_mock_called(tmp_path_factory):
@@ -349,7 +383,7 @@ def test_record_with_unknown_language(tmp_path):
 
     # act
     with pytest.raises(ODEMException) as odem_exc:
-        oproc.set_modelconfig_for(_langs)
+        oproc.language_modelconfig(_langs)
 
     # assert
     assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" == odem_exc.value.args[0]
