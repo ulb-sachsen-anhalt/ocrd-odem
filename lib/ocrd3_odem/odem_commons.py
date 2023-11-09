@@ -53,7 +53,6 @@ ARG_L_MODEL_MAP = 'model-mapping'
 ARG_S_EXECS = 'e'
 ARG_L_EXECS = 'executors'
 
-
 #
 # ODEM metadata
 #
@@ -68,10 +67,10 @@ DEFAULT_LANG = 'ger'
 # recognition level for tesserocr
 # must switch otherwise glyphs are reverted
 # for each word
-RTL_LANGUAGES = ['ara', 'fas', 'heb']
+DEFAULT_RTL_LANGUAGES = ['ara', 'fas', 'heb']
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_LOG_CONFIG =  os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
+DEFAULT_LOG_CONFIG = os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
 
 
 class ODEMException(Exception):

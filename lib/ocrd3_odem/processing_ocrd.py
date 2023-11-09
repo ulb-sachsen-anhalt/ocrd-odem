@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+from typing import List
 
 from ocrd.resolver import (
     Resolver
@@ -13,7 +14,7 @@ from digiflow import (
 
 from .odem_commons import (
     FILEGROUP_IMG,
-    RTL_LANGUAGES,
+    DEFAULT_RTL_LANGUAGES,
 )
 
 
@@ -46,12 +47,12 @@ def ocrd_workspace_setup(path_workspace, image_path):
     return image_path
 
 
-def get_recognition_level(model_config: str) -> str:
+def get_recognition_level(model_config: str, rtl_languages: List[str] = DEFAULT_RTL_LANGUAGES) -> str:
     """Determine tesseract recognition level
     with respect to language order by model
     configuration"""
 
-    if any((m for m in model_config.split('+') if m in RTL_LANGUAGES)):
+    if any((m for m in model_config.split('+') if m in rtl_languages)):
         return 'glyph'
     return 'word'
 
@@ -71,10 +72,11 @@ def run_ocr_page(*args):
     tess_host = args[4]
     tess_cntn = args[5]
     # determine if language requires word-level for RTLs
-    tess_level = get_recognition_level(model)
     docker_container_memory_limit: str = args[6]
     docker_container_timeout: int = args[7]
     container_name = args[8]
+
+    tess_level = get_recognition_level(model)
     os.chdir(ocr_dir)
     user_id = os.getuid()
     # replace not allowed chars
@@ -83,7 +85,7 @@ def run_ocr_page(*args):
     cmd += f" --name {container_name}"
     if docker_container_memory_limit is not None:
         cmd += f" --memory {docker_container_memory_limit}"
-        cmd += f" --memory-swap {docker_container_memory_limit}" # same value disables swap
+        cmd += f" --memory-swap {docker_container_memory_limit}"  # same value disables swap
     cmd += f" -w /data -v {ocr_dir}:/data"
     cmd += f" -v {tess_host}:{tess_cntn} {base_image}"
     cmd += f" ocrd-make TESSERACT_CONFIG={model} TESSERACT_LEVEL={tess_level} -f {makefile} . "
