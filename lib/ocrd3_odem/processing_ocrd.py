@@ -14,7 +14,6 @@ from digiflow import (
 
 from .odem_commons import (
     FILEGROUP_IMG,
-    DEFAULT_RTL_MODELS,
 )
 
 
@@ -47,7 +46,7 @@ def ocrd_workspace_setup(path_workspace, image_path):
     return image_path
 
 
-def get_recognition_level(model_config: str, rtl_models: List[str] = DEFAULT_RTL_MODELS) -> str:
+def get_recognition_level(model_config: str, rtl_models: List[str]) -> str:
     """Determine tesseract recognition level
     with respect to language order by model
     configuration"""
