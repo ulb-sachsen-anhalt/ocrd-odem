@@ -432,6 +432,7 @@ class ODEMProcess:
         tess_host = self.cfg.get('ocr', 'tessdir_host')
         tess_cntn = self.cfg.get('ocr', 'tessdir_cntr')
         docker_container_memory_limit: str = self.cfg.get('ocr', 'docker_container_memory_limit', fallback=None)
+        docker_container_user = self.cfg.get('ocr', 'docker_container_user', fallback=os.getuid())
         docker_container_timeout: str = self.cfg.getint(
             'ocr',
             'docker_container_timeout',
@@ -451,6 +452,7 @@ class ODEMProcess:
                 docker_container_memory_limit,
                 docker_container_timeout,
                 container_name,
+                docker_container_user,
             )
             # will be unset in case of magic mocking for test
             if profiling:
