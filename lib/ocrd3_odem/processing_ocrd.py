@@ -75,15 +75,15 @@ def run_ocr_page(*args):
     docker_container_memory_limit: str = args[6]
     docker_container_timeout: int = args[7]
     container_name = args[8]
+    container_user_id = args[9]
     os.chdir(ocr_dir)
-    user_id = os.getuid()
     # replace not allowed chars
     container_name = container_name.replace('+', '-')
-    cmd: str = f"docker run --rm -u {user_id}"
+    cmd: str = f"docker run --rm -u {container_user_id}"
     cmd += f" --name {container_name}"
     if docker_container_memory_limit is not None:
         cmd += f" --memory {docker_container_memory_limit}"
-        cmd += f" --memory-swap {docker_container_memory_limit}" # same value disables swap
+        cmd += f" --memory-swap {docker_container_memory_limit}"  # same value disables swap
     cmd += f" -w /data -v {ocr_dir}:/data"
     cmd += f" -v {tess_host}:{tess_cntn} {base_image}"
     cmd += f" ocrd-make TESSERACT_CONFIG={model} TESSERACT_LEVEL={tess_level} -f {makefile} . "
