@@ -35,7 +35,7 @@ from .odem_commons import (
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
-    ODEMException,
+    ODEMException, DEFAULT_RTL_MODELS,
 )
 from .processing_mets import (
     IDENTIFIER_CATALOGUE,
@@ -433,6 +433,7 @@ class ODEMProcess:
         tess_cntn = self.cfg.get('ocr', 'tessdir_cntr')
         docker_container_memory_limit: str = self.cfg.get('ocr', 'docker_container_memory_limit', fallback=None)
         docker_container_user = self.cfg.get('ocr', 'docker_container_user', fallback=os.getuid())
+        rtl_models: List[str] = self.cfg.getlist('ocr', 'model_rtl', fallback=DEFAULT_RTL_MODELS)
         docker_container_timeout: str = self.cfg.getint(
             'ocr',
             'docker_container_timeout',
@@ -453,6 +454,7 @@ class ODEMProcess:
                 docker_container_timeout,
                 container_name,
                 docker_container_user,
+                rtl_models,
             )
             # will be unset in case of magic mocking for test
             if profiling:

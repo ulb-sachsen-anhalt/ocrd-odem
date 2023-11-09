@@ -14,7 +14,7 @@ from digiflow import (
 
 from .odem_commons import (
     FILEGROUP_IMG,
-    DEFAULT_RTL_LANGUAGES,
+    DEFAULT_RTL_MODELS,
 )
 
 
@@ -47,12 +47,12 @@ def ocrd_workspace_setup(path_workspace, image_path):
     return image_path
 
 
-def get_recognition_level(model_config: str, rtl_languages: List[str] = DEFAULT_RTL_LANGUAGES) -> str:
+def get_recognition_level(model_config: str, rtl_models: List[str] = DEFAULT_RTL_MODELS) -> str:
     """Determine tesseract recognition level
     with respect to language order by model
     configuration"""
 
-    if any((m for m in model_config.split('+') if m in rtl_languages)):
+    if any((m for m in model_config.split('+') if m in rtl_models)):
         return 'glyph'
     return 'word'
 
@@ -75,11 +75,11 @@ def run_ocr_page(*args):
     docker_container_memory_limit: str = args[6]
     docker_container_timeout: int = args[7]
     container_name = args[8]
-	container_user_id = args[9]
+    container_user_id = args[9]
+    rtl_models = args[10]
 
-	
-    tess_level = get_recognition_level(model)
-    
+    tess_level = get_recognition_level(model, rtl_models)
+
     os.chdir(ocr_dir)
     # replace not allowed chars
     container_name = container_name.replace('+', '-')
