@@ -100,6 +100,8 @@ if __name__ == "__main__":
         print(f"unable to read config from '{CONF_FILE}! exit!")
         sys.exit(1)
 
+    CREATE_PDF: bool = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
+
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
     LOCAL_DELETE_BEVOR_EXPORT = []
@@ -193,9 +195,11 @@ if __name__ == "__main__":
         PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
         PROCESS.to_alto()
         PROCESS.link_ocr()
-        PROCESS.create_pdf()
+        if CREATE_PDF:
+            PROCESS.create_pdf()
         PROCESS.postprocess_ocr()
-        PROCESS.create_text_bundle_data()
+        if CREATE_PDF:
+            PROCESS.create_text_bundle_data()
         PROCESS.postprocess_mets()
         PROCESS.validate_mets()
         PROCESS.export_data()
