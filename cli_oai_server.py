@@ -101,7 +101,9 @@ def to_full_record(row):
 
     oai_id = row[RECORD_IDENTIFIER]
     record = OAIRecord(oai_id)
-    record.set = row[RECORD_SPEC]
+    # legacy field for backward compatibility
+    if RECORD_SPEC in row:
+        record.set = row[RECORD_SPEC]
     record.date_stamp = row[RECORD_RELEASED]
     record.info = row[RECORD_INFO]
     return record
