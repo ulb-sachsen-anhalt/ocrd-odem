@@ -6,7 +6,7 @@
 				<Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level][%t](%C{1}:%L) %m%n</Pattern>
 			</PatternLayout>
 		</Console>
-		<RollingFile name="derivansLog" fileName="${sys:user.home}/derivans.log" filePattern="${sys:user.home}/derivans.%i.log.gz" ignoreExceptions="false">
+		<RollingFile name="derivansLog" fileName="/usr/derivans/log/derivans.log" filePattern="/usr/derivans/log/derivans.%i.log.gz" ignoreExceptions="false">
 			<PatternLayout>
 				<Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level] (%C{1}:%L) %m%n</Pattern>
 			</PatternLayout>

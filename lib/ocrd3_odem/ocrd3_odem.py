@@ -605,12 +605,14 @@ class ODEMProcess:
             self.cfg.get('derivans', 'derivans_config')
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
+        path_logging = self.cfg.get('derivans','derivans_logdir', fallback=None)
         derivans: BaseDerivansManager = BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
             path_binary=path_bin,
             path_configuration=path_cfg,
-            path_mvn_project=path_prj
+            path_mvn_project=path_prj,
+            path_logging=path_logging,
         )
         derivans.init()
         # be cautious
