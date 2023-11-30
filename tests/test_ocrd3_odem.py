@@ -327,7 +327,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
 
     # act
     odem_processor.inspect_metadata()
-    odem_processor.filter_images()
+    odem_processor.set_local_images()
 
     # assert
     assert len(odem_processor.images_4_ocr) == 4

@@ -316,12 +316,10 @@ class ODEMProcess:
                              self.process_identifier, len(images))
         return images
 
-    def filter_images(self):
-        """Pick only those (local) images which
-        match the filtered metadata output so far.
-        Please note: that we pass a pair in,
-            inspect only the label and pass the
-            whole pair out, if file exists
+    def set_local_images(self):
+        """Construct pairs of local paths for 
+        (optional previously filtered by object metadata)
+        images and original page urn
         """
         _images_of_interest = []
         _local_max_dir = os.path.join(self.work_dir_main, 'MAX')

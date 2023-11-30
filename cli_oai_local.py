@@ -187,7 +187,7 @@ if __name__ == "__main__":
         PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.language_modelconfig()
-        PROCESS.filter_images()
+        PROCESS.set_local_images()
         outcomes = process_resource_monitor.monit_vmem(
             PROCESS.run_sequential if SEQUENTIAL else PROCESS.run_parallel
         )
