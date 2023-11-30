@@ -10,8 +10,9 @@ if [ ! -d "venv" ]; then
     python3 -m venv venv
 fi
 
-# shellcheck source=./venv/bin/activate
+# cf. https://www.shellcheck.net/wiki/SC1091
+# shellcheck source=/dev/null
 source ./venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install wheel
+python -m pip install --upgrade digiflow
 python -m pip install -r "$this_script_dir"/requirements.txt
