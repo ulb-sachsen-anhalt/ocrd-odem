@@ -616,7 +616,7 @@ class ODEMProcess:
             self.cfg.get('derivans', 'derivans_config')
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
-        path_logging = self.cfg.get('derivans','derivans_logdir', fallback=None)
+        path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
         derivans: BaseDerivansManager = BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
@@ -667,6 +667,10 @@ class ODEMProcess:
     def export_data(self):
         """re-do metadata and transform into output format"""
 
+        export_format: str = self.cfg.get('export', 'export_format', fallback='SAF')
+        export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
+        enrich_mets_fulltext: bool = self.cfg.getboolean('export', 'enrich_mets_fulltext', fallback=True)
+
         exp_dst = self.cfg.get('global', 'local_export_dir')
         exp_tmp = self.cfg.get('global', 'local_export_tmp')
         exp_col = self.cfg.get('global', 'export_collection')
@@ -677,9 +681,14 @@ class ODEMProcess:
         exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
         exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
         saf_name = self.identifiers[IDENTIFIER_CATALOGUE]
-        export_result = export_data_from(self.mets_file, exp_col,
-                                         saf_final_name=saf_name, export_dst=exp_dst,
-                                         export_map=exp_map, tmp_saf_dir=exp_tmp)
+        export_result = export_data_from(
+            self.mets_file,
+            exp_col,
+            saf_final_name=saf_name,
+            export_dst=exp_dst,
+            export_map=exp_map,
+            tmp_saf_dir=exp_tmp
+        )
         self.the_logger.info("[%s] exported data: %s",
                              self.process_identifier, export_result)
         if export_result:
