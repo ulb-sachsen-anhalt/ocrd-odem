@@ -1,16 +1,3 @@
-# Install by copying (or symlinking) makefiles into a directory
-# where all OCR-D workspaces (unpacked BagIts) reside. Then
-# chdir to that location.
-
-# Call via:
-# `make -f WORKFLOW-CONFIG.mk WORKSPACE-DIRS` or
-# `make -f WORKFLOW-CONFIG.mk all` or just
-# `make -f WORKFLOW-CONFIG.mk`
-# To rebuild partially, you must pass -W to recursive make:
-# `make -f WORKFLOW-CONFIG.mk EXTRA_MAKEFLAGS="-W FILEGRP"`
-# To get help on available goals:
-# `make help`
-
 ###
 # From here on, custom configuration begins.
 MODEL_CONFIG = Fraktur
@@ -68,8 +55,8 @@ $(DEW): TOOL = ocrd-cis-ocropy-dewarp
 
 OCR = PAGE
 $(OCR): $(DEW)
-$(OCR): PARAMS = "model" : "$(MODEL_CONFIG)", "textequiv_level" : "$(TESSERACT_LEVEL)"
-$(OCR): TOOL = ocrd-tesserocr-recognize
+$(OCR): PARAMS = "model" : "$(MODEL_CONFIG)"
+$(OCR): TOOL = ocrd-kraken-recognize
 
 sanitize: $(OCR)
 	ocrd workspace prune-files

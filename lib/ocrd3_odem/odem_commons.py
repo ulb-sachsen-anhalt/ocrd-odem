@@ -67,7 +67,7 @@ DEFAULT_LANG = 'ger'
 # recognition level for tesserocr
 # must switch otherwise glyphs are reverted
 # for each word
-DEFAULT_RTL_MODELS = ['ara', 'fas', 'heb']
+DEFAULT_RTL_MODELS = ["ara.traineddata", "fas.traineddata", "heb.traineddata"]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LOG_CONFIG = os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')

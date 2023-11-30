@@ -76,6 +76,8 @@ ODEM_PAGE_TIME_FORMAT = '%Y-%m-%d_%H-%m-%S'
 # how long to process single page?
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
 
+CFG_KEY_RES_VOL = "ocrd_resources_volumes"
+
 
 class ODEMProcess:
     """Create OCR for OAI Records.
@@ -232,11 +234,11 @@ class ODEMProcess:
             if not model_entry:
                 raise ODEMException(f"'{lang}' mapping not found (languages: {languages})!")
             for model in model_entry.split('+'):
-                if self._is_lang_available(model):
+                if self._is_model_available(model):
                     _models.append(model)
                 else:
                     raise ODEMException(f"'{model}' model config not found !")
-        _model_conf = '+'.join(_models)
+        _model_conf = '+'.join(_models) if self.cfg.getboolean('ocr', "model_combinable", fallback=True) else _models[0]
         self.the_logger.info("[%s] map languages '%s' => '%s'",
                              self.process_identifier, languages, _model_conf)
         return _model_conf
@@ -275,13 +277,14 @@ class ODEMProcess:
         # inspect language information from MODS metadata
         return self.language_modelconfig()
 
-    def _is_lang_available(self, lang) -> bool:
+    def _is_model_available(self, model) -> bool:
         """Determine whether model is available"""
 
-        tess_host = self.cfg.get('ocr', 'tessdir_host')
-        training_file = tess_host + '/' + lang + '.traineddata'
-        if os.path.exists(training_file):
-            return True
+        resource_dir_mappings = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
+        for host_dir, _ in resource_dir_mappings.items():
+            training_file = host_dir + '/' + model
+            if os.path.exists(training_file):
+                return True
         return False
 
     def get_local_image_paths(self, image_local_dir=None) -> List[str]:
@@ -407,6 +410,7 @@ class ODEMProcess:
 
         # # find out the needed model config for tesseract
         model_config = self.map_language_to_modelconfig(image_path)
+
         stored = 0
         mps = 0
         filesize_mb = 0
@@ -425,34 +429,43 @@ class ODEMProcess:
             _ident = os.path.basename(self.work_dir_main)
         # OCR Generation
         profiling = ('n.a.', 0)
-        base_image = self.cfg.get('ocr', 'ocrd_baseimage')
-        makefile = self.cfg.get('ocr', 'ocrd_makefile').split('/')[-1]
-        tess_host = self.cfg.get('ocr', 'tessdir_host')
-        tess_cntn = self.cfg.get('ocr', 'tessdir_cntr')
-        docker_container_memory_limit: str = self.cfg.get('ocr', 'docker_container_memory_limit', fallback=None)
-        docker_container_user = self.cfg.get('ocr', 'docker_container_user', fallback=os.getuid())
-        rtl_models: List[str] = self.cfg.getlist('ocr', 'model_rtl', fallback=DEFAULT_RTL_MODELS)
-        docker_container_timeout: str = self.cfg.getint(
+
+        container_name: str = f'{self.process_identifier}_{os.path.basename(page_workdir)}'
+        container_memory_limit: str = self.cfg.get('ocr', 'docker_container_memory_limit', fallback=None)
+        container_user = self.cfg.get('ocr', 'docker_container_user', fallback=os.getuid())
+        container_timeout: int = self.cfg.getint(
             'ocr',
             'docker_container_timeout',
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
-        container_name: str = f'{self.process_identifier}_{os.path.basename(page_workdir)}'
+        base_image = self.cfg.get('ocr', 'ocrd_baseimage')
+
+        makefile = self.cfg.get('ocr', 'ocrd_makefile').split('/')[-1]
+
+        # model_dir_host = self.cfg.get('ocr', 'model_dir_host')
+        # model_dir_container = self.cfg.get('ocr', 'model_dir_container')
+        tesseract_model_rtl: List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
+        ocrd_resources_volumes: Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
+
         if self.local_mode:
             container_name = os.path.basename(page_workdir)
         try:
             profiling = run_ocr_page(
+
                 page_workdir,
-                model_config,
                 base_image,
-                makefile,
-                tess_host,
-                tess_cntn,
-                docker_container_memory_limit,
-                docker_container_timeout,
+
+                container_memory_limit,
+                container_timeout,
                 container_name,
-                docker_container_user,
-                rtl_models,
+                container_user,
+
+                model_config,
+                makefile,
+
+                ocrd_resources_volumes,
+                tesseract_model_rtl,
+
             )
             # will be unset in case of magic mocking for test
             if profiling:

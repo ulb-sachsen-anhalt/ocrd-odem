@@ -65,29 +65,40 @@ def run_ocr_page(*args):
     """
 
     ocr_dir = args[0]
-    model = args[1]
-    base_image = args[2]
-    makefile = args[3]
-    tess_host = args[4]
-    tess_cntn = args[5]
-    # determine if language requires word-level for RTLs
-    docker_container_memory_limit: str = args[6]
-    docker_container_timeout: int = args[7]
-    container_name = args[8]
-    container_user_id = args[9]
-    rtl_models = args[10]
+    base_image = args[1]
 
-    tess_level = get_recognition_level(model, rtl_models)
+    container_memory_limit: str = args[2]
+    container_timeout: int = args[3]
+    container_name = args[4]
+    container_user_id = args[5]
+
+    model_config = args[6]
+    makefile = args[7]
+
+    ocrd_resources_volumes = args[8]
+    tesseract_model_rtl = args[9]
+
+    # determine if language requires word-level for RTLs
+    tess_level = get_recognition_level(model_config, tesseract_model_rtl)
+
+    model_config = model_config.replace('.traineddata', '')
 
     os.chdir(ocr_dir)
     # replace not allowed chars
     container_name = container_name.replace('+', '-')
+
     cmd: str = f"docker run --rm -u {container_user_id}"
     cmd += f" --name {container_name}"
-    if docker_container_memory_limit is not None:
-        cmd += f" --memory {docker_container_memory_limit}"
-        cmd += f" --memory-swap {docker_container_memory_limit}"  # same value disables swap
+    if container_memory_limit is not None:
+        cmd += f" --memory {container_memory_limit}"
+        cmd += f" --memory-swap {container_memory_limit}"  # same value disables swap
     cmd += f" -w /data -v {ocr_dir}:/data"
-    cmd += f" -v {tess_host}:{tess_cntn} {base_image}"
-    cmd += f" ocrd-make TESSERACT_CONFIG={model} TESSERACT_LEVEL={tess_level} -f {makefile} . "
-    subprocess.run(cmd, shell=True, check=True, timeout=docker_container_timeout)
+    for host_dir, cntr_dir in ocrd_resources_volumes.items():
+        cmd += f" -v {host_dir}:{cntr_dir}"
+    # cmd += f" -v {model_dir_host}:{model_dir_container}"
+    cmd += f" {base_image}"
+    cmd += f" ocrd-make MODEL_CONFIG={model_config} TESSERACT_LEVEL={tess_level}"
+    cmd += f" -f {makefile} . "
+
+    subprocess.run(cmd, shell=True, check=True, timeout=container_timeout)
+    pass
