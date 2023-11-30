@@ -6,6 +6,13 @@
 				<Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level][%t](%C{1}:%L) %m%n</Pattern>
 			</PatternLayout>
 		</Console>
+		<!-- 
+			please note:
+				this setup is meant to be used if derivans runs inside a containert
+				therefore these paths refer actually to paths/pattern inside the 
+				running container which must be volume-mapped to persist
+				c.f. https://github.com/ulb-sachsen-anhalt/digital-flow/src/digiflow/digiflow_generate.py#L48
+		-->
 		<RollingFile name="derivansLog" fileName="/usr/derivans/log/derivans.log" filePattern="/usr/derivans/log/derivans.%i.log.gz" ignoreExceptions="false">
 			<PatternLayout>
 				<Pattern>%d{yyyy-MM-dd HH:mm:ss} [%-5level] (%C{1}:%L) %m%n</Pattern>
