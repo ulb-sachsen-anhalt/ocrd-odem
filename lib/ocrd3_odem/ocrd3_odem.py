@@ -679,7 +679,8 @@ class ODEMProcess:
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
         exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
-        exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
+        if export_mets:
+            exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
         saf_name = self.identifiers[IDENTIFIER_CATALOGUE]
         export_result = export_data_from(
             self.mets_file,
@@ -687,7 +688,8 @@ class ODEMProcess:
             saf_final_name=saf_name,
             export_dst=exp_dst,
             export_map=exp_map,
-            tmp_saf_dir=exp_tmp
+            tmp_saf_dir=exp_tmp,
+            export_format=export_format
         )
         self.the_logger.info("[%s] exported data: %s",
                              self.process_identifier, export_result)
