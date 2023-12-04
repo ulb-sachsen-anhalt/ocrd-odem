@@ -14,13 +14,13 @@ from lib.ocrd3_odem.processing_ocrd import (
 
 @pytest.mark.parametrize("model_configuration,recognotion_level",
                          [
-                             ('ger', 'word'),
-                             ('ara', 'glyph'),
-                             ('ara+ger', 'glyph'),
-                             ('ger+lat', 'word'),
-                             ('fas', 'glyph'),
-                             ('ger+lat', 'word'),
-                             ('eng+fas', 'glyph')
+                             ('ger.traineddata', 'word'),
+                             ('ara.traineddata', 'glyph'),
+                             ('ara.traineddata+ger.traineddata', 'glyph'),
+                             ('ger.traineddata+lat.traineddata', 'word'),
+                             ('fas.traineddata', 'glyph'),
+                             ('ger.traineddata+lat.traineddata', 'word'),
+                             ('eng.traineddata+fas.traineddata', 'glyph')
                          ])
 def test_odem_recognition_level(model_configuration, recognotion_level):
     """Check determined recognition level passed

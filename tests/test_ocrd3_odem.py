@@ -23,7 +23,7 @@ from lib.ocrd3_odem import (
     ODEMProcess,
     ODEMException,
     get_configparser,
-    get_logger,
+    get_logger, CFG_KEY_RES_VOL,
 )
 from .conftest import (
     PROJECT_ROOT_DIR,
@@ -34,12 +34,12 @@ from .conftest import (
 
 
 @pytest.mark.parametrize("img_path,lang_str", [
-    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
-    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr+gt4hist_5000k'),
-    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc+lat_ocr'),
-    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k'),
-    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat_ocr'),
-    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'gt4hist_5000k+lat_ocr')])
+    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr.traineddata+gt4hist_5000k.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc.traineddata+lat_ocr.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat_ocr.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'gt4hist_5000k.traineddata+lat_ocr.traineddata')])
 def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     """Ensure ODEM Object picks 
     proper project language mappings
@@ -62,10 +62,11 @@ def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     assert odem_processor.map_language_to_modelconfig(img_path) == lang_str
 
 
-@pytest.mark.parametrize("img_path,langs,models",[
-    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_fre.jpg','lat', 'lat_ocr'),
-    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'ger+lat', 'gt4hist_5000k+lat_ocr'),
-    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'ger', 'gt4hist_5000k'),])
+@pytest.mark.parametrize("img_path,langs,models", [
+    ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_fre.jpg', 'lat', 'lat_ocr.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'ger+lat',
+     'gt4hist_5000k.traineddata+lat_ocr.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'ger', 'gt4hist_5000k.traineddata'), ])
 def test_exchange_language(img_path, langs, models, tmp_path):
     """Ensure: ODEM can be forced to use different
     languages than are present via file name
@@ -81,7 +82,8 @@ def test_exchange_language(img_path, langs, models, tmp_path):
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     odem_processor.cfg = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
-    odem_processor.cfg.set(CFG_SEC_OCR, 'tessdir_host', _tess_dir)
+    odem_processor.cfg.set(CFG_SEC_OCR, CFG_KEY_RES_VOL,
+                           f"{_tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize")
     odem_processor.cfg.set(CFG_SEC_OCR, KEY_LANGUAGES, langs)
     odem_processor.the_logger = get_logger(str(log_dir))
     odem_processor.local_mode = True
@@ -111,16 +113,16 @@ def test_enforce_language_and_model_mapping(tmp_path):
     _tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.cfg.set(CFG_SEC_OCR, 'tessdir_host', _tess_dir)
     odem_processor.cfg.set(CFG_SEC_OCR, KEY_LANGUAGES, 'fas')
-    odem_processor.cfg.set(CFG_SEC_OCR, KEY_MODEL_MAP, 'fas: fas')
+    odem_processor.cfg.set(CFG_SEC_OCR, KEY_MODEL_MAP, 'fas: fas.traineddata')
     odem_processor.the_logger = get_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act 1st
-    assert odem_processor.map_language_to_modelconfig('/data/img/0001.tif') == 'fas'
+    assert odem_processor.map_language_to_modelconfig('/data/img/0001.tif') == 'fas.traineddata'
     # act 2nd
-    assert odem_processor.map_language_to_modelconfig('/data/img/0002.tif') == 'fas'
+    assert odem_processor.map_language_to_modelconfig('/data/img/0002.tif') == 'fas.traineddata'
     # act 3rd call. still only fas:fas
-    assert odem_processor.map_language_to_modelconfig('/data/img/0003.tif') == 'fas'
+    assert odem_processor.map_language_to_modelconfig('/data/img/0003.tif') == 'fas.traineddata'
 
 
 def test_load_mock_called(tmp_path_factory):
@@ -211,7 +213,7 @@ def test_lang_mapping_missing_conf_error(odem_processor: ODEMProcess):
 
 
 def test_lang_mapping_missing_lang_error(odem_processor: ODEMProcess):
-    """Ensure cannot map dummy language 'yyy'"""
+    """Ensure cannot map dummy language 'yyy.traineddata'"""
 
     # arrange
     img_path = 'resources/urn+nbn+de+gbv+3+1-116899-p0062-3_xxx.jpg'
@@ -221,7 +223,7 @@ def test_lang_mapping_missing_lang_error(odem_processor: ODEMProcess):
         odem_processor.map_language_to_modelconfig(img_path)
 
     # assert
-    assert "'yyy' model config not found !" in err.value.args[0]
+    assert "'yyy.traineddata' model config not found !" in err.value.args[0]
 
 
 def test_module_fixture_one_integrated_ocr_in_mets(fixture_27949: ODEMProcess):

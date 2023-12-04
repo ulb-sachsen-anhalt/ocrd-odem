@@ -35,7 +35,7 @@ from .odem_commons import (
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
-    ODEMException, DEFAULT_RTL_MODELS,
+    ODEMException, DEFAULT_RTL_MODELS, CFG_KEY_RES_VOL,
 )
 from .processing_mets import (
     IDENTIFIER_CATALOGUE,
@@ -75,8 +75,6 @@ DEFAULT_RUNTIME_PAGE = 1.0
 ODEM_PAGE_TIME_FORMAT = '%Y-%m-%d_%H-%m-%S'
 # how long to process single page?
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
-
-CFG_KEY_RES_VOL = "ocrd_resources_volumes"
 
 
 class ODEMProcess:
@@ -280,7 +278,7 @@ class ODEMProcess:
     def _is_model_available(self, model) -> bool:
         """Determine whether model is available"""
 
-        resource_dir_mappings = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
+        resource_dir_mappings = self.cfg.getdict(CFG_SEC_OCR, CFG_KEY_RES_VOL, fallback={})
         for host_dir, _ in resource_dir_mappings.items():
             training_file = host_dir + '/' + model
             if os.path.exists(training_file):

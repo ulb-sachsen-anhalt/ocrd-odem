@@ -29,7 +29,7 @@ def test_merge_args_exchange_model_mappings():
     _prev_mapping = _conf_parser.getdict(CFG_SEC_OCR, KEY_MODEL_MAP)
     assert 'lat' in _prev_mapping
     assert 'per' in _prev_mapping
-    assert _prev_mapping['per'] == 'fas'
+    assert _prev_mapping['per'] == 'fas.traineddata'
 
     # act
     _args = {KEY_MODEL_MAP: 'fas: ulb-fas-123'}
@@ -53,7 +53,7 @@ def test_merge_args_from_cli():
     _prev_mapping = _conf_parser.getdict(CFG_SEC_OCR, KEY_MODEL_MAP)
     assert 'lat' in _prev_mapping
     assert 'per' in _prev_mapping
-    assert _prev_mapping['per'] == 'fas'
+    assert _prev_mapping['per'] == 'fas.traineddata'
 
     # act
     _args = {KEY_LANGUAGES: 'ulb-fas-123'}
@@ -77,7 +77,7 @@ def test_merge_model_mappings_with_subsequent_calls():
     assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
     _prev_mapping = _conf_parser.getdict(CFG_SEC_OCR, KEY_MODEL_MAP)
     assert 'per' in _prev_mapping
-    assert _prev_mapping['per'] == 'fas'
+    assert _prev_mapping['per'] == 'fas.traineddata'
 
     # act
     _args = {KEY_MODEL_MAP: 'fas: ulb-fas-123'}
