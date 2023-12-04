@@ -36,7 +36,8 @@ def fixture_configuration():
     config.set('global', 'data_fields', 'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
     config.set('mets', 'blacklist_file_groups', 'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')
     config.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back')
-    config.set('mets', 'blacklist_physical_container_labels', 'Auftragszettel,Colorchecker,Leerseite,Rückdeckel,Deckblatt,Vorderdeckel,Illustration')
+    config.set('mets', 'blacklist_physical_container_labels',
+               'Auftragszettel,Colorchecker,Leerseite,Rückdeckel,Deckblatt,Vorderdeckel,Illustration')
     config.set('ocr', 'strip_tags', 'alto:Shape,alto:Processing,alto:Illustration,alto:GraphicalElement')
     config.set('ocr', 'ocrd_baseimage', 'ocrd/all:2022-08-15')
     return config
@@ -49,6 +50,17 @@ def prepare_tessdata_dir(tmp_path: Path) -> str:
     models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger', 'fas']
     for _m in models:
         with open(str(model_dir / f'{_m}.traineddata'), 'wb') as writer:
+            writer.write(b'abc')
+    return str(model_dir)
+
+
+def prepare_kraken_dir(tmp_path: Path) -> str:
+    """Generate MWE model data"""
+    model_dir = tmp_path / 'kraken'
+    model_dir.mkdir()
+    models = ['arabic_best']
+    for _m in models:
+        with open(str(model_dir / f'{_m}.mlmodel'), 'wb') as writer:
             writer.write(b'abc')
     return str(model_dir)
 
@@ -69,7 +81,7 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     _oproc.cfg = fixture_configuration()
     _oproc.cfg.set('ocr', CFG_KEY_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     _oproc.ocr_files = [os.path.join(trgt_alto, a)
-                       for a in os.listdir(trgt_alto)]
+                        for a in os.listdir(trgt_alto)]
     _oproc.mets_file = str(trgt_mets)
     _oproc.inspect_metadata()
     _oproc.clear_existing_entries()
