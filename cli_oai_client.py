@@ -4,7 +4,6 @@
 import argparse
 import os
 import shutil
-import socket
 import sys
 import time
 
@@ -137,7 +136,6 @@ class OAIServiceClient:
         self.record_data['IDENTIFIER'] = urn
         # if we have to report somethin' new, then append it
         if kwargs is not None:
-            _self_ip_addr = socket.gethostbyname(socket.gethostname())
             _info = f"{kwargs}"
             if self.record_data['INFO'] != 'n.a.':
                 _info = f"{self.record_data['INFO']},{_info}"
