@@ -9,6 +9,7 @@ import time
 from configparser import (
     ConfigParser,
 )
+from enum import Enum
 from pathlib import (
     Path
 )
@@ -31,6 +32,12 @@ MARK_OCR_SKIP = 'ocr_skip'
 
 # how many parallel procs
 DEFAULT_EXECUTORS = 2
+
+
+class ExportFormat(str, Enum):
+    SAF = 'SAF'
+    FLAT_ZIP = 'FLAT_ZIP'
+
 
 #
 # ODEM configuration keys

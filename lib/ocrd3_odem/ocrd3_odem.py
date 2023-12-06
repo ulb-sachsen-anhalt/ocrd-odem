@@ -32,7 +32,7 @@ from digiflow import (
 
 from .odem_commons import (
     CFG_SEC_OCR,
-    KEY_LANGUAGES,
+    ExportFormat, KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
     ODEMException, DEFAULT_RTL_MODELS,
@@ -667,7 +667,7 @@ class ODEMProcess:
     def export_data(self):
         """re-do metadata and transform into output format"""
 
-        export_format: str = self.cfg.get('export', 'export_format', fallback='SAF')
+        export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
         export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
         enrich_mets_fulltext: bool = self.cfg.getboolean('export', 'enrich_mets_fulltext', fallback=True)
 
@@ -682,15 +682,15 @@ class ODEMProcess:
         if export_mets:
             exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
         saf_name = self.identifiers[IDENTIFIER_CATALOGUE]
-        export_result = export_data_from(
-            self.mets_file,
-            exp_col,
-            saf_final_name=saf_name,
-            export_dst=exp_dst,
-            export_map=exp_map,
-            tmp_saf_dir=exp_tmp,
-            export_format=export_format
-        )
+        if export_format == ExportFormat.SAF:
+            export_result = export_data_from(
+                self.mets_file,
+                exp_col,
+                saf_final_name=saf_name,
+                export_dst=exp_dst,
+                export_map=exp_map,
+                tmp_saf_dir=exp_tmp,
+            )
         self.the_logger.info("[%s] exported data: %s",
                              self.process_identifier, export_result)
         if export_result:
