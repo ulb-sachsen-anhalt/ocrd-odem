@@ -9,6 +9,7 @@ import os
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 from pathlib import (
     Path
@@ -27,8 +28,9 @@ from digiflow import (
     export_data_from,
     MetsProcessor,
     BaseDerivansManager,
-    DerivansResult
+    DerivansResult, map_contents
 )
+from digiflow.digiflow_export import _compress
 
 from .odem_commons import (
     CFG_SEC_OCR,
@@ -691,6 +693,19 @@ class ODEMProcess:
                 export_map=exp_map,
                 tmp_saf_dir=exp_tmp,
             )
+        elif export_format:
+            prefix = 'opendata-working-'
+            source_path_dir = os.path.dirname(self.mets_file)
+            tmp_dir = tempfile.gettempdir()
+            if exp_tmp:
+                tmp_dir = exp_tmp
+            with tempfile.TemporaryDirectory(prefix=prefix, dir=tmp_dir) as tmp_dir:
+                work_dir = os.path.join(tmp_dir, saf_name)
+                export_mappings = map_contents(source_path_dir, work_dir, exp_map)
+                for mapping in export_mappings:
+                    mapping.copy()
+                export_result = _compress(os.path.dirname(work_dir), saf_name)
+
         self.the_logger.info("[%s] exported data: %s",
                              self.process_identifier, export_result)
         if export_result:
