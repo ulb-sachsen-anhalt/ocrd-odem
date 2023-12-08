@@ -208,7 +208,7 @@ def _fixture_odem_setup(tmp_path):
     log_dir.mkdir()
     odem_processor = ODEMProcess(None, work_dir=str(work_2))
     cfg = get_configparser()
-    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
+    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     odem_processor.cfg = cfg
     _model_dir = prepare_tessdata_dir(work_dir)
     odem_processor.cfg.set(CFG_SEC_OCR, CFG_KEY_RES_VOL,
@@ -341,7 +341,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     shutil.copyfile(_orig_mets, _work_dir / '1981185920_44046.xml')
     odem_processor = ODEMProcess(_record, work_dir=_work_dir)
     cfg = get_configparser()
-    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
+    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     odem_processor.cfg = cfg
     _log_dir = tmp_path / 'log'
     _log_dir.mkdir()
@@ -367,7 +367,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     _work_dir.mkdir()
     odem_processor = ODEMProcess(_record, work_dir=_work_dir)
     cfg = get_configparser()
-    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
+    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     odem_processor.cfg = cfg
     _log_dir = tmp_path / 'log'
     _log_dir.mkdir()

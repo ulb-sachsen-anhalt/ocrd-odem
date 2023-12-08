@@ -32,7 +32,7 @@ def fixture_configuration():
     """
 
     config = get_configparser()
-    config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini'))
+    config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     config.set('global', 'data_fields', 'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
     config.set('mets', 'blacklist_file_groups', 'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')
     config.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back')
