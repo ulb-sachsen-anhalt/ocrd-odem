@@ -23,7 +23,7 @@ from lib.ocrd3_odem import (
     ODEMProcess,
     ODEMException,
     get_configparser,
-    get_logger, CFG_KEY_RES_VOL, CFG_KEY_MODEL_COMBINABLE,
+    get_logger, CFG_KEY_RES_VOL, CFG_KEY_MODEL_COMBINABLE, ExportFormat,
 )
 from .conftest import (
     PROJECT_ROOT_DIR,
@@ -410,3 +410,45 @@ def test_record_with_unknown_language(tmp_path):
 
     # assert
     assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" == odem_exc.value.args[0]
+
+
+def test_export_flat_zip(tmp_path):
+    path_workdir = tmp_path / 'workdir'
+    path_workdir.mkdir()
+    path_tmp_export_dir = tmp_path / 'tmp_export'
+    path_tmp_export_dir.mkdir()
+    path_export_dir = tmp_path / 'export'
+    path_export_dir.mkdir()
+
+    orig_file = TEST_RES / '1981185920_44046.xml'
+    trgt_mets = path_workdir / 'test.xml'
+    shutil.copyfile(orig_file, trgt_mets)
+
+    orig_files = TEST_RES / 'vd18-1180329' / 'FULLTEXT'
+    trgt_files = path_workdir / 'FULLTEXT'
+    shutil.copytree(orig_files, trgt_files)
+
+    (path_workdir / 'log').mkdir()
+    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc.cfg = fixture_configuration()
+    _model_dir = prepare_tessdata_dir(tmp_path)
+
+    oproc.cfg.set('export', 'export_format', ExportFormat.FLAT_ZIP)
+    oproc.cfg.set('global', 'local_export_tmp', str(path_tmp_export_dir))
+    oproc.cfg.set('global', 'local_export_dir', str(path_export_dir))
+    oproc.cfg.set(
+        CFG_SEC_OCR,
+        CFG_KEY_RES_VOL,
+        f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize'
+    )
+
+    oproc.mets_file = str(trgt_mets)
+    oproc.inspect_metadata()
+    _langs = oproc.statistics.get(STATS_KEY_LANGS)
+
+    # act
+    zipfilepath, _ = oproc.export_data()
+
+    # assert
+    assert os.path.exists(zipfilepath) and os.path.getsize(zipfilepath) == 58552

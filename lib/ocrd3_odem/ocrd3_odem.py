@@ -30,7 +30,7 @@ from digiflow import (
     BaseDerivansManager,
     DerivansResult, map_contents
 )
-from digiflow.digiflow_export import _compress
+from digiflow.digiflow_export import _compress, _move_to_tmp_file
 
 from .odem_commons import (
     CFG_SEC_OCR,
@@ -691,7 +691,7 @@ class ODEMProcess:
                 export_map=exp_map,
                 tmp_saf_dir=exp_tmp,
             )
-        elif export_format:
+        elif export_format == ExportFormat.FLAT_ZIP:
             prefix = 'opendata-working-'
             source_path_dir = os.path.dirname(self.mets_file)
             tmp_dir = tempfile.gettempdir()
@@ -702,7 +702,12 @@ class ODEMProcess:
                 export_mappings = map_contents(source_path_dir, work_dir, exp_map)
                 for mapping in export_mappings:
                     mapping.copy()
-                export_result = _compress(os.path.dirname(work_dir), saf_name)
+                tmp_zip_path, size = self._compress(os.path.dirname(work_dir), saf_name)
+                path_export_processing = _move_to_tmp_file(tmp_zip_path, exp_dst)
+                export_result = path_export_processing, size
+
+        else:
+            raise ODEMException(f'Unsupported export format: {export_format}')
 
         self.the_logger.info("[%s] exported data: %s",
                              self.process_identifier, export_result)
@@ -716,6 +721,9 @@ class ODEMProcess:
                 self.the_logger.debug('[%s] rename %s to %s',
                                       self.process_identifier, pth, final_path)
                 shutil.move(pth, final_path)
+                return final_path, size
+
+        return None
 
     @property
     def duration(self):
@@ -733,3 +741,15 @@ class ODEMProcess:
 
         self._statistics['timedelta'] = f'{self.duration}'
         return self._statistics
+
+    def _compress(self, work_dir, archive_name):
+        zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
+
+        previous_dir = os.getcwd()
+        os.chdir(os.path.join(work_dir, archive_name))
+        cmd = f'zip -q -r {zip_file_path} ./*'
+        subprocess.run(cmd, shell=True, check=True)
+        os.chmod(zip_file_path, 0o666)
+        zip_size = int(os.path.getsize(zip_file_path) / 1024 / 1024)
+        os.chdir(previous_dir)
+        return zip_file_path, f"{zip_size}MiB"
