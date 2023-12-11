@@ -669,7 +669,6 @@ class ODEMProcess:
 
         export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
         export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
-        enrich_mets_fulltext: bool = self.cfg.getboolean('export', 'enrich_mets_fulltext', fallback=True)
 
         exp_dst = self.cfg.get('global', 'local_export_dir')
         exp_tmp = self.cfg.get('global', 'local_export_tmp')
