@@ -42,6 +42,8 @@ class ExportFormat(str, Enum):
 #
 # ODEM configuration keys
 CFG_SEC_OCR = 'ocr'
+CFG_KEY_RES_VOL = "ocrd_resources_volumes"
+CFG_KEY_MODEL_COMBINABLE = "model_combinable"
 KEY_EXECS = 'n_executors'
 KEY_LANGUAGES = 'language_model'
 KEY_MODEL_MAP = 'model_mapping'

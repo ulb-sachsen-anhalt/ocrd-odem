@@ -23,13 +23,13 @@ def test_merge_args_exchange_model_mappings():
 
     # arrange
     _conf_parser = get_configparser()
-    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini')
+    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini')
     assert os.path.isfile(_default_ini_file)
     assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
     _prev_mapping = _conf_parser.getdict(CFG_SEC_OCR, KEY_MODEL_MAP)
     assert 'lat' in _prev_mapping
     assert 'per' in _prev_mapping
-    assert _prev_mapping['per'] == 'fas'
+    assert _prev_mapping['per'] == 'fas.traineddata'
 
     # act
     _args = {KEY_MODEL_MAP: 'fas: ulb-fas-123'}
@@ -47,13 +47,13 @@ def test_merge_args_from_cli():
 
     # arrange
     _conf_parser = get_configparser()
-    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini')
+    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini')
     assert os.path.isfile(_default_ini_file)
     assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
     _prev_mapping = _conf_parser.getdict(CFG_SEC_OCR, KEY_MODEL_MAP)
     assert 'lat' in _prev_mapping
     assert 'per' in _prev_mapping
-    assert _prev_mapping['per'] == 'fas'
+    assert _prev_mapping['per'] == 'fas.traineddata'
 
     # act
     _args = {KEY_LANGUAGES: 'ulb-fas-123'}
@@ -72,12 +72,12 @@ def test_merge_model_mappings_with_subsequent_calls():
 
     # arrange
     _conf_parser = get_configparser()
-    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ini')
+    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini')
     assert os.path.isfile(_default_ini_file)
     assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
     _prev_mapping = _conf_parser.getdict(CFG_SEC_OCR, KEY_MODEL_MAP)
     assert 'per' in _prev_mapping
-    assert _prev_mapping['per'] == 'fas'
+    assert _prev_mapping['per'] == 'fas.traineddata'
 
     # act
     _args = {KEY_MODEL_MAP: 'fas: ulb-fas-123'}
