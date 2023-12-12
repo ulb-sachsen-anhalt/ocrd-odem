@@ -9,6 +9,7 @@ import os
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 from pathlib import (
     Path
@@ -27,11 +28,13 @@ from digiflow import (
     export_data_from,
     MetsProcessor,
     BaseDerivansManager,
-    DerivansResult
+    DerivansResult, map_contents
 )
+from digiflow.digiflow_export import _compress, _move_to_tmp_file
 
 from .odem_commons import (
     CFG_SEC_OCR,
+    ExportFormat,
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
@@ -453,7 +456,7 @@ class ODEMProcess:
                 raise ODEMException(str(err.args[0])) from err
             raise err
 
-    def export_data(self):
+    def export_data(self) -> Tuple:
         """re-do metadata and transform into output format"""
 
         exp_dst = self.cfg.get('global', 'local_export_dir')
@@ -481,6 +484,8 @@ class ODEMProcess:
                 self.the_logger.debug('[%s] rename %s to %s',
                                       self.process_identifier, pth, final_path)
                 shutil.move(pth, final_path)
+            return (final_path, size)
+        return ()
 
     @property
     def duration(self):
@@ -543,7 +548,7 @@ class OCRDPageParallel(ODEMProcess):
         self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
                              self.process_identifier, _len_img, _estm_min)
         try:
-            outcomes = [self.ocrd_page(_img)
+            outcomes = [self.create_single_ocr(_img)
                         for _img in self.images_4_ocr]
             return outcomes
         except (OSError, AttributeError) as err:

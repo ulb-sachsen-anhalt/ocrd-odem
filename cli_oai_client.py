@@ -228,6 +228,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     CREATE_PDF: bool = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
+    ENRICH_METS_FULLTEXT: bool = CFG.getboolean('export', 'enrich_mets_fulltext', fallback=True)
 
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
@@ -347,7 +348,8 @@ if __name__ == "__main__":
         outcomes = process_resource_monitor.monit_vmem(PROCESS.run)
         PROCESS.calculate_statistics(outcomes)
         PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
-        PROCESS.link_ocr()
+        if ENRICH_METS_FULLTEXT:
+            PROCESS.link_ocr()
         if CREATE_PDF:
             PROCESS.create_pdf()
         PROCESS.postprocess_ocr()

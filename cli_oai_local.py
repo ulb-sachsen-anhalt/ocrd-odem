@@ -102,6 +102,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     CREATE_PDF: bool = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
+    ENRICH_METS_FULLTEXT: bool = CFG.getboolean('export', 'enrich_mets_fulltext', fallback=True)
 
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
