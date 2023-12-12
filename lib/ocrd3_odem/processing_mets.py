@@ -194,10 +194,10 @@ def fname_ident_pairs_from_metadata(mets_root, image_res, blacklist_structs, bla
         _file_id = img_cnt.get('ID')
         _phys_dict = _phys_container_for_id(_phys_conts, _file_id)
         try:
-            log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
+            log_types = _log_types_for_page(_phys_dict['ID'], _structmap_links, _log_conts)
         except ODEMMetadataMetsException as ome:
             _problems.append(ome.args[0])
-        if not is_in(blacklist_structs, log_type):
+        if not is_in(blacklist_structs, log_types):
             if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
                 _pairs.append((_local_file_name, _phys_dict['ID']))
     # re-raise on error
@@ -227,14 +227,15 @@ def _phys_container_for_id(_phys_conts, _id):
             return {'ID': _cnt_id, 'LABEL': _label}
 
 
-def _log_type_for_id(phys_id, structmap_links, log_conts):
+def _log_types_for_page(phys_id, structmap_links, log_conts):
     """Follow link from physical container ('to') 
-    via  strucmap link to the corresponding logical 
+    via  strucmap link to any corresponding logical 
     structure ('from') and grab it's type
 
-    Alert if no type found => indicates inconsistend data
+    Alert if no link found => indicates inconsistend data
     """
 
+    _log_linked_types = []
     for _link in structmap_links:
         _physical_target_id = _link.attrib['{http://www.w3.org/1999/xlink}to']
         if _physical_target_id == phys_id:
@@ -242,8 +243,10 @@ def _log_type_for_id(phys_id, structmap_links, log_conts):
                 _logical_section_id = _logical_section.attrib['ID']
                 _logical_target_id = _link.attrib['{http://www.w3.org/1999/xlink}from']
                 if _logical_section_id == _logical_target_id:
-                    return _logical_section.attrib['TYPE']
-    raise ODEMMetadataMetsException(f"Page {phys_id} not linked")
+                    _log_linked_types.append(_logical_section.attrib['TYPE'])
+    if len(_log_linked_types) == 0:
+        raise ODEMMetadataMetsException(f"Page {phys_id} not linked")
+    return _log_linked_types
 
 
 def clear_filegroups(xml_file, removals):
