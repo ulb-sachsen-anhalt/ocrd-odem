@@ -1,6 +1,7 @@
 """Specification for METS/MODS handling"""
 
 import datetime
+import os
 import shutil
 
 import pytest
@@ -8,7 +9,6 @@ import pytest
 import lxml.etree as ET
 
 from lib.ocrd3_odem import (
-    IDENTIFIER_CATALOGUE,
     XMLNS,
     ODEMMetadataMetsException,
     ODEMNoImagesForOCRException,
@@ -51,7 +51,7 @@ def test_odem_process_catalog_identifier(inspecteur_44043: ODEMMetadataInspecteu
     # init_odem.inspect_metadata()
 
     # assert
-    assert inspecteur_44043.identifiers[IDENTIFIER_CATALOGUE] == '265982944'
+    assert inspecteur_44043.record_identifier == '265982944'
 
 
 @pytest.fixture(name='post_mets', scope='module')
@@ -141,7 +141,7 @@ def test_opendata_record_no_printwork():
         inspc.inspect()
 
     # assert
-    assert f"{_oai_urn} no type for OCR: Ac" ==  odem_exc.value.args[0]
+    assert f"{_oai_urn} invalid PICA type for OCR: Ac" ==  odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present():
@@ -182,3 +182,23 @@ def test_opendata_record_type_error():
 
     # assert
     assert "2x: Page PHYS_0112 not linked,Page PHYS_0113 not linked" ==  odem_exc.value.args[0]
+
+
+def test_mets_mods_sbb_vol01_with_ulb_defaults():
+    """Check result outcome for SBB digital object from
+    OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
+    with default ULB configuration settings
+    """
+    # sbb-PPN891267093
+    _oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
+    orig_file = TEST_RES / 'sbb-PPN891267093.xml'
+    assert os.path.isfile(orig_file)
+    cfg = fixture_configuration()
+    inspc = ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+
+    # act
+    inspc.inspect()
+
+    # assert
+    assert inspc.process_identifier == _oai_urn
+    assert inspc.record_identifier == 'PPN891267093'

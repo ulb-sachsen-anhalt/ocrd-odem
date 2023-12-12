@@ -4,12 +4,13 @@ from .odem_commons import *
 
 from .ocrd3_odem import (
 	ODEMProcess,
+	OCRDPageParallel,
 )
 from .processing_ocrd import (
 	get_recognition_level,
 )
 from .processing_mets import (
-	IDENTIFIER_CATALOGUE,
+	RECORD_IDENTIFIER,
 	XMLNS,
 	ODEMMetadataInspecteur,
 	ODEMMetadataMetsException,

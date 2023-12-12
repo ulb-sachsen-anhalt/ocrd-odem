@@ -22,10 +22,17 @@ from .odem_commons import (
     FILEGROUP_OCR,
 )
 
-PRINT_WORKS = ['a', 'f', 'F', 'Z', 'B']
-IDENTIFIER_CATALOGUE = 'gvk-ppn'
+TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
+TYPE_PRINTS_LOGICAL = ['monograph', 'volume', 'issue', 'additional']
+CATALOG_ULB = 'gvk-ppn'
+CATALOG_OTH = 'gbv-ppn'
+CATALOGUE_IDENTIFIERS = [CATALOG_ULB, CATALOG_OTH]
+RECORD_IDENTIFIER = 'recordIdentifier'
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
+
+IMAGE_GROUP_ULB = 'MAX'
+IMAGE_GROUP_DEFAULT = 'DEFAULT'
 
 
 def extract_mets_data(the_self, the_data):
@@ -92,20 +99,35 @@ class ODEMMetadataInspecteur:
         """
         try:
             report = self._get_report()
-            if not report.type or report.type[-1] not in PRINT_WORKS:
-                raise ODEMNoTypeForOCRException(f"{self.process_identifier} no type for OCR: {report.type}")
+            if not report.type:
+                raise ODEMNoTypeForOCRException(f"{self.process_identifier} found no type")
+            _type = report.type
+            # PICA types *might* contain trailing 'u' or 'v' = 'Afu'
+            if len(_type) in range (2,4) and _type[1] not in TYPE_PRINTS_PICA:
+                raise ODEMNoTypeForOCRException(f"{self.process_identifier} invalid PICA type for OCR: {report.type}")
+            elif len(_type) > 3 and _type not in TYPE_PRINTS_LOGICAL:
+                raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
             reader = MetsReader(self._data)
             reader.check()
             self.inspect_metadata_images()
         except RuntimeError as _err:
             raise ODEMMetadataMetsException(_err.args[0]) from _err
-        if IDENTIFIER_CATALOGUE not in report.identifiers:
-            raise ODEMMetadataMetsException(f"No {IDENTIFIER_CATALOGUE} in {self.process_identifier}")
+        if not any(ident in CATALOGUE_IDENTIFIERS for ident in report.identifiers):
+            raise ODEMMetadataMetsException(f"No {CATALOGUE_IDENTIFIERS} in {self.process_identifier}")
 
     @property
     def identifiers(self):
-        """Get language information"""
+        """Get *all* identifiers"""
         return self._get_report().identifiers
+    
+    @property
+    def record_identifier(self):
+        """Get main MODS recordIdentifier if present"""
+        _idents = self._get_report().identifiers
+        if CATALOG_ULB in _idents:
+            return _idents[CATALOG_ULB]
+        elif CATALOG_OTH in _idents:
+            return _idents[CATALOG_OTH]
 
     @property
     def languages(self):
@@ -131,24 +153,27 @@ class ODEMMetadataInspecteur:
         blacklist_log = self._cfg.getlist('mets', 'blacklist_logical_containers')
         blacklist_lab = self._cfg.getlist('mets', 'blacklist_physical_container_labels')
         mets_root = ET.parse(self._data).getroot()
-        _max_images = mets_root.findall('.//mets:fileGrp[@USE="MAX"]/mets:file', XMLNS)
-        _n_max_images = len(_max_images)
-        if _n_max_images < 1:
+        _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_ULB}"]/mets:file', XMLNS)
+        _n_image_res = len(_image_res)
+        if _n_image_res == 0:
+            _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_DEFAULT}"]/mets:file', XMLNS)
+            _n_image_res = len(_image_res)
+        if _n_image_res < 1:
             _msg = f"{self.process_identifier} contains absolutly no images for OCR!"
             raise ODEMNoImagesForOCRException(_msg)
         # gather present images via generator
-        pairs_img_id = fname_ident_pairs_from_metadata(mets_root, blacklist_log, blacklist_lab)
+        pairs_img_id = fname_ident_pairs_from_metadata(mets_root, _image_res, blacklist_log, blacklist_lab)
         n_images_ocrable = len(pairs_img_id)
         if n_images_ocrable < 1:
-            _msg = f"{self.process_identifier} contains no images for OCR (total: {_n_max_images})!"
+            _msg = f"{self.process_identifier} contains no images for OCR (total: {_n_image_res})!"
             raise ODEMNoImagesForOCRException(_msg)
         # else, journey onwards with image name only
         self.image_pairs = pairs_img_id
-        self.n_images_pages = _n_max_images
+        self.n_images_pages = _n_image_res
         self.n_images_ocrable = len(self.image_pairs)
 
 
-def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page_labels):
+def fname_ident_pairs_from_metadata(mets_root, image_res, blacklist_structs, blacklist_page_labels):
     """Generate pairs of image label and URN
     that respect defined blacklisted physical
     and logical structures.
@@ -164,10 +189,9 @@ def fname_ident_pairs_from_metadata(mets_root, blacklist_structs, blacklist_page
     _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', XMLNS)
     _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', XMLNS)
     _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', XMLNS)
-    _max_images = mets_root.findall('.//mets:fileGrp[@USE="MAX"]/mets:file', XMLNS)
-    for _max_file in _max_images:
-        _local_file_name = _max_file[0].get(Q_XLINK_HREF).split('/')[-1]
-        _file_id = _max_file.get('ID')
+    for img_cnt in image_res:
+        _local_file_name = img_cnt[0].get(Q_XLINK_HREF).split('/')[-1]
+        _file_id = img_cnt.get('ID')
         _phys_dict = _phys_container_for_id(_phys_conts, _file_id)
         try:
             log_type = _log_type_for_id(_phys_dict['ID'], _structmap_links, _log_conts)
