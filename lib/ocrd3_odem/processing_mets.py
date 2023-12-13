@@ -26,7 +26,8 @@ TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
 TYPE_PRINTS_LOGICAL = ['monograph', 'volume', 'issue', 'additional']
 CATALOG_ULB = 'gvk-ppn'
 CATALOG_OTH = 'gbv-ppn'
-CATALOGUE_IDENTIFIERS = [CATALOG_ULB, CATALOG_OTH]
+CATALOG_SWB = 'swb-ppn' # SLUB OAI related
+CATALOGUE_IDENTIFIERS = [CATALOG_ULB, CATALOG_OTH, CATALOG_SWB]
 RECORD_IDENTIFIER = 'recordIdentifier'
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
@@ -128,6 +129,11 @@ class ODEMMetadataInspecteur:
             return _idents[CATALOG_ULB]
         elif CATALOG_OTH in _idents:
             return _idents[CATALOG_OTH]
+        else:
+            _proc_in = self.process_identifier
+            if ':' in _proc_in:
+                return _proc_in.replace(':', '+')
+            return _proc_in
 
     @property
     def languages(self):
