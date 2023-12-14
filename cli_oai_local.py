@@ -126,6 +126,8 @@ if __name__ == "__main__":
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
         CFG.set('ocr', 'n_executors', str(EXECUTOR_ARGS))
     EXECUTORS = CFG.getint('ocr', 'n_executors', fallback=DEFAULT_EXECUTORS)
+    if SEQUENTIAL:
+        EXECUTORS = 1
     LOGGER.debug("local work_root: '%s', executors:%s, keep_res:%s, lock:%s",
                  LOCAL_WORK_ROOT, EXECUTORS, MUST_KEEP_RESOURCES, MUST_LOCK)
 
