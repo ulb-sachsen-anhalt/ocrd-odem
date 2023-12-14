@@ -351,10 +351,14 @@ def _process_agents(mproc, label_base_image):
     mproc.enrich_agent(f"{METS_AGENT_ODEM}_{label_base_image}")
 
     # ensure only very recent derivans agent entry exists
+
     xp_txt_derivans = '//mets:agent[contains(mets:name,"DigitalDerivans")]'
     derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=XMLNS)
     if len(derivanses) < 1:
-        raise RuntimeError(f"Missing METS agent entry for {xp_txt_derivans}!")
+        # no previous derivans agent can happen
+        # for data from other institutions
+        # like SLUB or SBB records
+        return
     # sort by latest token in agent note ascending
     # note is assumed to be a date
     # like: "PDF FileGroup for PDF_198114125 created at 2022-04-29T12:40:30"
