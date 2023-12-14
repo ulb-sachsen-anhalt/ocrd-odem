@@ -9,7 +9,6 @@ import os
 import shutil
 import socket
 import subprocess
-import tempfile
 import time
 from pathlib import (
     Path
@@ -25,20 +24,21 @@ import numpy as np
 from digiflow import (
     OAILoader,
     OAIRecord,
-    export_data_from,
     MetsProcessor,
     BaseDerivansManager,
-    DerivansResult, map_contents
+    DerivansResult, 
+    export_data_from,
 )
-from digiflow.digiflow_export import _compress, _move_to_tmp_file
 
 from .odem_commons import (
     CFG_SEC_OCR,
-    ExportFormat,
+    CFG_KEY_RES_VOL,
+    DEFAULT_RTL_MODELS, 
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
-    ODEMException, DEFAULT_RTL_MODELS, CFG_KEY_RES_VOL,
+    ExportFormat,
+    ODEMException, 
 )
 from .processing_mets import (
     RECORD_IDENTIFIER,
@@ -54,8 +54,10 @@ from .processing_ocrd import (
     run_ocr_page,
 )
 from .processing_ocr_results import (
+    FILEGROUP_OCR,
     convert_to_output_format,
-    postprocess_ocr_file,
+    list_files,
+    postprocess_ocrd_file,
 )
 from .processing_image import (
     has_image_ext,
@@ -335,11 +337,11 @@ class ODEMProcess:
 
     def run(self) -> List:
         """Execute OCR workflow
-        Subject to actual ODEM flavors
+        Subject to actual ODEM flavor
         """
         return [(0,0,0,0)]
 
-    def calculate_statistics(self, outcomes):
+    def calculate_statistics(self, outcomes:List):
         """Calculate and aggregate runtime stats"""
         n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
         _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
@@ -353,6 +355,7 @@ class ODEMProcess:
     def link_ocr(self) -> int:
         """Prepare and link OCR-data"""
 
+        self.ocr_files = list_files(self.work_dir_main, FILEGROUP_OCR)
         if not self.ocr_files:
             return 0
         proc = MetsProcessor(self.mets_file)
@@ -368,7 +371,7 @@ class ODEMProcess:
         # clear punctual regions
         strip_tags = self.cfg.getlist('ocr', 'strip_tags')
         for _ocr_file in self.ocr_files:
-            postprocess_ocr_file(_ocr_file, strip_tags)
+            postprocess_ocrd_file(_ocr_file, strip_tags)
 
     def create_text_bundle_data(self):
         """create additional dspace bundle for indexing ocr text
@@ -548,7 +551,7 @@ class OCRDPageParallel(ODEMProcess):
         self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
                              self.process_identifier, _len_img, _estm_min)
         try:
-            outcomes = [self.create_single_ocr(_img)
+            outcomes = [self.ocrd_page(_img)
                         for _img in self.images_4_ocr]
             return outcomes
         except (OSError, AttributeError) as err:
@@ -615,11 +618,7 @@ class OCRDPageParallel(ODEMProcess):
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
         base_image = self.cfg.get('ocr', 'ocrd_baseimage')
-
         makefile = self.cfg.get('ocr', 'ocrd_makefile').split('/')[-1]
-
-        # model_dir_host = self.cfg.get('ocr', 'model_dir_host')
-        # model_dir_container = self.cfg.get('ocr', 'model_dir_container')
         tesseract_model_rtl: List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
         ocrd_resources_volumes: Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
 
@@ -627,21 +626,16 @@ class OCRDPageParallel(ODEMProcess):
             container_name = os.path.basename(page_workdir)
         try:
             profiling = run_ocr_page(
-
                 page_workdir,
                 base_image,
-
                 container_memory_limit,
                 container_timeout,
                 container_name,
                 container_user,
-
                 model_config,
                 makefile,
-
                 ocrd_resources_volumes,
                 tesseract_model_rtl,
-
             )
             # will be unset in case of magic mocking for test
             if profiling:

@@ -21,5 +21,5 @@ from .processing_mets import (
 from .processing_ocr_results import (
 	PUNCTUATIONS,
 	ODEMMetadataOcrException,
-	postprocess_ocr_file,
+	postprocess_ocrd_file,
 )

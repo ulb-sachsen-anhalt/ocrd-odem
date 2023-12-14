@@ -7,6 +7,9 @@ import unicodedata
 from math import (
     ceil
 )
+from typing import (
+    List,
+)
 
 import lxml.etree as ET
 
@@ -59,7 +62,7 @@ class ODEMMetadataOcrException(Exception):
     """
 
 
-def postprocess_ocr_file(ocr_file, strip_tags):
+def postprocess_ocrd_file(ocr_file, strip_tags):
     """
     Correct data in actual ocr_file
     * sourceImage file_name (ensure ends with '.jpg')
@@ -101,26 +104,29 @@ def postprocess_ocr_file(ocr_file, strip_tags):
     mproc.write()
 
 
+def list_files(dir_root, sub_dir) -> List:
+    _curr_dir = os.path.join(dir_root, sub_dir)
+    return [
+        os.path.join(_curr_dir, _file)
+        for _file in os.listdir(_curr_dir)
+        if str(_file).endswith('.xml')
+    ]
+
+
 def convert_to_output_format(work_dir_root):
     """Convert created OCR-Files to required presentation
     format (i.e. ALTO)
     """
 
     _converted = []
-    ocr_dir = os.path.join(work_dir_root, LOCAL_DIR_RESULT)
-    page_files = [
-        os.path.join(curr_dir, page_file)
-        for curr_dir, _, files in os.walk(ocr_dir)
-        for page_file in files
-        if str(page_file).endswith('.xml')
-    ]
-    alto_dir = os.path.join(work_dir_root, FILEGROUP_OCR)
-    if not os.path.isdir(alto_dir):
-        os.makedirs(alto_dir, exist_ok=True)
-    for page_file in page_files:
-        the_id = os.path.basename(page_file)
-        output_file = os.path.join(alto_dir, the_id)
-        converter = OcrdPageAltoConverter(page_filename=page_file).convert()
+    _fulltext_dir = os.path.join(work_dir_root, FILEGROUP_OCR)
+    if not os.path.isdir(_fulltext_dir):
+        os.makedirs(_fulltext_dir, exist_ok=True)
+    _results = list_files(work_dir_root, LOCAL_DIR_RESULT)
+    for _file in _results:
+        the_id = os.path.basename(_file)
+        output_file = os.path.join(_fulltext_dir, the_id)
+        converter = OcrdPageAltoConverter(page_filename=_file).convert()
         with open(output_file, 'w', encoding='utf-8') as output:
             output.write(str(converter))
         _converted.append(output_file)
