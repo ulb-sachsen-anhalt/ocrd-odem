@@ -618,7 +618,7 @@ class OCRDPageParallel(ODEMProcess):
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
         base_image = self.cfg.get('ocr', 'ocrd_baseimage')
-        makefile = self.cfg.get('ocr', 'ocrd_makefile').split('/')[-1]
+        ocrd_process_list = self.cfg.getlist('ocr', 'ocrd_process_list')
         tesseract_model_rtl: List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
         ocrd_resources_volumes: Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
 
@@ -632,8 +632,8 @@ class OCRDPageParallel(ODEMProcess):
                 container_timeout,
                 container_name,
                 container_user,
+                ocrd_process_list,
                 model_config,
-                makefile,
                 ocrd_resources_volumes,
                 tesseract_model_rtl,
             )

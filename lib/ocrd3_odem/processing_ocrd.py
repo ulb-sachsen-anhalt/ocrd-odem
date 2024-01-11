@@ -72,8 +72,9 @@ def run_ocr_page(*args):
     container_name = args[4]
     container_user_id = args[5]
 
-    model_config = args[6]
-    makefile = args[7]
+    ocrd_process_list: List[str] = args[6]
+
+    model_config = args[7]
 
     ocrd_resources_volumes = args[8]
     tesseract_model_rtl = args[9]
@@ -87,6 +88,13 @@ def run_ocr_page(*args):
     # replace not allowed chars
     container_name = container_name.replace('+', '-')
 
+    ocrd_process_args = {
+        'tesseract_level': tess_level,
+        'model_config': model_config
+    }
+    ocrd_process_list: List[str] = [f'"{p.format(**ocrd_process_args)}"' for p in ocrd_process_list]
+    ocrd_process_str: str = " ".join(ocrd_process_list)
+
     cmd: str = f"docker run --rm -u {container_user_id}"
     cmd += f" --name {container_name}"
     if container_memory_limit is not None:
@@ -95,10 +103,9 @@ def run_ocr_page(*args):
     cmd += f" -w /data -v {ocr_dir}:/data"
     for host_dir, cntr_dir in ocrd_resources_volumes.items():
         cmd += f" -v {host_dir}:{cntr_dir}"
-    # cmd += f" -v {model_dir_host}:{model_dir_container}"
     cmd += f" {base_image}"
-    cmd += f" ocrd-make MODEL_CONFIG={model_config} TESSERACT_LEVEL={tess_level}"
-    cmd += f" -f {makefile} . "
-
+    # cmd += f" ocrd-make MODEL_CONFIG={model_config} TESSERACT_LEVEL={tess_level}"
+    # cmd += f" -f {makefile} . "
+    cmd += f" ocrd process {ocrd_process_str}"
     subprocess.run(cmd, shell=True, check=True, timeout=container_timeout)
     pass
