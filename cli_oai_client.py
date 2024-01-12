@@ -32,6 +32,7 @@ from lib.ocrd3_odem import (
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
     ODEMProcess,
+    OCRDPageParallel,
     ODEMException,
     get_configparser,
     get_logger,
@@ -295,7 +296,7 @@ if __name__ == "__main__":
     rec_ident = record.identifier
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
-    PROCESS = ODEMProcess(record, req_dst_dir, EXECUTORS)
+    PROCESS: ODEMProcess = OCRDPageParallel(record, req_dst_dir, EXECUTORS)
     PROCESS.the_logger = LOGGER
     PROCESS.the_logger.debug(
         "request %s from %s, %s part slots)",
@@ -344,15 +345,11 @@ if __name__ == "__main__":
         PROCESS.language_modelconfig()
         PROCESS.set_local_images()
 
-        outcomes = process_resource_monitor.monit_vmem(PROCESS.run_parallel)
+        outcomes = process_resource_monitor.monit_vmem(PROCESS.run)
         PROCESS.calculate_statistics(outcomes)
-
         PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
-        PROCESS.to_alto()
-
         if ENRICH_METS_FULLTEXT:
             PROCESS.link_ocr()
-
         if CREATE_PDF:
             PROCESS.create_pdf()
         PROCESS.postprocess_ocr()

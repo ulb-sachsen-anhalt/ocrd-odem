@@ -1,6 +1,7 @@
 """Specification for METS/MODS handling"""
 
 import datetime
+import os
 import shutil
 
 import pytest
@@ -8,7 +9,6 @@ import pytest
 import lxml.etree as ET
 
 from lib.ocrd3_odem import (
-    IDENTIFIER_CATALOGUE,
     XMLNS,
     ODEMMetadataMetsException,
     ODEMNoImagesForOCRException,
@@ -51,7 +51,7 @@ def test_odem_process_catalog_identifier(inspecteur_44043: ODEMMetadataInspecteu
     # init_odem.inspect_metadata()
 
     # assert
-    assert inspecteur_44043.identifiers[IDENTIFIER_CATALOGUE] == '265982944'
+    assert inspecteur_44043.record_identifier == '265982944'
 
 
 @pytest.fixture(name='post_mets', scope='module')
@@ -141,7 +141,7 @@ def test_opendata_record_no_printwork():
         inspc.inspect()
 
     # assert
-    assert f"{_oai_urn} no type for OCR: Ac" ==  odem_exc.value.args[0]
+    assert f"{_oai_urn} invalid PICA type for OCR: Ac" ==  odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present():
@@ -182,3 +182,94 @@ def test_opendata_record_type_error():
 
     # assert
     assert "2x: Page PHYS_0112 not linked,Page PHYS_0113 not linked" ==  odem_exc.value.args[0]
+
+
+def test_mets_mods_sbb_vol01_with_ulb_defaults():
+    """Check result outcome for SBB digital object from
+    OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
+    with default ULB configuration settings
+    """
+    _oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
+    orig_file = TEST_RES / 'sbb-PPN891267093.xml'
+    assert os.path.isfile(orig_file)
+    cfg = fixture_configuration()
+    inspc = ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+
+    # act
+    inspc.inspect()
+
+    # assert
+    assert inspc.process_identifier == _oai_urn
+    assert inspc.record_identifier == 'PPN891267093'
+
+
+def test_mets_filter_logical_structs_by_type():
+    """Check filter mechanics for Kitodo2 record
+    which consists of 21 pages
+    * cover_front       : PHYS_0001,PHYS_0002
+    * cover_back        : PHYS_0019,PHYS_0020,PHYS_0021
+    * "[Leerseite]"     : PHYS_0004,PHYS_0017,PHYS_0018
+    * "[Colorchecker]"  : PHYS_0021 (already due cover_back)
+    => use exact 13 of total 21 pairs
+    """
+    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/33908'
+    orig_file = TEST_RES / '1981185920_33908.xml'
+    assert os.path.isfile(orig_file)
+    cfg = fixture_configuration()
+    inspc = ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+
+    # act
+    inspc.inspect()
+
+    # assert
+    assert inspc.process_identifier == _oai_urn
+    assert inspc.record_identifier == '058134433'
+    _image_page_pairs = inspc.image_pairs
+    assert not any('PHYS_0001' in p[1] for p in _image_page_pairs)
+    assert not any('PHYS_0002' in p[1] for p in _image_page_pairs)
+    assert any('PHYS_0003' in p[1] for p in _image_page_pairs)
+    assert not any('PHYS_0004' in p[1] for p in _image_page_pairs)
+    assert any('PHYS_0016' in p[1] for p in _image_page_pairs)
+    assert not any('PHYS_0017' in p[1] for p in _image_page_pairs)
+    assert len(_image_page_pairs) == 13
+
+
+def test_mets_mods_sbb_vol01_filtering():
+    """Check filtering for SBB digital object from
+    OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
+    with default ULB configuration settings
+    """
+    _oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
+    orig_file = TEST_RES / 'sbb-PPN891267093.xml'
+    assert os.path.isfile(orig_file)
+    cfg = fixture_configuration()
+    inspc = ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+
+    # act
+    inspc.inspect()
+
+    # assert
+    _image_page_pairs = inspc.image_pairs
+    assert not any('PHYS_0001' in p[1] for p in _image_page_pairs)
+    assert len(_image_page_pairs) == 136
+
+
+def test_mets_mods_sbb_vol01_filtering_custom():
+    """Check filtering for SBB digital object from
+    OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
+    now also remove logical type 'binding'
+    """
+    _oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
+    orig_file = TEST_RES / 'sbb-PPN891267093.xml'
+    assert os.path.isfile(orig_file)
+    cfg = fixture_configuration()
+    cfg.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back,binding')
+    inspc = ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+
+    # act
+    inspc.inspect()
+
+    # assert
+    _image_page_pairs = inspc.image_pairs
+    assert not any('PHYS_0001' in p[1] for p in _image_page_pairs)
+    assert len(_image_page_pairs) == 129

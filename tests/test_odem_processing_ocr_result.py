@@ -8,7 +8,7 @@ from lib.ocrd3_odem import (
     PUNCTUATIONS,
 	XMLNS,
     ODEMProcess,
-    postprocess_ocr_file,
+    postprocess_ocrd_file,
 )
 from .conftest import (
     fixture_configuration,
@@ -61,7 +61,7 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: ODEMProcess):
     strip_tags = fixture_configuration().getlist('ocr', 'strip_tags') # pylint: disable=no-member
 
     # act
-    postprocess_ocr_file(path_file, strip_tags)
+    postprocess_ocrd_file(path_file, strip_tags)
 
     # assert
     _raw_lines = [l.strip() for l in open(path_file, encoding='utf-8').readlines()]

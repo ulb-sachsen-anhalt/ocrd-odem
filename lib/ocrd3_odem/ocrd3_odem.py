@@ -18,29 +18,34 @@ from typing import (
     Dict,
     List,
     Optional,
-    Tuple,
 )
 import lxml.etree as ET
 import numpy as np
 from digiflow import (
     OAILoader,
     OAIRecord,
-    export_data_from,
     MetsProcessor,
     BaseDerivansManager,
-    DerivansResult, map_contents
+    DerivansResult,
+    export_data_from,
+    map_contents,
 )
-from digiflow.digiflow_export import _compress, _move_to_tmp_file
+from digiflow.digiflow_export import (
+    _move_to_tmp_file
+)
 
 from .odem_commons import (
     CFG_SEC_OCR,
-    ExportFormat, KEY_LANGUAGES,
+    CFG_KEY_RES_VOL,
+    DEFAULT_RTL_MODELS,
+    KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
-    ODEMException, DEFAULT_RTL_MODELS, CFG_KEY_RES_VOL,
+    ExportFormat,
+    ODEMException,
 )
 from .processing_mets import (
-    IDENTIFIER_CATALOGUE,
+    CATALOG_ULB,
     XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
@@ -53,8 +58,10 @@ from .processing_ocrd import (
     run_ocr_page,
 )
 from .processing_ocr_results import (
+    FILEGROUP_OCR,
     convert_to_output_format,
-    postprocess_ocr_file,
+    list_files,
+    postprocess_ocrd_file,
 )
 from .processing_image import (
     has_image_ext,
@@ -189,7 +196,7 @@ class ODEMProcess:
         except ODEMMetadataMetsException as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
         self.identifiers = insp.identifiers
-        self._statistics[IDENTIFIER_CATALOGUE] = insp.identifiers[IDENTIFIER_CATALOGUE]
+        self._statistics[CATALOG_ULB] = insp.record_identifier
         self._statistics['type'] = insp.type
         self._statistics[STATS_KEY_LANGS] = insp.languages
         self._statistics['n_images_pages'] = insp.n_images_pages
@@ -212,8 +219,7 @@ class ODEMProcess:
             _proc.write()
 
     def language_modelconfig(self, languages=None) -> str:
-        """Compose tesseract-ocr model config
-        from 
+        """resolve model configuration from
         * provided "languages" parameter
         * else use metadata language entries.
 
@@ -250,7 +256,7 @@ class ODEMProcess:
         Please note, that more than one config
         can be required, each glued with a '+' sign.
         (Therefore the splitting.)
-        
+
         Resolving order
         #1: inspect language flag
         #2: inspect local filenames
@@ -333,6 +339,237 @@ class ODEMProcess:
             _images_of_interest.append((_the_file, _urn))
         self.images_4_ocr = _images_of_interest
 
+    def run(self) -> List:
+        """Execute OCR workflow
+        Subject to actual ODEM flavor
+        """
+        return [(0, 0, 0, 0)]
+
+    def calculate_statistics(self, outcomes: List):
+        """Calculate and aggregate runtime stats"""
+        n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
+        _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
+        _mod_val_counts = np.unique(_total_mps, return_counts=True)
+        mps = list(zip(*_mod_val_counts))
+        total_mb = sum([e[3] for e in outcomes if e[0] == 1])
+        self._statistics['n_ocr'] = n_ocr
+        self._statistics['mb'] = round(total_mb, 2)
+        self._statistics['mps'] = mps
+
+    def link_ocr(self) -> int:
+        """Prepare and link OCR-data"""
+
+        self.ocr_files = list_files(self.work_dir_main, FILEGROUP_OCR)
+        if not self.ocr_files:
+            return 0
+        proc = MetsProcessor(self.mets_file)
+        _n_linked_ocr = integrate_ocr_file(proc.tree, self.ocr_files)
+        proc.write()
+        return _n_linked_ocr
+
+    def postprocess_ocr(self):
+        """Apply additional postprocessing to OCR data"""
+
+        # inspect each single created ocr file
+        # drop unwanted elements
+        # clear punctual regions
+        strip_tags = self.cfg.getlist('ocr', 'strip_tags')
+        for _ocr_file in self.ocr_files:
+            postprocess_ocrd_file(_ocr_file, strip_tags)
+
+    def create_text_bundle_data(self):
+        """create additional dspace bundle for indexing ocr text
+        read ocr-file sequential according to their number label
+        and extract every row into additional text file"""
+
+        _ocrs = sorted(self.ocr_files)
+        _txts = []
+        for _o in _ocrs:
+            with open(_o, mode='r', encoding='UTF-8') as _ocr_file:
+                _alto_root = ET.parse(_ocr_file)
+                _lines = _alto_root.findall('.//alto:TextLine', XMLNS)
+                for _l in _lines:
+                    _l_strs = [s.attrib['CONTENT'] for s in _l.findall('.//alto:String', XMLNS)]
+                    _txts.append(' '.join(_l_strs))
+        txt_content = '\n'.join(_txts)
+        _out_path = os.path.join(self.work_dir_main, f'{self._statistics[CATALOG_ULB]}.pdf.txt')
+        with open(_out_path, mode='w', encoding='UTF-8') as _writer:
+            _writer.write(txt_content)
+        self.the_logger.info("[%s] harvested %d lines from %d ocr files to %s",
+                             self.process_identifier, len(_txts), len(_ocrs), _out_path)
+        self._statistics['n_text_lines'] = len(_txts)
+
+    def create_pdf(self):
+        """Forward PDF-creation to Derivans"""
+
+        _cfg_path_dir_bin = self.cfg.get('derivans', 'derivans_dir_bin', fallback=None)
+        path_bin = None
+        if _cfg_path_dir_bin is not None:
+            path_bin = os.path.join(PROJECT_ROOT, _cfg_path_dir_bin)
+        _cfg_path_dir_project = self.cfg.get('derivans', 'derivans_dir_project', fallback=None)
+        path_prj = None
+        if _cfg_path_dir_project is not None:
+            path_prj = os.path.join(PROJECT_ROOT, _cfg_path_dir_project)
+        path_cfg = os.path.join(
+            PROJECT_ROOT,
+            self.cfg.get('derivans', 'derivans_config')
+        )
+        derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
+        path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
+        derivans: BaseDerivansManager = BaseDerivansManager.create(
+            self.mets_file,
+            container_image_name=derivans_image,
+            path_binary=path_bin,
+            path_configuration=path_cfg,
+            path_mvn_project=path_prj,
+            path_logging=path_logging,
+        )
+        derivans.init()
+        # be cautious
+        try:
+            dresult: DerivansResult = derivans.start()
+            self.the_logger.info("[%s] create derivates in %.1fs",
+                                 self.process_identifier, dresult.duration)
+        except subprocess.CalledProcessError as _sub_err:
+            _err_msg = _sub_err.stdout.decode().split(os.linesep)[0].replace("'", "\"")
+            _args = [_err_msg]
+            _args.extend(_sub_err.args)
+            raise ODEMException(_args) from _sub_err
+
+    def delete_before_export(self, folders):
+        """delete folders given by list"""
+
+        work = self.work_dir_main
+        self.the_logger.info(
+            "[%s] delete folders: %s", self.process_identifier, folders)
+        for folder in folders:
+            delete_me = os.path.join(work, folder)
+            if os.path.exists(delete_me):
+                self.the_logger.info(
+                    "[%s] delete folder: %s", self.process_identifier, delete_me)
+                shutil.rmtree(delete_me)
+
+    def postprocess_mets(self):
+        """wrap work related to processing METS/MODS"""
+
+        postprocess_mets(self.mets_file, self.cfg.get('ocr', 'ocrd_baseimage'))
+
+    def validate_mets(self):
+        """Forward METS-schema validation"""
+        try:
+            validate_mets(self.mets_file)
+        except RuntimeError as err:
+            if len(err.args) > 0 and str(err.args[0]).startswith('invalid schema'):
+                raise ODEMException(str(err.args[0])) from err
+            raise err
+
+    def export_data(self):
+        """re-do metadata and transform into output format"""
+
+        export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
+        export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
+
+        exp_dst = self.cfg.get('global', 'local_export_dir')
+        exp_tmp = self.cfg.get('global', 'local_export_tmp')
+        exp_col = self.cfg.get('global', 'export_collection')
+        exp_map = self.cfg.getdict('global', 'export_mappings')
+        # overwrite default mapping *.xml => 'mets.xml'
+        # since we will have currently many more XML-files
+        # created due OCR and do more specific mapping, though
+        exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
+        if export_mets:
+            exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
+        saf_name = self.identifiers.get(CATALOG_ULB)
+        if export_format == ExportFormat.SAF:
+            export_result = export_data_from(
+                self.mets_file,
+                exp_col,
+                saf_final_name=saf_name,
+                export_dst=exp_dst,
+                export_map=exp_map,
+                tmp_saf_dir=exp_tmp,
+            )
+        elif export_format == ExportFormat.FLAT_ZIP:
+            prefix = 'opendata-working-'
+            source_path_dir = os.path.dirname(self.mets_file)
+            tmp_dir = tempfile.gettempdir()
+            if exp_tmp:
+                tmp_dir = exp_tmp
+            with tempfile.TemporaryDirectory(prefix=prefix, dir=tmp_dir) as tmp_dir:
+                work_dir = os.path.join(tmp_dir, saf_name)
+                export_mappings = map_contents(source_path_dir, work_dir, exp_map)
+                for mapping in export_mappings:
+                    mapping.copy()
+                tmp_zip_path, size = self._compress(os.path.dirname(work_dir), saf_name)
+                path_export_processing = _move_to_tmp_file(tmp_zip_path, exp_dst)
+                export_result = path_export_processing, size
+
+        else:
+            raise ODEMException(f'Unsupported export format: {export_format}')
+
+        self.the_logger.info("[%s] exported data: %s",
+                             self.process_identifier, export_result)
+        if export_result:
+            pth, size = export_result
+            self.the_logger.info("[%s] create %s (%s)",
+                                 self.process_identifier, pth, size)
+            # final re-move at export destination
+            if '.processing' in str(pth):
+                final_path = pth.replace('.processing', '')
+                self.the_logger.debug('[%s] rename %s to %s',
+                                      self.process_identifier, pth, final_path)
+                shutil.move(pth, final_path)
+                return final_path, size
+
+        return None
+
+    @property
+    def duration(self):
+        """Get current duration of ODEMProcess.
+        Most likely at the final end to get an idea
+        how much the whole process takes."""
+
+        return datetime.timedelta(seconds=round(time.time() - self._process_start))
+
+    @property
+    def statistics(self):
+        """Get some statistics as dictionary
+        with execution duration updated each call by
+        requesting it's string representation"""
+
+        self._statistics['timedelta'] = f'{self.duration}'
+        return self._statistics
+
+    def _compress(self, work_dir, archive_name):
+        zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
+
+        previous_dir = os.getcwd()
+        os.chdir(os.path.join(work_dir, archive_name))
+        cmd = f'zip -q -r {zip_file_path} ./*'
+        subprocess.run(cmd, shell=True, check=True)
+        os.chmod(zip_file_path, 0o666)
+        zip_size = int(os.path.getsize(zip_file_path) / 1024 / 1024)
+        os.chdir(previous_dir)
+        return zip_file_path, f"{zip_size}MiB"
+
+
+class OCRDPageParallel(ODEMProcess):
+    """Use page parallel workflow"""
+
+    def run(self):
+        """Wrap specific OCR execution with
+        respect to number of executors"""
+
+        _outcomes = [(0, 0, 0, 0)]
+        if self.n_executors > 1:
+            _outcomes = self.run_parallel()
+        else:
+            _outcomes = self.run_sequential()
+        if _outcomes:
+            self._statistics['outcomes'] = _outcomes
+        self.to_alto()
+        return _outcomes
+
     def run_parallel(self):
         """Run workflow parallel given poolsize"""
 
@@ -343,8 +580,7 @@ class ODEMProcess:
                     max_workers=self.n_executors,
                     thread_name_prefix='odem'
             ) as executor:
-                outcomes = list(executor.map(self.create_single_ocr, self.images_4_ocr))
-                # self._calculate_statistics(outcomes)
+                outcomes = list(executor.map(self.ocrd_page, self.images_4_ocr))
                 return outcomes
         except (OSError, AttributeError) as err:
             self.the_logger.error(err)
@@ -360,26 +596,14 @@ class ODEMProcess:
         self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
                              self.process_identifier, _len_img, _estm_min)
         try:
-            outcomes = [self.create_single_ocr(_img)
+            outcomes = [self.ocrd_page(_img)
                         for _img in self.images_4_ocr]
-            # self._calculate_statistics(outcomes)
             return outcomes
         except (OSError, AttributeError) as err:
             self.the_logger.error(err)
             raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
 
-    def calculate_statistics(self, outcomes):
-        """Calculate and aggregate runtime stats"""
-        n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
-        _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
-        _mod_val_counts = np.unique(_total_mps, return_counts=True)
-        mps = list(zip(*_mod_val_counts))
-        total_mb = sum([e[3] for e in outcomes if e[0] == 1])
-        self._statistics['n_ocr'] = n_ocr
-        self._statistics['mb'] = round(total_mb, 2)
-        self._statistics['mps'] = mps
-
-    def create_single_ocr(self, image_4_ocr):
+    def ocrd_page(self, image_4_ocr):
         """Create OCR Data"""
 
         ocr_log_conf = os.path.join(
@@ -439,11 +663,7 @@ class ODEMProcess:
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
         base_image = self.cfg.get('ocr', 'ocrd_baseimage')
-
         makefile = self.cfg.get('ocr', 'ocrd_makefile').split('/')[-1]
-
-        # model_dir_host = self.cfg.get('ocr', 'model_dir_host')
-        # model_dir_container = self.cfg.get('ocr', 'model_dir_container')
         tesseract_model_rtl: List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
         ocrd_resources_volumes: Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
 
@@ -451,21 +671,16 @@ class ODEMProcess:
             container_name = os.path.basename(page_workdir)
         try:
             profiling = run_ocr_page(
-
                 page_workdir,
                 base_image,
-
                 container_memory_limit,
                 container_timeout,
                 container_name,
                 container_user,
-
                 model_config,
                 makefile,
-
                 ocrd_resources_volumes,
                 tesseract_model_rtl,
-
             )
             # will be unset in case of magic mocking for test
             if profiling:
@@ -557,198 +772,3 @@ class ODEMProcess:
         self.ocr_files = _cnv
         self.the_logger.info("[%s] converted '%d' files page-to-alto",
                              self.process_identifier, len(_cnv))
-
-    def link_ocr(self) -> int:
-        """Prepare and link OCR-data"""
-
-        if not self.ocr_files:
-            return 0
-        proc = MetsProcessor(self.mets_file)
-        _n_linked_ocr = integrate_ocr_file(proc.tree, self.ocr_files)
-        proc.write()
-        return _n_linked_ocr
-
-    def postprocess_ocr(self):
-        """Apply additional postprocessing to OCR data"""
-
-        # inspect each single created ocr file
-        # drop unwanted elements
-        # clear punctual regions
-        strip_tags = self.cfg.getlist('ocr', 'strip_tags')
-        for _ocr_file in self.ocr_files:
-            postprocess_ocr_file(_ocr_file, strip_tags)
-
-    def create_text_bundle_data(self):
-        """create additional dspace bundle for indexing ocr text
-        read ocr-file sequential according to their number label
-        and extract every row into additional text file"""
-
-        _ocrs = sorted(self.ocr_files)
-        _txts = []
-        for _o in _ocrs:
-            with open(_o, mode='r', encoding='UTF-8') as _ocr_file:
-                _alto_root = ET.parse(_ocr_file)
-                _lines = _alto_root.findall('.//alto:TextLine', XMLNS)
-                for _l in _lines:
-                    _l_strs = [s.attrib['CONTENT'] for s in _l.findall('.//alto:String', XMLNS)]
-                    _txts.append(' '.join(_l_strs))
-        txt_content = '\n'.join(_txts)
-        _out_path = os.path.join(self.work_dir_main, f'{self.identifiers[IDENTIFIER_CATALOGUE]}.pdf.txt')
-        with open(_out_path, mode='w', encoding='UTF-8') as _writer:
-            _writer.write(txt_content)
-        self.the_logger.info("[%s] harvested %d lines from %d ocr files to %s",
-                             self.process_identifier, len(_txts), len(_ocrs), _out_path)
-        self._statistics['n_text_lines'] = len(_txts)
-
-    def create_pdf(self):
-        """Forward PDF-creation to Derivans"""
-
-        _cfg_path_dir_bin = self.cfg.get('derivans', 'derivans_dir_bin', fallback=None)
-        path_bin = None
-        if _cfg_path_dir_bin is not None:
-            path_bin = os.path.join(PROJECT_ROOT, _cfg_path_dir_bin)
-        _cfg_path_dir_project = self.cfg.get('derivans', 'derivans_dir_project', fallback=None)
-        path_prj = None
-        if _cfg_path_dir_project is not None:
-            path_prj = os.path.join(PROJECT_ROOT, _cfg_path_dir_project)
-        path_cfg = os.path.join(
-            PROJECT_ROOT,
-            self.cfg.get('derivans', 'derivans_config')
-        )
-        derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
-        path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
-        derivans: BaseDerivansManager = BaseDerivansManager.create(
-            self.mets_file,
-            container_image_name=derivans_image,
-            path_binary=path_bin,
-            path_configuration=path_cfg,
-            path_mvn_project=path_prj,
-            path_logging=path_logging,
-        )
-        derivans.init()
-        # be cautious
-        try:
-            dresult: DerivansResult = derivans.start()
-            self.the_logger.info("[%s] create derivates in %s",
-                                 self.process_identifier, dresult.duration)
-        except subprocess.CalledProcessError as _sub_err:
-            _err_msg = _sub_err.stdout.decode().split(os.linesep)[0].replace("'", "\"")
-            _args = [_err_msg]
-            _args.extend(_sub_err.args)
-            raise ODEMException(_args) from _sub_err
-
-    def delete_before_export(self, folders):
-        """delete folders given by list"""
-
-        work = self.work_dir_main
-        self.the_logger.info(
-            "[%s] delete folders: %s", self.process_identifier, folders)
-        for folder in folders:
-            delete_me = os.path.join(work, folder)
-            if os.path.exists(delete_me):
-                self.the_logger.info(
-                    "[%s] delete folder: %s", self.process_identifier, delete_me)
-                shutil.rmtree(delete_me)
-
-    def postprocess_mets(self):
-        """wrap work related to processing METS/MODS"""
-
-        postprocess_mets(self.mets_file, self.cfg.get('ocr', 'ocrd_baseimage'))
-
-    def validate_mets(self):
-        """Forward METS-schema validation"""
-        try:
-            validate_mets(self.mets_file)
-        except RuntimeError as err:
-            if len(err.args) > 0 and str(err.args[0]).startswith('invalid schema'):
-                raise ODEMException(str(err.args[0])) from err
-            raise err
-
-    def export_data(self):
-        """re-do metadata and transform into output format"""
-
-        export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
-        export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
-
-        exp_dst = self.cfg.get('global', 'local_export_dir')
-        exp_tmp = self.cfg.get('global', 'local_export_tmp')
-        exp_col = self.cfg.get('global', 'export_collection')
-        exp_map = self.cfg.getdict('global', 'export_mappings')
-        # overwrite default mapping *.xml => 'mets.xml'
-        # since we will have currently many more XML-files
-        # created due OCR and do more specific mapping, though
-        exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
-        if export_mets:
-            exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
-        saf_name = self.identifiers[IDENTIFIER_CATALOGUE]
-        if export_format == ExportFormat.SAF:
-            export_result = export_data_from(
-                self.mets_file,
-                exp_col,
-                saf_final_name=saf_name,
-                export_dst=exp_dst,
-                export_map=exp_map,
-                tmp_saf_dir=exp_tmp,
-            )
-        elif export_format == ExportFormat.FLAT_ZIP:
-            prefix = 'opendata-working-'
-            source_path_dir = os.path.dirname(self.mets_file)
-            tmp_dir = tempfile.gettempdir()
-            if exp_tmp:
-                tmp_dir = exp_tmp
-            with tempfile.TemporaryDirectory(prefix=prefix, dir=tmp_dir) as tmp_dir:
-                work_dir = os.path.join(tmp_dir, saf_name)
-                export_mappings = map_contents(source_path_dir, work_dir, exp_map)
-                for mapping in export_mappings:
-                    mapping.copy()
-                tmp_zip_path, size = self._compress(os.path.dirname(work_dir), saf_name)
-                path_export_processing = _move_to_tmp_file(tmp_zip_path, exp_dst)
-                export_result = path_export_processing, size
-
-        else:
-            raise ODEMException(f'Unsupported export format: {export_format}')
-
-        self.the_logger.info("[%s] exported data: %s",
-                             self.process_identifier, export_result)
-        if export_result:
-            pth, size = export_result
-            self.the_logger.info("[%s] create %s (%s)",
-                                 self.process_identifier, pth, size)
-            # final re-move at export destination
-            if '.processing' in str(pth):
-                final_path = pth.replace('.processing', '')
-                self.the_logger.debug('[%s] rename %s to %s',
-                                      self.process_identifier, pth, final_path)
-                shutil.move(pth, final_path)
-                return final_path, size
-
-        return None
-
-    @property
-    def duration(self):
-        """Get current duration of ODEMProcess.
-        Most likely at the final end to get an idea
-        how much the whole process takes."""
-
-        return datetime.timedelta(seconds=round(time.time() - self._process_start))
-
-    @property
-    def statistics(self):
-        """Get some statistics as dictionary
-        with execution duration updated each call by
-        requesting it's string representation"""
-
-        self._statistics['timedelta'] = f'{self.duration}'
-        return self._statistics
-
-    def _compress(self, work_dir, archive_name):
-        zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
-
-        previous_dir = os.getcwd()
-        os.chdir(os.path.join(work_dir, archive_name))
-        cmd = f'zip -q -r {zip_file_path} ./*'
-        subprocess.run(cmd, shell=True, check=True)
-        os.chmod(zip_file_path, 0o666)
-        zip_size = int(os.path.getsize(zip_file_path) / 1024 / 1024)
-        os.chdir(previous_dir)
-        return zip_file_path, f"{zip_size}MiB"

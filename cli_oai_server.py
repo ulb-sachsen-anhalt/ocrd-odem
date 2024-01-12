@@ -104,7 +104,9 @@ def to_full_record(row):
     # legacy field for backward compatibility
     if RECORD_SPEC in row:
         record.set = row[RECORD_SPEC]
-    record.date_stamp = row[RECORD_RELEASED]
+    # legacy field for backward compatibility
+    if RECORD_RELEASED in row:
+        record.date_stamp = row[RECORD_RELEASED]
     record.info = row[RECORD_INFO]
     return record
 

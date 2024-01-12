@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="static/style.xsl"?><OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2023-12-12T10:41:15Z</responseDate><request verb="GetRecord" identifier="oai:opendata.uni-halle.de:1981185920/33908" metadataPrefix="mets">https://opendata.uni-halle.de/oai/dd</request><GetRecord><record><header><identifier>oai:opendata.uni-halle.de:1981185920/33908</identifier><datestamp>2023-11-24T14:27:48Z</datestamp><setSpec>com_1981185920_31823</setSpec><setSpec>col_1981185920_31824</setSpec><setSpec>digi_vd18_ulb</setSpec><setSpec>digi_vd18</setSpec><setSpec>digi_vd</setSpec></header><metadata><mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:dv="http://dfg-viewer.de/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:b="https://bibliothek.uni-halle.de" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns" xmlns:a="https:/zvdd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:doc="http://www.lyncode.com/xoai" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/mods.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd">
+   <mets:metsHdr CREATEDATE="2020-12-22T08:26:36" LASTMODDATE="2023-11-24T14:27:47Z">
+      <mets:agent OTHERTYPE="SOFTWARE" ROLE="CREATOR" TYPE="OTHER">
+         <mets:name>Kitodo - kitodo-ugh-2.1.4-SNAPSHOT-v1.11.1-106-g4dbbb02 - 07−December−2020</mets:name>
+         <mets:note>Kitodo</mets:note>
+      </mets:agent>
+      <mets:agent OTHERTYPE="Software" ROLE="EDITOR" TYPE="OTHER">
+         <mets:name>zedExporter</mets:name>
+         <mets:note>PDF-Dokument-Downloadlink wurde eingefügt.</mets:note>
+         <mets:note />
+      </mets:agent>
+      <mets:agent TYPE="OTHER" ROLE="OTHER" OTHERTYPE="SOFTWARE">
+         <mets:name>DigitalDerivans V1.8.4</mets:name>
+         <mets:note>PDF FileGroup for PDF_058134433 created at 2023-11-23T08:37:11</mets:note>
+      </mets:agent>
+      <mets:agent TYPE="OTHER" ROLE="OTHER" OTHERTYPE="SOFTWARE">
+         <mets:name>DFG-OCRD3-ODEM_ocrd/all:2023-02-07</mets:name>
+         <mets:note>2023-11-23 09:37:57</mets:note>
+      </mets:agent>
+  </mets:metsHdr>
+   <mets:dmdSec ID="DMDLOG_0000">
+      <mets:mdWrap MDTYPE="MODS">
+         <mets:xmlData>
+            <mods:mods>
+               <mods:identifier type="urn">urn:nbn:de:gbv:3:1-1192015415-058134433-12</mods:identifier>
+               <mods:identifier type="vd18">15154777</mods:identifier>
+               <mods:recordInfo>
+                  <mods:recordIdentifier source="gvk-ppn">058134433</mods:recordIdentifier>
+                  <mods:recordCreationDate encoding="marc">27-06-97</mods:recordCreationDate>
+                  <mods:recordChangeDate encoding="marc">05-03-20</mods:recordChangeDate>
+               </mods:recordInfo>
+               <mods:titleInfo>
+                  <mods:title>De Sententia Vlpiani L. 6. § 2.ff. Qvae In Fravdem Creditorvm: Eivsqve Ivre Saxonico Facta Correctione</mods:title>
+               </mods:titleInfo>
+               <mods:titleInfo type="uniform">
+                  <mods:title>De Sententia Ulpiani L. 6. § 2.ff. Quae In Fraudem Creditorum: Eiusque Iure Saxonico Facta Correctione</mods:title>
+               </mods:titleInfo>
+               <mods:note type="source note">Die Rückseite des Titelblatts ist unbedruckt</mods:note>
+               <mods:note type="statement of responsibility">Qvaedam Disserit Et Orationem Aditialem Die XXIII. Novembr. A.R.S. MDCCLII. Hora IX. In Avditorio ICtorvm Habendam Indicit D. Fridericvs Gottlieb Zoller. Prof. Pvbl. Ivr. Sax. Ord.</mods:note>
+               <mods:name authority="gnd" authorityURI="http://d-nb.info/gnd/" type="personal" valueURI="http://d-nb.info/gnd/117602647">
+                  <mods:namePart type="given">Friedrich Gottlieb</mods:namePart>
+                  <mods:namePart type="family">Zoller</mods:namePart>
+                  <mods:role>
+                     <mods:roleTerm authority="marcrelator" type="code">aut</mods:roleTerm>
+                  </mods:role>
+                  <mods:displayForm>Zoller, Friedrich Gottlieb</mods:displayForm>
+                  <mods:namePart type="date">1717-1782</mods:namePart>
+               </mods:name>
+               <mods:name authority="gnd" authorityURI="http://d-nb.info/gnd/" type="personal" valueURI="http://d-nb.info/gnd/143328255">
+                  <mods:namePart type="given">Gottfried August</mods:namePart>
+                  <mods:namePart type="family">Stopfel</mods:namePart>
+                  <mods:role>
+                     <mods:roleTerm authority="marcrelator" type="code">prt</mods:roleTerm>
+                  </mods:role>
+                  <mods:displayForm>Stopfel, Gottfried August</mods:displayForm>
+               </mods:name>
+               <mods:name authority="gnd" authorityURI="http://d-nb.info/gnd/" type="corporate" valueURI="http://d-nb.info/gnd/1069498254">
+                  <mods:namePart>Officina Stopffeliana</mods:namePart>
+                  <mods:role>
+                     <mods:roleTerm authority="marcrelator" type="code">prt</mods:roleTerm>
+                  </mods:role>
+               </mods:name>
+               <mods:language>
+                  <mods:languageTerm authority="iso639-2b" type="code">lat</mods:languageTerm>
+               </mods:language>
+               <mods:language>
+                  <mods:languageTerm authority="iso639-2b" type="code">ger</mods:languageTerm>
+               </mods:language>
+               <mods:note type="source note">Vorlageform der Veröffentlichungsangabe: Lipsiae Litteris Stopffelianis. - Erscheinungsdatum nach Datierung im Titel bestimmt</mods:note>
+               <mods:originInfo eventType="publication">
+                  <mods:dateIssued encoding="iso8601" keyDate="yes">1752</mods:dateIssued>
+                  <mods:place>
+                     <mods:placeTerm type="text">Lipsiae</mods:placeTerm>
+                  </mods:place>
+                  <mods:publisher>Litteris Stopffelianis</mods:publisher>
+                  <mods:place>
+                     <mods:placeTerm type="text" valueURI="http://d-nb.info/gnd/4035206-7">Leipzig</mods:placeTerm>
+                  </mods:place>
+               </mods:originInfo>
+               <mods:physicalDescription>
+                  <mods:extent>XIV Seiten; 4°</mods:extent>
+               </mods:physicalDescription>
+               <mods:genre authority="aad">Universitätsprogramm</mods:genre>
+               <mods:genre authority="aad">Gelegenheitsschrift:Einladung</mods:genre>
+               <mods:extension>
+                  <a:zvddWrap>
+                     <a:titleWord>Ejusque Jure</a:titleWord>
+                  </a:zvddWrap>
+                  <b:externalType recordSyntax="pica">Aa</b:externalType>
+                  <b:contentType>
+                     <b:text>Text</b:text>
+                     <b:code>txt</b:code>
+                  </b:contentType>
+               </mods:extension>
+               <mods:originInfo eventType="digitization">
+                  <mods:publisher>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:publisher>
+                  <mods:place>
+                     <mods:placeTerm type="text">Halle (Saale)</mods:placeTerm>
+                  </mods:place>
+                  <mods:edition>[Electronic ed.]</mods:edition>
+                  <mods:dateCaptured encoding="iso8601">2020</mods:dateCaptured>
+               </mods:originInfo>
+               <mods:location>
+                  <mods:physicalLocation>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:physicalLocation>
+                  <mods:shelfLocator>Leipzig, Diss., 1752 R-Z (20)</mods:shelfLocator>
+               </mods:location>
+               <mods:accessCondition xlink:href="https://creativecommons.org/publicdomain/mark/1.0/" type="use and reproduction">Public Domain Mark 1.0</mods:accessCondition>
+               <mods:identifier type="doi">doi:10.25673/33716</mods:identifier>
+            </mods:mods>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:dmdSec ID="DMDPHYS_0000">
+      <mets:mdWrap MDTYPE="MODS">
+         <mets:xmlData>
+            <mods:mods>
+               <mods:location>
+                  <mods:shelfLocator>Leipzig, Diss., 1752 R-Z (20)</mods:shelfLocator>
+               </mods:location>
+            </mods:mods>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:amdSec ID="AMD">
+      <mets:rightsMD ID="RIGHTS">
+         <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVRIGHTS">
+            <mets:xmlData>
+               <dv:rights>
+                  <dv:owner>Universitäts- und Landesbibliothek Sachsen-Anhalt</dv:owner>
+                  <dv:ownerLogo>https://opendata.uni-halle.de/image/mets_viewerLogo.gif</dv:ownerLogo>
+                  <dv:ownerSiteURL>http://www.bibliothek.uni-halle.de</dv:ownerSiteURL>
+                  <dv:ownerContact>mailto:auskunft@bibliothek.uni-halle.de</dv:ownerContact>
+                  <dv:license>https://creativecommons.org/publicdomain/mark/1.0/</dv:license>
+               </dv:rights>
+            </mets:xmlData>
+         </mets:mdWrap>
+      </mets:rightsMD>
+      <mets:digiprovMD ID="DIGIPROV">
+         <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVLINKS">
+            <mets:xmlData>
+               <dv:links>
+                  <dv:reference>http://opac.bibliothek.uni-halle.de/DB=1/CLK?IKT=12&amp;TRM=058134433</dv:reference>
+                  <dv:presentation>https://opendata.uni-halle.de//handle/1981185920/33908</dv:presentation>
+                  <dv:iiif>https://opendata.uni-halle.de//json/iiif/1981185920/33908/488881af-f4d1-470e-971a-272e71553e92/manifest</dv:iiif>
+                  <dv:sru>https://opendata.uni-halle.de/sru_ft_search/1981185920/33908</dv:sru>
+               </dv:links>
+            </mets:xmlData>
+         </mets:mdWrap>
+      </mets:digiprovMD>
+   </mets:amdSec>
+   <mets:fileSec>
+      <mets:fileGrp USE="MAX">
+         <mets:file ID="FILE_0001_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/c0e44cad-1116-470c-8611-b16e03b05526/00000001.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0002_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/be72b0a1-cdc1-41a5-b6f4-376c85187c8f/00000002.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0003_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/7f2c9975-25d1-4509-8aef-4467cd6be1ef/00000003.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0004_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/b185ab69-7e4a-42b0-b8f3-58049a4a6dae/00000004.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0005_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/62b6854a-738d-4593-b540-b2bc4507896f/00000005.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0006_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/1af66fb8-4402-4d5c-8127-bbb05354346b/00000006.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0007_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/deab504b-20b0-4594-ae19-d97a0c81303b/00000007.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0008_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/ee35d941-a977-48a0-b919-e86a808f1357/00000008.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0009_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/7afd0f69-e537-4bcd-a6e5-df0bd5fa27c9/00000009.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0010_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/7d9b9d43-9c3a-4f1d-8202-efd2d86d1e27/00000010.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0011_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/a84ada30-2f7d-4a28-a182-88a2e8c7ce2d/00000011.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0012_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/62f2a9ee-7626-4d22-afa2-a97652c44831/00000012.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0013_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/ca9ae415-5e44-40a7-990f-167084b8ab36/00000013.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0014_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/42d7e4f4-2b5b-4d81-80e1-8049a8524f1a/00000014.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0015_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/cda57079-398a-4a29-ba7c-feb48022f884/00000015.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0016_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/d2762f52-6b5b-4676-a05a-c82273e0cefd/00000016.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0017_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/bef412b8-043b-48c7-805e-b8c95517fa05/00000017.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0018_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/3db3940e-ad66-4132-bac3-adebdaf3cc0a/00000018.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0019_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/12271ecb-cbb1-4407-aef2-9f70c3938a65/00000019.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0020_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/9bf4c317-0711-4bb5-8ea5-7b812f79bd4e/00000020.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0021_MAX" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/5293a6e8-6094-4764-81ba-e1b2a594ba29/00000021.jpg" />
+         </mets:file>
+      </mets:fileGrp>
+      <mets:fileGrp USE="FULLTEXT">
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000019">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/1a4280e1-a6df-4035-9259-d77950bf69eb/00000019.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000020">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/ce26983d-ae82-42a6-aeab-364002ad0b56/00000020.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000015">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/69fca555-5d75-40cf-87b4-094a7da6a0dc/00000015.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000009">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/dad1407e-429a-432f-999f-f8a8639dd5fc/00000009.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000010">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/36d03442-2fd1-44ae-8fbb-6dbdaf904184/00000010.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000006">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/d020bb0c-de7c-4a2a-ab9e-eb08bb0ac690/00000006.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000016">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/8cb46d84-f58f-4ed1-ab1e-d03fd8689ef3/00000016.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000013">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/63960942-da97-4a95-a5f3-f6a924471b24/00000013.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000002">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/1e998e2e-6e09-4541-a520-0033749e30d5/00000002.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000014">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/5cb0b50b-90c9-4bc1-84c9-3ac51609498a/00000014.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000008">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/d206cec7-13e6-4fd3-91e5-071a5e1e534d/00000008.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000001">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/f6ee409f-e199-4c77-89de-db53f9effba1/00000001.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000007">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/94d9f9ad-a47c-4b03-93f7-bb7abd41c673/00000007.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000012">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/d55ebff3-076c-4d38-8193-c0a6e3eb6832/00000012.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000011">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/4545911d-6d42-4563-9665-a3aa6bdc49ff/00000011.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000005">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/e1568856-cb7a-4455-8711-f4875c9219ea/00000005.xml" />
+         </mets:file>
+         <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000003">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/10b05534-7541-401a-95df-f6811daf5b46/00000003.xml" />
+         </mets:file>
+      </mets:fileGrp>
+      <mets:fileGrp USE="DOWNLOAD">
+         <mets:file ID="PDF_058134433" MIMETYPE="application/pdf">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de/retrieve/fe4f0b94-6333-4540-becc-50f1a30c12c5/058134433.pdf" />
+         </mets:file>
+      </mets:fileGrp>
+      <mets:fileGrp USE="THUMBS">
+         <mets:file ID="FILE_0001_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/c0e44cad-1116-470c-8611-b16e03b05526/!0!77!00!17!77001782087272195428179867228422962612/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0002_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/be72b0a1-cdc1-41a5-b6f4-376c85187c8f/!0!66!73!54!66735408662373487280288472299852104212/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0003_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/7f2c9975-25d1-4509-8aef-4467cd6be1ef/!0!15!20!22!152022442140977178254129229504265595164/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0004_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/b185ab69-7e4a-42b0-b8f3-58049a4a6dae/!0!11!70!62!117062982575099750463734659853327320153/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0005_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/62b6854a-738d-4593-b540-b2bc4507896f/!0!16!35!00!163500267593240832564137519359638685621/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0006_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/1af66fb8-4402-4d5c-8127-bbb05354346b/!0!12!23!13!122313161082019062497410139511655745979/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0007_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/deab504b-20b0-4594-ae19-d97a0c81303b/!0!14!97!11!14971114376872306119452383953450330443/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0008_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/ee35d941-a977-48a0-b919-e86a808f1357/!0!89!50!81!89508136919018633801673569206365187360/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0009_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/7afd0f69-e537-4bcd-a6e5-df0bd5fa27c9/!0!13!40!76!134076134896434702894196367384747462291/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0010_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/7d9b9d43-9c3a-4f1d-8202-efd2d86d1e27/!0!10!09!61!100961778910162947219005811764833382580/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0011_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/a84ada30-2f7d-4a28-a182-88a2e8c7ce2d/!0!10!12!59!101259788461773083915734982932736876880/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0012_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/62f2a9ee-7626-4d22-afa2-a97652c44831/!0!15!36!26!153626850804275684760748529120888732904/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0013_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/ca9ae415-5e44-40a7-990f-167084b8ab36/!0!15!30!09!153009053774967563246562922280976961364/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0014_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/42d7e4f4-2b5b-4d81-80e1-8049a8524f1a/!0!13!48!40!13484060512729375456652726201350891900/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0015_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/cda57079-398a-4a29-ba7c-feb48022f884/!0!13!22!98!132298264561382024078357769388708513218/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0016_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/d2762f52-6b5b-4676-a05a-c82273e0cefd/!0!60!95!42!60954279517979266919469663039790333687/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0017_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/bef412b8-043b-48c7-805e-b8c95517fa05/!0!41!61!55!41615546884922576705480701914770944906/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0018_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/3db3940e-ad66-4132-bac3-adebdaf3cc0a/!0!13!80!84!138084753938101707898950418880393889300/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0019_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/12271ecb-cbb1-4407-aef2-9f70c3938a65/!0!13!24!09!132409857359930419053290525374228158258/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0020_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/9bf4c317-0711-4bb5-8ea5-7b812f79bd4e/!0!11!63!66!116366080636715650959972248239822627898/full/!128,128/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0021_THUMB" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/5293a6e8-6094-4764-81ba-e1b2a594ba29/!0!61!27!87!6127877114515046980137041033232085423/full/!128,128/0/default.jpg" />
+         </mets:file>
+      </mets:fileGrp>
+      <mets:fileGrp USE="DEFAULT">
+         <mets:file ID="FILE_0001_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/c0e44cad-1116-470c-8611-b16e03b05526/!0!77!00!17!77001782087272195428179867228422962612/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0002_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/be72b0a1-cdc1-41a5-b6f4-376c85187c8f/!0!66!73!54!66735408662373487280288472299852104212/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0003_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/7f2c9975-25d1-4509-8aef-4467cd6be1ef/!0!15!20!22!152022442140977178254129229504265595164/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0004_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/b185ab69-7e4a-42b0-b8f3-58049a4a6dae/!0!11!70!62!117062982575099750463734659853327320153/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0005_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/62b6854a-738d-4593-b540-b2bc4507896f/!0!16!35!00!163500267593240832564137519359638685621/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0006_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/1af66fb8-4402-4d5c-8127-bbb05354346b/!0!12!23!13!122313161082019062497410139511655745979/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0007_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/deab504b-20b0-4594-ae19-d97a0c81303b/!0!14!97!11!14971114376872306119452383953450330443/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0008_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/ee35d941-a977-48a0-b919-e86a808f1357/!0!89!50!81!89508136919018633801673569206365187360/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0009_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/7afd0f69-e537-4bcd-a6e5-df0bd5fa27c9/!0!13!40!76!134076134896434702894196367384747462291/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0010_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/7d9b9d43-9c3a-4f1d-8202-efd2d86d1e27/!0!10!09!61!100961778910162947219005811764833382580/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0011_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/a84ada30-2f7d-4a28-a182-88a2e8c7ce2d/!0!10!12!59!101259788461773083915734982932736876880/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0012_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/62f2a9ee-7626-4d22-afa2-a97652c44831/!0!15!36!26!153626850804275684760748529120888732904/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0013_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/ca9ae415-5e44-40a7-990f-167084b8ab36/!0!15!30!09!153009053774967563246562922280976961364/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0014_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/42d7e4f4-2b5b-4d81-80e1-8049a8524f1a/!0!13!48!40!13484060512729375456652726201350891900/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0015_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/cda57079-398a-4a29-ba7c-feb48022f884/!0!13!22!98!132298264561382024078357769388708513218/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0016_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/d2762f52-6b5b-4676-a05a-c82273e0cefd/!0!60!95!42!60954279517979266919469663039790333687/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0017_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/bef412b8-043b-48c7-805e-b8c95517fa05/!0!41!61!55!41615546884922576705480701914770944906/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0018_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/3db3940e-ad66-4132-bac3-adebdaf3cc0a/!0!13!80!84!138084753938101707898950418880393889300/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0019_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/12271ecb-cbb1-4407-aef2-9f70c3938a65/!0!13!24!09!132409857359930419053290525374228158258/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0020_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/9bf4c317-0711-4bb5-8ea5-7b812f79bd4e/!0!11!63!66!116366080636715650959972248239822627898/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+         <mets:file ID="FILE_0021_DEFAULT" MIMETYPE="image/jpeg">
+            <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata.uni-halle.de//iiif-imgsrv/5293a6e8-6094-4764-81ba-e1b2a594ba29/!0!61!27!87!6127877114515046980137041033232085423/full/!1000,1000/0/default.jpg" />
+         </mets:file>
+      </mets:fileGrp>
+   </mets:fileSec>
+   <mets:structMap TYPE="LOGICAL">
+      <mets:div ADMID="AMD" DMDID="DMDLOG_0000" ID="LOG_0000" LABEL="De Sententia Vlpiani L. 6. § 2.ff. Qvae In Fravdem Creditorvm: Eivsqve Ivre Saxonico Facta Correctione" ORDERLABEL="De Sententia Vlpiani L. 6. § 2.ff. Qvae In Fravdem Creditorvm: Eivsqve Ivre Saxonico Facta Correctione" TYPE="monograph">
+         <mets:fptr FILEID="PDF_058134433" />
+         <mets:div ID="LOG_0001" TYPE="cover_front" />
+         <mets:div ID="LOG_0002" TYPE="title_page" />
+         <mets:div ID="LOG_0003" TYPE="section" />
+         <mets:div ID="LOG_0004" TYPE="cover_back" />
+      </mets:div>
+  </mets:structMap>
+   <mets:structMap TYPE="PHYSICAL">
+      <mets:div DMDID="DMDPHYS_0000" ID="PHYS_0000" TYPE="physSequence">
+         <mets:div ID="PHYS_0001" ORDER="1" ORDERLABEL=" - " TYPE="page">
+            <mets:fptr FILEID="FILE_0001_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000001" />
+            <mets:fptr FILEID="FILE_0001_THUMB" />
+            <mets:fptr FILEID="FILE_0001_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0002" ORDER="2" ORDERLABEL=" - " TYPE="page">
+            <mets:fptr FILEID="FILE_0002_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000002" />
+            <mets:fptr FILEID="FILE_0002_THUMB" />
+            <mets:fptr FILEID="FILE_0002_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0003" ORDER="3" ORDERLABEL=" - " TYPE="page">
+            <mets:fptr FILEID="FILE_0003_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000003" />
+            <mets:fptr FILEID="FILE_0003_THUMB" />
+            <mets:fptr FILEID="FILE_0003_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0004" ORDER="4" ORDERLABEL="[Leerseite]" TYPE="page">
+            <mets:fptr FILEID="FILE_0004_MAX" />
+            <mets:fptr FILEID="FILE_0004_THUMB" />
+            <mets:fptr FILEID="FILE_0004_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0005" ORDER="5" ORDERLABEL=" - " TYPE="page">
+            <mets:fptr FILEID="FILE_0005_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000005" />
+            <mets:fptr FILEID="FILE_0005_THUMB" />
+            <mets:fptr FILEID="FILE_0005_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0006" ORDER="6" ORDERLABEL="Seite IV" TYPE="page">
+            <mets:fptr FILEID="FILE_0006_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000006" />
+            <mets:fptr FILEID="FILE_0006_THUMB" />
+            <mets:fptr FILEID="FILE_0006_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0007" ORDER="7" ORDERLABEL="Seite V" TYPE="page">
+            <mets:fptr FILEID="FILE_0007_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000007" />
+            <mets:fptr FILEID="FILE_0007_THUMB" />
+            <mets:fptr FILEID="FILE_0007_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0008" ORDER="8" ORDERLABEL="Seite VI" TYPE="page">
+            <mets:fptr FILEID="FILE_0008_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000008" />
+            <mets:fptr FILEID="FILE_0008_THUMB" />
+            <mets:fptr FILEID="FILE_0008_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0009" ORDER="9" ORDERLABEL="Seite VII" TYPE="page">
+            <mets:fptr FILEID="FILE_0009_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000009" />
+            <mets:fptr FILEID="FILE_0009_THUMB" />
+            <mets:fptr FILEID="FILE_0009_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0010" ORDER="10" ORDERLABEL="Seite VIII" TYPE="page">
+            <mets:fptr FILEID="FILE_0010_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000010" />
+            <mets:fptr FILEID="FILE_0010_THUMB" />
+            <mets:fptr FILEID="FILE_0010_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0011" ORDER="11" ORDERLABEL="Seite IX" TYPE="page">
+            <mets:fptr FILEID="FILE_0011_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000011" />
+            <mets:fptr FILEID="FILE_0011_THUMB" />
+            <mets:fptr FILEID="FILE_0011_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0012" ORDER="12" ORDERLABEL="Seite X" TYPE="page">
+            <mets:fptr FILEID="FILE_0012_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000012" />
+            <mets:fptr FILEID="FILE_0012_THUMB" />
+            <mets:fptr FILEID="FILE_0012_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0013" ORDER="13" ORDERLABEL="Seite XI" TYPE="page">
+            <mets:fptr FILEID="FILE_0013_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000013" />
+            <mets:fptr FILEID="FILE_0013_THUMB" />
+            <mets:fptr FILEID="FILE_0013_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0014" ORDER="14" ORDERLABEL="Seite XII" TYPE="page">
+            <mets:fptr FILEID="FILE_0014_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000014" />
+            <mets:fptr FILEID="FILE_0014_THUMB" />
+            <mets:fptr FILEID="FILE_0014_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0015" ORDER="15" ORDERLABEL="Seite XIII" TYPE="page">
+            <mets:fptr FILEID="FILE_0015_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000015" />
+            <mets:fptr FILEID="FILE_0015_THUMB" />
+            <mets:fptr FILEID="FILE_0015_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0016" ORDER="16" ORDERLABEL="Seite XIV" TYPE="page">
+            <mets:fptr FILEID="FILE_0016_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000016" />
+            <mets:fptr FILEID="FILE_0016_THUMB" />
+            <mets:fptr FILEID="FILE_0016_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0017" ORDER="17" ORDERLABEL="[Leerseite]" TYPE="page">
+            <mets:fptr FILEID="FILE_0017_MAX" />
+            <mets:fptr FILEID="FILE_0017_THUMB" />
+            <mets:fptr FILEID="FILE_0017_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0018" ORDER="18" ORDERLABEL="[Leerseite]" TYPE="page">
+            <mets:fptr FILEID="FILE_0018_MAX" />
+            <mets:fptr FILEID="FILE_0018_THUMB" />
+            <mets:fptr FILEID="FILE_0018_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0019" ORDER="19" ORDERLABEL=" - " TYPE="page">
+            <mets:fptr FILEID="FILE_0019_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000019" />
+            <mets:fptr FILEID="FILE_0019_THUMB" />
+            <mets:fptr FILEID="FILE_0019_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0020" ORDER="20" ORDERLABEL=" - " TYPE="page">
+            <mets:fptr FILEID="FILE_0020_MAX" />
+            <mets:fptr FILEID="FULLTEXT_00000020" />
+            <mets:fptr FILEID="FILE_0020_THUMB" />
+            <mets:fptr FILEID="FILE_0020_DEFAULT" />
+         </mets:div>
+         <mets:div ID="PHYS_0021" ORDER="21" ORDERLABEL="[Colorchecker]" TYPE="page">
+            <mets:fptr FILEID="FILE_0021_MAX" />
+            <mets:fptr FILEID="FILE_0021_THUMB" />
+            <mets:fptr FILEID="FILE_0021_DEFAULT" />
+         </mets:div>
+      </mets:div>
+   </mets:structMap>
+   <mets:structLink>
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0001" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0002" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0003" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0004" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0005" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0006" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0007" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0008" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0009" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0010" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0011" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0012" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0013" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0014" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0015" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0016" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0017" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0018" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0019" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0020" />
+      <mets:smLink xlink:from="LOG_0000" xlink:to="PHYS_0021" />
+      <mets:smLink xlink:from="LOG_0001" xlink:to="PHYS_0001" />
+      <mets:smLink xlink:from="LOG_0001" xlink:to="PHYS_0002" />
+      <mets:smLink xlink:from="LOG_0002" xlink:to="PHYS_0003" />
+      <mets:smLink xlink:from="LOG_0002" xlink:to="PHYS_0004" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0005" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0006" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0007" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0008" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0009" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0010" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0011" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0012" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0013" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0014" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0015" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0016" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0017" />
+      <mets:smLink xlink:from="LOG_0003" xlink:to="PHYS_0018" />
+      <mets:smLink xlink:from="LOG_0004" xlink:to="PHYS_0019" />
+      <mets:smLink xlink:from="LOG_0004" xlink:to="PHYS_0020" />
+      <mets:smLink xlink:from="LOG_0004" xlink:to="PHYS_0021" />
+  </mets:structLink>
+</mets:mets>
+</metadata></record></GetRecord></OAI-PMH>

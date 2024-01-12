@@ -413,6 +413,12 @@ def test_record_with_unknown_language(tmp_path):
 
 
 def test_export_flat_zip(tmp_path):
+    """Test export workflow for a
+    flat archive layout like was
+    use of old with the legacy
+    semantics VLS systems
+    """
+
     path_workdir = tmp_path / 'workdir'
     path_workdir.mkdir()
     path_tmp_export_dir = tmp_path / 'tmp_export'

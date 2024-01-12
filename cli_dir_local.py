@@ -28,6 +28,7 @@ from lib.ocrd3_odem import (
     DEFAULT_EXECUTORS,
     KEY_EXECS,
     ODEMProcess,
+    OCRDPageParallel,
     get_configparser,
     get_logger,
     merge_args,
@@ -113,7 +114,7 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
         os.makedirs(req_dst_dir, exist_ok=True)
-        PROCESS = ODEMProcess(None, req_dst_dir, EXECUTORS)
+        PROCESS: ODEMProcess = OCRDPageParallel(None, req_dst_dir, EXECUTORS)
         PROCESS.local_mode = True
         PROCESS.cfg = CFG
         PROCESS.the_logger = LOGGER
@@ -126,10 +127,7 @@ if __name__ == "__main__":
         # this is assigned to "PROCESS.images_4_ocr" in ODEMProcess.filter_images()
         # thats why we have to manually fit that requirement
         PROCESS.images_4_ocr = list(zip(PROCESS.images_4_ocr, [pathlib.Path(i).stem for i in PROCESS.images_4_ocr]))
-        if RUN_SEQUENTIAL:
-            PROCESS.run_sequential()
-        else:
-            PROCESS.run_parallel()
+        PROCESS.run()
         PROCESS.the_logger.info("[%s] duration: %s (%s)", req_idn,
                                 PROCESS.duration, PROCESS.statistics)
     except Exception as exc:
