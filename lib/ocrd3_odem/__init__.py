@@ -5,6 +5,7 @@ from .odem_commons import *
 from .ocrd3_odem import (
     ODEMProcess,
     OCRDPageParallel,
+    ODEMTesseract,
 )
 from .processing_ocrd import (
     get_recognition_level,

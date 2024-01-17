@@ -44,10 +44,13 @@ from .odem_commons import (
 )
 from .processing_mets import (
     CATALOG_ULB,
+    XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
+    extract_mets_data,
     integrate_ocr_file,
     postprocess_mets,
+    validate_mets,
 )
 from .processing_ocrd import (
     run_ocr_page,
@@ -209,7 +212,7 @@ class ODEMProcess:
             _blacklisted = self.cfg.getlist('mets', 'blacklist_file_groups')
             _ident = self.process_identifier
             self.the_logger.info("[%s] remove %s", _ident, _blacklisted)
-            _proc =df.MetsProcessor(self.mets_file)
+            _proc = df.MetsProcessor(self.mets_file)
             _proc.clear_filegroups(_blacklisted)
             _proc.write()
 
@@ -604,6 +607,8 @@ class OCRDPageParallel(ODEMProcess):
 
         ocr_log_conf = os.path.join(
             PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_logging'))
+        ocr_makefile = os.path.join(
+            PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_makefile'))
 
         # Preprare workspace with makefile
         (image_path, ident) = image_4_ocr
@@ -611,10 +616,13 @@ class OCRDPageParallel(ODEMProcess):
         file_name = os.path.basename(image_path)
         file_id = file_name.split('.')[0]
         page_workdir = os.path.join(self.work_dir_main, file_id)
+
         if os.path.exists(page_workdir):
             shutil.rmtree(page_workdir, ignore_errors=True)
         os.mkdir(page_workdir)
+
         shutil.copy(ocr_log_conf, page_workdir)
+        shutil.copy(ocr_makefile, page_workdir)
         os.chdir(page_workdir)
 
         # move and convert image data at once
@@ -670,6 +678,7 @@ class OCRDPageParallel(ODEMProcess):
                 container_user,
                 ocrd_process_list,
                 model_config,
+                makefile,
                 ocrd_resources_volumes,
                 tesseract_model_rtl,
             )
