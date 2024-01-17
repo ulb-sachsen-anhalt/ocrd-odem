@@ -57,6 +57,10 @@ from .processing_mets import (
 from .processing_ocrd import (
     run_ocr_page,
 )
+from .processing_ocr_pipeline import (
+    analyze,
+    run_pipeline,
+)
 from .processing_ocr_results import (
     FILEGROUP_OCR,
     convert_to_output_format,
@@ -127,6 +131,8 @@ class ODEMProcess:
         self.store = None
         self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
+        self.ocr_function = None
+        self.ocr_input_paths = []
         self._statistics = {'execs': executors}
         self._process_start = time.time()
         if logger is not None:
@@ -343,7 +349,47 @@ class ODEMProcess:
         """Execute OCR workflow
         Subject to actual ODEM flavor
         """
-        return [(0, 0, 0, 0)]
+        _outcomes = [(0, 0, 0, 0)]
+        if self.n_executors > 1:
+            _outcomes = self.run_parallel()
+        else:
+            _outcomes = self.run_sequential()
+        if _outcomes:
+            self._statistics['outcomes'] = _outcomes
+        return _outcomes
+
+    def run_parallel(self):
+        """Run workflow parallel given poolsize"""
+
+        self.the_logger.info("[%s] %d images run_parallel by %d executors",
+                             self.process_identifier, len(self._pipeline_input), self.n_executors)
+        try:
+            with concurrent.futures.ThreadPoolExecutor(
+                    max_workers=self.n_executors,
+                    thread_name_prefix='odem'
+            ) as executor:
+                outcomes = list(executor.map(self.ocr_function, self.ocr_input_paths))
+                return outcomes
+        except (OSError, AttributeError) as err:
+            self.the_logger.error(err)
+            raise RuntimeError(f"OCR-D parallel: {err.args[0]}") from err
+
+    def run_sequential(self):
+        """run complete workflow plain sequential
+        For debugging or small machines
+        """
+
+        _len_img = len(self.ocr_input_paths)
+        _estm_min = _len_img * DEFAULT_RUNTIME_PAGE
+        self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
+                             self.process_identifier, _len_img, _estm_min)
+        try:
+            outcomes = [self.ocr_function(_img)
+                        for _img in self.ocr_input_paths]
+            return outcomes
+        except (OSError, AttributeError) as err:
+            self.the_logger.error(err)
+            raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
 
     def calculate_statistics(self, outcomes: List):
         """Calculate and aggregate runtime stats"""
@@ -772,3 +818,132 @@ class OCRDPageParallel(ODEMProcess):
         self.ocr_files = _cnv
         self.the_logger.info("[%s] converted '%d' files page-to-alto",
                              self.process_identifier, len(_cnv))
+
+
+class ODEMTesseract(ODEMProcess):
+    """Tesseract Runner"""
+
+    def __init__(self, record, workspace, n_execs):
+        super().__init__(record, workspace, executors=n_execs)
+        self.ocr_function = run_pipeline
+        self.pipeline_config = None
+
+    def run(self):
+        """Wrap specific OCR execution with
+        respect to number of executors"""
+
+        _cfg = self.read_pipeline_config()
+        self._prepare_workdir_tmp()
+        _n_total = len(self.images_4_ocr)
+        self.ocr_input_paths = [(img, i, _n_total, self.the_logger, _cfg)
+                                for i, img in enumerate(self.images_4_ocr, start=1)]
+        return super().run()
+
+    def read_pipeline_config(self, path_cfg=None) -> configparser:
+        """Read and process additional pipeline configuration"""
+
+        _path_cfg = path_cfg
+        if path_cfg is None:
+            if self.cfg.has_option('ocr', 'ocr_pipeline_config'):
+                _path_cfg = os.path.abspath(self.cfg.get('ocr', 'ocr_pipeline_config'))
+        if not os.path.isfile(_path_cfg):
+            raise ODEMException(f"Invalid ocr-pipeline conf {_path_cfg}")
+        _cfg = configparser.ConfigParser()
+        _cfg.read(_path_cfg)
+        self.pipeline_config = _cfg
+        return _cfg
+
+    def _prepare_workdir_tmp(self):
+        workdir_tmp = self.cfg.get('ocr', 'ocr_pipeline_workdir_tmp')
+        self.the_logger.warning("no workdir set, use '%s'", workdir_tmp)
+        if not os.path.isdir(workdir_tmp):
+            if os.access(workdir_tmp, os.W_OK):
+                os.makedirs(workdir_tmp)
+            else:
+                self.the_logger.warning("tmp workdir '%s' not writable, use /tmp",
+                                        workdir_tmp)
+                workdir_tmp = '/tmp/ocr-pipeline-workdir'
+                if os.path.exists(workdir_tmp):
+                    self._clean_workdir(workdir_tmp)
+                os.makedirs(workdir_tmp, exist_ok=True)
+        else:
+            self._clean_workdir(workdir_tmp)
+        return workdir_tmp
+
+    def _clean_workdir(self, the_dir):
+        self.the_logger.info("clean existing workdir '%s'", the_dir)
+        for file_ in os.listdir(the_dir):
+            fpath = os.path.join(the_dir, file_)
+            if os.path.isfile(fpath):
+                os.unlink(fpath)
+
+    # def run_parallel(self):
+    #     """Run workflow parallel given poolsize"""
+
+    #     self.the_logger.info("[%s] %d images run_parallel by %d executors",
+    #                          self.process_identifier, len(self._pipeline_input), self.n_executors)
+    #     try:
+    #         with concurrent.futures.ThreadPoolExecutor(
+    #                 max_workers=self.n_executors,
+    #                 thread_name_prefix='odem'
+    #         ) as executor:
+    #             outcomes = list(executor.map(run_pipeline, self._pipeline_input))
+    #             return outcomes
+    #     except (OSError, AttributeError) as err:
+    #         self.the_logger.error(err)
+    #         raise RuntimeError(f"OCR-D parallel: {err.args[0]}") from err
+
+    # def run_sequential(self):
+    #     """run complete workflow plain sequential
+    #     For debugging or small machines
+    #     """
+
+    #     _len_img = len(self._pipeline_input)
+    #     _estm_min = _len_img * DEFAULT_RUNTIME_PAGE
+    #     self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
+    #                          self.process_identifier, _len_img, _estm_min)
+    #     try:
+    #         outcomes = [run_pipeline(_img)
+    #                     for _img in self._pipeline_input]
+    #         return outcomes
+    #     except (OSError, AttributeError) as err:
+    #         self.the_logger.error(err)
+    #         raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
+
+    def store_estimations(self, estms):
+        """Postprocessing of OCR-Quality Estimation Data"""
+
+        valids = [r for r in estms if r[1] != -1]
+        invalids = [r for r in estms if r[1] == -1]
+        sorteds = sorted(valids, key=lambda r: r[1])
+        aggregations = analyze(sorteds)
+        end_time = time.strftime('%Y-%m-%d_%H-%M', time.localtime())
+        if not os.path.isdir(self.work_dir_main):
+            self.the_logger.warning('unable to choose store for estm data: %s',
+                                    str(self.work_dir_main))
+            return
+
+        file_name = os.path.basename(self.work_dir_main)
+        file_path = os.path.join(
+            self.work_dir_main, f"{file_name}_{end_time}.wtr")
+        self.the_logger.info("store mean '%.3f' in '%s'",
+                             aggregations[0], file_path)
+        if aggregations:
+            (mean, bins) = aggregations
+            b_1 = len(bins[0])
+            b_2 = len(bins[1])
+            b_3 = len(bins[2])
+            b_4 = len(bins[3])
+            b_5 = len(bins[4])
+            n_v = len(valids)
+            n_i = len(invalids)
+            self.the_logger.info("WTE (Mean): '%.1f' (1: %d/%d, ... 5: %d/%d)",
+                                 mean, b_1, n_v, b_5, n_v)
+            with open(file_path, 'w', encoding="UTF-8") as outfile:
+                outfile.write(
+                    f"{mean},{b_1},{b_2},{b_3},{b_4},{b_5},{len(estms)},{n_i}\n")
+                for s in sorteds:
+                    outfile.write(
+                        f"{s[0]},{s[1]:.3f},{s[2]},{s[3]},{s[4]},{s[5]},{s[6]},{s[7]}\n")
+                outfile.write("\n")
+                return file_path
