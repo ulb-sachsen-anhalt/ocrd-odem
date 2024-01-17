@@ -418,7 +418,7 @@ def test_export_flat_zip(tmp_path):
     use of old with the legacy
     semantics VLS systems
     """
-    
+
     path_workdir = tmp_path / 'workdir'
     path_workdir.mkdir()
     path_tmp_export_dir = tmp_path / 'tmp_export'
@@ -454,10 +454,7 @@ def test_export_flat_zip(tmp_path):
     _langs = oproc.statistics.get(STATS_KEY_LANGS)
 
     # act
-    zipfilepath, size = oproc.export_data()
+    zipfilepath, _ = oproc.export_data()
 
     # assert
-    assert os.path.exists(zipfilepath)
-    assert size == '0MB'
-    assert os.path.getsize(zipfilepath) > 58500    # UH: 59832? AN: 58552?
-    assert os.path.getsize(zipfilepath) < 60500
+    assert os.path.exists(zipfilepath) and os.path.getsize(zipfilepath) == 58552

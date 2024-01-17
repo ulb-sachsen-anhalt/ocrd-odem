@@ -142,10 +142,8 @@ if __name__ == "__main__":
         LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE)
         sys.exit(1)
 
-
     def wrap_save_record_state(status: str, urn, **kwargs):
         handler.save_record_state(urn, status, **kwargs)
-
 
     try:
         handler.save_record_state(record.identifier, MARK_OCR_BUSY)

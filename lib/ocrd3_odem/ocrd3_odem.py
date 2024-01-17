@@ -9,6 +9,7 @@ import os
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 from pathlib import (
     Path
@@ -17,7 +18,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Tuple,
 )
 import lxml.etree as ET
 import numpy as np
@@ -26,22 +26,26 @@ from digiflow import (
     OAIRecord,
     MetsProcessor,
     BaseDerivansManager,
-    DerivansResult, 
+    DerivansResult,
     export_data_from,
+    map_contents,
+)
+from digiflow.digiflow_export import (
+    _move_to_tmp_file
 )
 
 from .odem_commons import (
     CFG_SEC_OCR,
     CFG_KEY_RES_VOL,
-    DEFAULT_RTL_MODELS, 
+    DEFAULT_RTL_MODELS,
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
     PROJECT_ROOT,
     ExportFormat,
-    ODEMException, 
+    ODEMException,
 )
 from .processing_mets import (
-    RECORD_IDENTIFIER,
+    CATALOG_ULB,
     XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
@@ -192,7 +196,7 @@ class ODEMProcess:
         except ODEMMetadataMetsException as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
         self.identifiers = insp.identifiers
-        self._statistics[RECORD_IDENTIFIER] = insp.record_identifier
+        self._statistics[CATALOG_ULB] = insp.record_identifier
         self._statistics['type'] = insp.type
         self._statistics[STATS_KEY_LANGS] = insp.languages
         self._statistics['n_images_pages'] = insp.n_images_pages
@@ -252,7 +256,7 @@ class ODEMProcess:
         Please note, that more than one config
         can be required, each glued with a '+' sign.
         (Therefore the splitting.)
-        
+
         Resolving order
         #1: inspect language flag
         #2: inspect local filenames
@@ -339,9 +343,9 @@ class ODEMProcess:
         """Execute OCR workflow
         Subject to actual ODEM flavor
         """
-        return [(0,0,0,0)]
+        return [(0, 0, 0, 0)]
 
-    def calculate_statistics(self, outcomes:List):
+    def calculate_statistics(self, outcomes: List):
         """Calculate and aggregate runtime stats"""
         n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
         _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
@@ -388,7 +392,7 @@ class ODEMProcess:
                     _l_strs = [s.attrib['CONTENT'] for s in _l.findall('.//alto:String', XMLNS)]
                     _txts.append(' '.join(_l_strs))
         txt_content = '\n'.join(_txts)
-        _out_path = os.path.join(self.work_dir_main, f'{self._statistics[RECORD_IDENTIFIER]}.pdf.txt')
+        _out_path = os.path.join(self.work_dir_main, f'{self._statistics[CATALOG_ULB]}.pdf.txt')
         with open(_out_path, mode='w', encoding='UTF-8') as _writer:
             _writer.write(txt_content)
         self.the_logger.info("[%s] harvested %d lines from %d ocr files to %s",
@@ -411,7 +415,7 @@ class ODEMProcess:
             self.cfg.get('derivans', 'derivans_config')
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
-        path_logging = self.cfg.get('derivans','derivans_logdir', fallback=None)
+        path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
         derivans: BaseDerivansManager = BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
@@ -459,8 +463,11 @@ class ODEMProcess:
                 raise ODEMException(str(err.args[0])) from err
             raise err
 
-    def export_data(self) -> Tuple:
+    def export_data(self):
         """re-do metadata and transform into output format"""
+
+        export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
+        export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
 
         exp_dst = self.cfg.get('global', 'local_export_dir')
         exp_tmp = self.cfg.get('global', 'local_export_tmp')
@@ -470,11 +477,36 @@ class ODEMProcess:
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
         exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
-        exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
-        saf_name = self._statistics[RECORD_IDENTIFIER]
-        export_result = export_data_from(self.mets_file, exp_col,
-                                         saf_final_name=saf_name, export_dst=exp_dst,
-                                         export_map=exp_map, tmp_saf_dir=exp_tmp)
+        if export_mets:
+            exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
+        saf_name = self.identifiers.get(CATALOG_ULB)
+        if export_format == ExportFormat.SAF:
+            export_result = export_data_from(
+                self.mets_file,
+                exp_col,
+                saf_final_name=saf_name,
+                export_dst=exp_dst,
+                export_map=exp_map,
+                tmp_saf_dir=exp_tmp,
+            )
+        elif export_format == ExportFormat.FLAT_ZIP:
+            prefix = 'opendata-working-'
+            source_path_dir = os.path.dirname(self.mets_file)
+            tmp_dir = tempfile.gettempdir()
+            if exp_tmp:
+                tmp_dir = exp_tmp
+            with tempfile.TemporaryDirectory(prefix=prefix, dir=tmp_dir) as tmp_dir:
+                work_dir = os.path.join(tmp_dir, saf_name)
+                export_mappings = map_contents(source_path_dir, work_dir, exp_map)
+                for mapping in export_mappings:
+                    mapping.copy()
+                tmp_zip_path, size = self._compress(os.path.dirname(work_dir), saf_name)
+                path_export_processing = _move_to_tmp_file(tmp_zip_path, exp_dst)
+                export_result = path_export_processing, size
+
+        else:
+            raise ODEMException(f'Unsupported export format: {export_format}')
+
         self.the_logger.info("[%s] exported data: %s",
                              self.process_identifier, export_result)
         if export_result:
@@ -487,8 +519,9 @@ class ODEMProcess:
                 self.the_logger.debug('[%s] rename %s to %s',
                                       self.process_identifier, pth, final_path)
                 shutil.move(pth, final_path)
-            return (final_path, size)
-        return ()
+                return final_path, size
+
+        return None
 
     @property
     def duration(self):
@@ -506,7 +539,19 @@ class ODEMProcess:
 
         self._statistics['timedelta'] = f'{self.duration}'
         return self._statistics
-    
+
+    def _compress(self, work_dir, archive_name):
+        zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
+
+        previous_dir = os.getcwd()
+        os.chdir(os.path.join(work_dir, archive_name))
+        cmd = f'zip -q -r {zip_file_path} ./*'
+        subprocess.run(cmd, shell=True, check=True)
+        os.chmod(zip_file_path, 0o666)
+        zip_size = int(os.path.getsize(zip_file_path) / 1024 / 1024)
+        os.chdir(previous_dir)
+        return zip_file_path, f"{zip_size}MiB"
+
 
 class OCRDPageParallel(ODEMProcess):
     """Use page parallel workflow"""
@@ -515,7 +560,7 @@ class OCRDPageParallel(ODEMProcess):
         """Wrap specific OCR execution with
         respect to number of executors"""
 
-        _outcomes = [(0,0,0,0)]
+        _outcomes = [(0, 0, 0, 0)]
         if self.n_executors > 1:
             _outcomes = self.run_parallel()
         else:

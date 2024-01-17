@@ -296,7 +296,7 @@ if __name__ == "__main__":
     rec_ident = record.identifier
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
-    PROCESS:ODEMProcess = OCRDPageParallel(record, req_dst_dir, EXECUTORS)
+    PROCESS: ODEMProcess = OCRDPageParallel(record, req_dst_dir, EXECUTORS)
     PROCESS.the_logger = LOGGER
     PROCESS.the_logger.debug(
         "request %s from %s, %s part slots)",
