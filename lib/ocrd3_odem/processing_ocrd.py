@@ -104,8 +104,5 @@ def run_ocr_page(*args):
     for host_dir, cntr_dir in ocrd_resources_volumes.items():
         cmd += f" -v {host_dir}:{cntr_dir}"
     cmd += f" {base_image}"
-    # cmd += f" ocrd-make MODEL_CONFIG={model_config} TESSERACT_LEVEL={tess_level}"
-    # cmd += f" -f {makefile} . "
     cmd += f" ocrd process {ocrd_process_str}"
     subprocess.run(cmd, shell=True, check=True, timeout=container_timeout)
-    pass

@@ -560,6 +560,9 @@ class OCRDPageParallel(ODEMProcess):
         """Wrap specific OCR execution with
         respect to number of executors"""
 
+        if not self.cfg.has_option('ocr', 'ocrd_process_list'):
+            raise ODEMException("No option 'ocrd_process_list' in section: 'ocr'")
+
         _outcomes = [(0, 0, 0, 0)]
         if self.n_executors > 1:
             _outcomes = self.run_parallel()
@@ -663,7 +666,6 @@ class OCRDPageParallel(ODEMProcess):
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
         base_image = self.cfg.get('ocr', 'ocrd_baseimage')
-        ocrd_process_list = self.cfg.getlist('ocr', 'ocrd_process_list')
         tesseract_model_rtl: List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
         ocrd_resources_volumes: Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
 

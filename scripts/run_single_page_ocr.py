@@ -1,8 +1,14 @@
+"""
+Simplicistic example for creating ocr data for a single page with the OCR-D workflow.
+"""
+
 import argparse
 import configparser
 import os
 import pathlib
 import shutil
+import subprocess
+from typing import List, Dict
 
 from PIL import Image
 from ocrd.resolver import Resolver
@@ -25,7 +31,7 @@ arg_parser.add_argument(
     "-c",
     "--config",
     required=False,
-    default="resources/odem.ini",
+    default="resources/odem.ocrd.tesseract.ini",
     help="path to configuration file"
 )
 args = arg_parser.parse_args()
@@ -34,7 +40,6 @@ cfg_parser: configparser.ConfigParser = get_configparser()
 cfg_parser.read(conf_file)
 
 ocr_log_conf = os.path.join(PROJECT_ROOT, cfg_parser.get('ocr', 'ocrd_logging'))
-ocr_makefile = os.path.join(PROJECT_ROOT, cfg_parser.get('ocr', 'ocrd_makefile'))
 LOCAL_WORK_ROOT = cfg_parser.get('global', 'local_work_root')
 
 # prepare page work dir
@@ -46,12 +51,9 @@ if os.path.exists(page_workdir):
     shutil.rmtree(page_workdir, ignore_errors=True)
 os.mkdir(page_workdir)
 shutil.copy(ocr_log_conf, page_workdir)
-shutil.copy(ocr_makefile, page_workdir)
 os.chdir(page_workdir)
 
 # preproc image
-if not str(image_file_path).endswith(EXT_JPG):
-    image_file_path = f"{image_file_path}{EXT_JPG}"
 input_image = Image.open(image_file_path)
 file_name = os.path.basename(image_file_path)
 image_max_dir = os.path.join(page_workdir, 'MAX')
@@ -81,31 +83,28 @@ kwargs = {
 workspace.mets.add_file(**kwargs)
 workspace.save_mets()
 
-tessdir_host = cfg_parser.get('ocr', 'tessdir_host')
-tessdir_cntr = cfg_parser.get('ocr', 'tessdir_cntr')
 base_image = cfg_parser.get('ocr', 'ocrd_baseimage')
 
 os.chdir(page_workdir)
 
-cmd_inside_cntr = "ocrd-make TESSERACT_CONFIG=gt4hist_5000k TESSERACT_LEVEL=word -f ulb-odem.mk ."
+ocrd_process_list = cfg_parser.getlist('ocr', 'ocrd_process_list')
+ocrd_process_args = {
+    'tesseract_level': 'word',
+    'model_config': 'gt4hist_5000k'
+}
+ocrd_process_list: List[str] = [f'"{p.format(**ocrd_process_args)}"' for p in ocrd_process_list]
+ocrd_process_str: str = " ".join(ocrd_process_list)
 
-print(("#" * 30), " VERSION 1 ", ("#" * 30))
-print(f"cd {page_workdir}")
-cmd: str = f'docker run --rm -u 1000 -w /data '
-cmd += f'-v {page_workdir}:/data '
-cmd += f'-v {tessdir_host}:{tessdir_cntr} '
-cmd += f'{base_image} '
-cmd += cmd_inside_cntr
+ocrd_resources_volumes: Dict[str, str] = cfg_parser.getdict('ocr', 'ocrd_resources_volumes', fallback={})
+
+cmd_inside_cntr = f"ocrd process {ocrd_process_str}"
+
+cmd: str = 'docker run --rm -u 1000 -w /data'
+cmd += f' -v {page_workdir}:/data '
+for host_dir, cntr_dir in ocrd_resources_volumes.items():
+    cmd += f" -v {host_dir}:{cntr_dir}"
+cmd += f' {base_image}'
+cmd += f' {cmd_inside_cntr}'
 print(cmd)
 
-print(("#" * 30), " VERSION 2 ", ("#" * 30))
-print(f"cd {page_workdir}")
-cmd: str = f'docker run -it -u 1000 -w /data '
-cmd += f'-v {page_workdir}:/data '
-cmd += f'-v {tessdir_host}:{tessdir_cntr} '
-cmd += f'{base_image} '
-cmd += f"bash"
-print(cmd)
-
-print('-' * 80)
-print(cmd_inside_cntr)
+subprocess.run(cmd, shell=True, check=True)
