@@ -3,7 +3,7 @@
 import pytest
 from digiflow import OAIRecord
 
-from conftest import fixture_configuration
+from .conftest import fixture_configuration
 from lib.ocrd3_odem import OCRDPageParallel
 from lib.ocrd3_odem.odem_commons import (
     DEFAULT_RTL_MODELS as D_RTL, ODEMException,
