@@ -823,7 +823,7 @@ class OCRDPageParallel(ODEMProcess):
 class ODEMTesseract(ODEMProcess):
     """Tesseract Runner"""
 
-    def __init__(self, record, workspace, n_execs):
+    def __init__(self, record, workspace, n_execs=1):
         super().__init__(record, workspace, executors=n_execs)
         self.ocr_function = run_pipeline
         self.pipeline_config = None
@@ -876,39 +876,6 @@ class ODEMTesseract(ODEMProcess):
             fpath = os.path.join(the_dir, file_)
             if os.path.isfile(fpath):
                 os.unlink(fpath)
-
-    # def run_parallel(self):
-    #     """Run workflow parallel given poolsize"""
-
-    #     self.the_logger.info("[%s] %d images run_parallel by %d executors",
-    #                          self.process_identifier, len(self._pipeline_input), self.n_executors)
-    #     try:
-    #         with concurrent.futures.ThreadPoolExecutor(
-    #                 max_workers=self.n_executors,
-    #                 thread_name_prefix='odem'
-    #         ) as executor:
-    #             outcomes = list(executor.map(run_pipeline, self._pipeline_input))
-    #             return outcomes
-    #     except (OSError, AttributeError) as err:
-    #         self.the_logger.error(err)
-    #         raise RuntimeError(f"OCR-D parallel: {err.args[0]}") from err
-
-    # def run_sequential(self):
-    #     """run complete workflow plain sequential
-    #     For debugging or small machines
-    #     """
-
-    #     _len_img = len(self._pipeline_input)
-    #     _estm_min = _len_img * DEFAULT_RUNTIME_PAGE
-    #     self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
-    #                          self.process_identifier, _len_img, _estm_min)
-    #     try:
-    #         outcomes = [run_pipeline(_img)
-    #                     for _img in self._pipeline_input]
-    #         return outcomes
-    #     except (OSError, AttributeError) as err:
-    #         self.the_logger.error(err)
-    #         raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
 
     def store_estimations(self, estms):
         """Postprocessing of OCR-Quality Estimation Data"""
