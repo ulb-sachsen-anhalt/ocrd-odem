@@ -25,6 +25,7 @@ from lib.ocrd3_odem import (
     MARK_OCR_FAIL,
     ODEMProcess,
     OCRDPageParallel,
+    ODEMTesseract,
     ODEMException,
     get_configparser,
     get_logger,
@@ -158,7 +159,8 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
 
-        PROCESS: ODEMProcess = OCRDPageParallel(record, req_dst_dir, EXECUTORS)
+        # PROCESS: ODEMProcess = OCRDPageParallel(record, req_dst_dir, EXECUTORS)
+        PROCESS: ODEMProcess = ODEMTesseract(record, req_dst_dir, EXECUTORS)
         PROCESS.the_logger = LOGGER
         PROCESS.the_logger.info("[%s] odem from %s, %d executors", local_ident, OAI_RECORD_FILE, EXECUTORS)
         PROCESS.cfg = CFG
