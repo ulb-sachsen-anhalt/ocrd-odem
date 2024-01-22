@@ -611,8 +611,6 @@ class OCRDPageParallel(ODEMProcess):
 
         ocr_log_conf = os.path.join(
             PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_logging'))
-        ocr_makefile = os.path.join(
-            PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_makefile'))
 
         # Preprare workspace with makefile
         (image_path, ident) = image_4_ocr
@@ -620,13 +618,10 @@ class OCRDPageParallel(ODEMProcess):
         file_name = os.path.basename(image_path)
         file_id = file_name.split('.')[0]
         page_workdir = os.path.join(self.work_dir_main, file_id)
-
         if os.path.exists(page_workdir):
             shutil.rmtree(page_workdir, ignore_errors=True)
         os.mkdir(page_workdir)
-
         shutil.copy(ocr_log_conf, page_workdir)
-        shutil.copy(ocr_makefile, page_workdir)
         os.chdir(page_workdir)
 
         # move and convert image data at once
