@@ -106,7 +106,7 @@ class ODEMMetadataInspecteur:
             # PICA types *might* contain trailing 'u' or 'v' = 'Afu'
             if len(_type) in range (2,4) and _type[1] not in TYPE_PRINTS_PICA:
                 raise ODEMNoTypeForOCRException(f"{self.process_identifier} invalid PICA type for OCR: {report.type}")
-            elif len(_type) > 3 and _type not in TYPE_PRINTS_LOGICAL:
+            elif len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
                 raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
             reader = MetsReader(self._data)
             reader.check()
