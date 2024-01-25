@@ -420,7 +420,7 @@ class ODEMProcess:
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
         path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
-        derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
+        derivans: BaseDerivansManager = BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
             path_binary=path_bin,
@@ -431,7 +431,7 @@ class ODEMProcess:
         derivans.init()
         # be cautious
         try:
-            dresult: df.DerivansResult = derivans.start()
+            dresult: DerivansResult = derivans.start()
             self.the_logger.info("[%s] create derivates in %.1fs",
                                  self.process_identifier, dresult.duration)
         except subprocess.CalledProcessError as _sub_err:
@@ -835,39 +835,6 @@ class ODEMTesseract(ODEMProcess):
             fpath = os.path.join(the_dir, file_)
             if os.path.isfile(fpath):
                 os.unlink(fpath)
-
-    # def run_parallel(self):
-    #     """Run workflow parallel given poolsize"""
-
-    #     self.the_logger.info("[%s] %d images run_parallel by %d executors",
-    #                          self.process_identifier, len(self._pipeline_input), self.n_executors)
-    #     try:
-    #         with concurrent.futures.ThreadPoolExecutor(
-    #                 max_workers=self.n_executors,
-    #                 thread_name_prefix='odem'
-    #         ) as executor:
-    #             outcomes = list(executor.map(run_pipeline, self._pipeline_input))
-    #             return outcomes
-    #     except (OSError, AttributeError) as err:
-    #         self.the_logger.error(err)
-    #         raise RuntimeError(f"OCR-D parallel: {err.args[0]}") from err
-
-    # def run_sequential(self):
-    #     """run complete workflow plain sequential
-    #     For debugging or small machines
-    #     """
-
-    #     _len_img = len(self._pipeline_input)
-    #     _estm_min = _len_img * DEFAULT_RUNTIME_PAGE
-    #     self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
-    #                          self.process_identifier, _len_img, _estm_min)
-    #     try:
-    #         outcomes = [run_pipeline(_img)
-    #                     for _img in self._pipeline_input]
-    #         return outcomes
-    #     except (OSError, AttributeError) as err:
-    #         self.the_logger.error(err)
-    #         raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
 
     def store_estimations(self, estms):
         """Postprocessing of OCR-Quality Estimation Data"""

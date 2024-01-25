@@ -3,6 +3,7 @@
 from .odem_commons import *
 
 from .ocrd3_odem import (
+    OdemWorkflowProcessType,
     ODEMProcess,
     OCRDPageParallel,
     ODEMTesseract,
