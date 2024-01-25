@@ -31,7 +31,7 @@ from lib.ocrd3_odem import (
     OCRDPageParallel,
     get_configparser,
     get_logger,
-    merge_args,
+    merge_args, OdemWorkflowProcessType,
 )
 
 
@@ -114,7 +114,12 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
         os.makedirs(req_dst_dir, exist_ok=True)
-        PROCESS: ODEMProcess = OCRDPageParallel(None, req_dst_dir, EXECUTORS)
+
+        proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
+        if proc_type is None:
+            LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
+        PROCESS: ODEMProcess = ODEMProcess.create(proc_type, None, req_dst_dir, EXECUTORS)
+
         PROCESS.local_mode = True
         PROCESS.cfg = CFG
         PROCESS.the_logger = LOGGER

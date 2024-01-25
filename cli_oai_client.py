@@ -31,8 +31,8 @@ from lib.ocrd3_odem import (
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
+    OdemWorkflowProcessType,
     ODEMProcess,
-    OCRDPageParallel,
     ODEMException,
     get_configparser,
     get_logger,
@@ -271,6 +271,7 @@ if __name__ == "__main__":
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
     HOST = CFG.get('oai-server', 'oai_server_url')
     PORT = CFG.getint('oai-server', 'oai_server_port')
+
     LOGGER.info("OAIServiceClient instance listens %s:%s for '%s' (format:%s)",
                 HOST, PORT, OAI_RECORD_FILE_NAME, DATA_FIELDS)
     CLIENT = OAIServiceClient(OAI_RECORD_FILE_NAME, HOST, PORT)
@@ -296,7 +297,12 @@ if __name__ == "__main__":
     rec_ident = record.identifier
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
-    PROCESS: ODEMProcess = OCRDPageParallel(record, req_dst_dir, EXECUTORS)
+
+    proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
+    if proc_type is None:
+        LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
+    PROCESS: ODEMProcess = ODEMProcess.create(proc_type, record, req_dst_dir, EXECUTORS)
+
     PROCESS.the_logger = LOGGER
     PROCESS.the_logger.debug(
         "request %s from %s, %s part slots)",

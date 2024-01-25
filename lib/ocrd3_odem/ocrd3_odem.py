@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """OCR-Generation for OAI-Records"""
 
+from __future__ import annotations
+
 import concurrent.futures
 import configparser
 import datetime
@@ -11,6 +13,7 @@ import socket
 import subprocess
 import tempfile
 import time
+from enum import Enum
 from pathlib import (
     Path
 )
@@ -90,6 +93,11 @@ ODEM_PAGE_TIME_FORMAT = '%Y-%m-%d_%H-%m-%S'
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
 
 
+class OdemWorkflowProcessType(str, Enum):
+    OCRD_PAGE_PARALLEL = "OCRD_PAGE_PARALLEL"
+    ODEM_TESSERACT = "ODEM_TESSERACT"
+
+
 class ODEMProcess:
     """Create OCR for OAI Records.
 
@@ -102,6 +110,22 @@ class ODEMProcess:
         paths. They will be applied by a custom mapping
         for the underlying OCR-Engine Tesseract-OCR.
     """
+
+    @staticmethod
+    def create(
+            workflow_type: OdemWorkflowProcessType | str,
+            record: OAIRecord,
+            work_dir,
+            executors=2,
+            log_dir=None,
+            logger=None
+    ) -> ODEMProcess:
+        if (
+                workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT
+                or workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT.value
+        ):
+            return ODEMTesseract(record, work_dir, executors, log_dir, logger)
+        return OCRDPageParallel(record, work_dir, executors, log_dir, logger)
 
     def __init__(self, record: OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
         """Create new ODEM Process.
@@ -606,6 +630,9 @@ class OCRDPageParallel(ODEMProcess):
         """Wrap specific OCR execution with
         respect to number of executors"""
 
+        if not self.cfg.has_option('ocr', 'ocrd_process_list'):
+            raise ODEMException("No option 'ocrd_process_list' in section: 'ocr'")
+
         _outcomes = [(0, 0, 0, 0)]
         if self.n_executors > 1:
             _outcomes = self.run_parallel()
@@ -654,8 +681,6 @@ class OCRDPageParallel(ODEMProcess):
 
         ocr_log_conf = os.path.join(
             PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_logging'))
-        ocr_makefile = os.path.join(
-            PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_makefile'))
 
         # Preprare workspace with makefile
         (image_path, ident) = image_4_ocr
@@ -663,13 +688,10 @@ class OCRDPageParallel(ODEMProcess):
         file_name = os.path.basename(image_path)
         file_id = file_name.split('.')[0]
         page_workdir = os.path.join(self.work_dir_main, file_id)
-
         if os.path.exists(page_workdir):
             shutil.rmtree(page_workdir, ignore_errors=True)
         os.mkdir(page_workdir)
-
         shutil.copy(ocr_log_conf, page_workdir)
-        shutil.copy(ocr_makefile, page_workdir)
         os.chdir(page_workdir)
 
         # move and convert image data at once
@@ -709,7 +731,7 @@ class OCRDPageParallel(ODEMProcess):
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
         base_image = self.cfg.get('ocr', 'ocrd_baseimage')
-        makefile = self.cfg.get('ocr', 'ocrd_makefile').split('/')[-1]
+        ocrd_process_list = self.cfg.getlist('ocr', 'ocrd_process_list')
         tesseract_model_rtl: List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
         ocrd_resources_volumes: Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
 
@@ -723,8 +745,8 @@ class OCRDPageParallel(ODEMProcess):
                 container_timeout,
                 container_name,
                 container_user,
+                ocrd_process_list,
                 model_config,
-                makefile,
                 ocrd_resources_volumes,
                 tesseract_model_rtl,
             )
@@ -823,8 +845,8 @@ class OCRDPageParallel(ODEMProcess):
 class ODEMTesseract(ODEMProcess):
     """Tesseract Runner"""
 
-    def __init__(self, record, workspace, n_execs=1):
-        super().__init__(record, workspace, executors=n_execs)
+    def __init__(self, record: OAIRecord, work_dir, executors=1, log_dir=None, logger=None):
+        super().__init__(record, work_dir, executors, log_dir, logger)
         self.ocr_function = run_pipeline
         self.pipeline_config = None
 
