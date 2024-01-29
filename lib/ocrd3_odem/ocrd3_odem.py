@@ -20,7 +20,7 @@ from pathlib import (
 from typing import (
     Dict,
     List,
-    Optional,
+    Optional, Any,
 )
 import lxml.etree as ET
 import numpy as np
@@ -156,7 +156,7 @@ class ODEMProcess:
         self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
         self.ocr_function = None
-        self.ocr_input_paths = []
+        self.ocr_input: List[List[Any]] = []
         self._statistics = {'execs': executors}
         self._process_start = time.time()
         if logger is not None:
@@ -386,13 +386,13 @@ class ODEMProcess:
         """Run workflow parallel given poolsize"""
 
         self.the_logger.info("[%s] %d images run_parallel by %d executors",
-                             self.process_identifier, len(self._pipeline_input), self.n_executors)
+                             self.process_identifier, len(self.ocr_input), self.n_executors)
         try:
             with concurrent.futures.ThreadPoolExecutor(
                     max_workers=self.n_executors,
                     thread_name_prefix='odem'
             ) as executor:
-                outcomes = list(executor.map(self.ocr_function, self.ocr_input_paths))
+                outcomes = list(executor.map(self.ocr_function, self.ocr_input))
                 return outcomes
         except (OSError, AttributeError) as err:
             self.the_logger.error(err)
@@ -403,13 +403,12 @@ class ODEMProcess:
         For debugging or small machines
         """
 
-        _len_img = len(self.ocr_input_paths)
+        _len_img = len(self.ocr_input)
         _estm_min = _len_img * DEFAULT_RUNTIME_PAGE
         self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
                              self.process_identifier, _len_img, _estm_min)
         try:
-            outcomes = [self.ocr_function(_img)
-                        for _img in self.ocr_input_paths]
+            outcomes = [self.ocr_function(_args) for _args in self.ocr_input]
             return outcomes
         except (OSError, AttributeError) as err:
             self.the_logger.error(err)
@@ -857,7 +856,15 @@ class ODEMTesseract(ODEMProcess):
         _cfg = self.read_pipeline_config()
         self._prepare_workdir_tmp()
         _n_total = len(self.images_4_ocr)
-        self.ocr_input_paths = [(img, i, _n_total, self.the_logger, _cfg)
+        # find section for tesseract step
+        # sette, modde oder add eigenschaft modelconfig
+        for sections in bbla:
+            if section type == stepTesseract
+            section
+            error werfen
+        _cfg.set(step_name,"model_configs",mc)
+        mc= self.map_language_to_modelconfig(self.images_4_ocr[0])
+        self.ocr_input = [(img, i, _n_total, self.the_logger, _cfg)
                                 for i, img in enumerate(self.images_4_ocr, start=1)]
         return super().run()
 
