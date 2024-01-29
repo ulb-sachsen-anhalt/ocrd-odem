@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """OCR-Generation for OAI-Records"""
 
+from __future__ import annotations
+
 import concurrent.futures
 import configparser
 import datetime
@@ -11,6 +13,7 @@ import socket
 import subprocess
 import tempfile
 import time
+from enum import Enum
 from pathlib import (
     Path
 )
@@ -86,6 +89,11 @@ DEFAULT_RUNTIME_PAGE = 1.0
 ODEM_PAGE_TIME_FORMAT = '%Y-%m-%d_%H-%m-%S'
 # how long to process single page?
 DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
+
+
+class OdemWorkflowProcessType(str, Enum):
+    OCRD_PAGE_PARALLEL = "OCRD_PAGE_PARALLEL"
+    ODEM_TESSERACT = "ODEM_TESSERACT"
 
 
 class ODEMProcess:
@@ -461,19 +469,22 @@ class ODEMProcess:
     def validate_mets(self):
         """Forward METS-schema validation"""
         try:
-            dfv.validate_xml(self.mets_file)
-        except dfv.InvalidXMLException as err:
-            raise ODEMException(str(err.args[0])) from err
+            validate_mets(self.mets_file)
+        except RuntimeError as err:
+            if len(err.args) > 0 and str(err.args[0]).startswith('invalid schema'):
+                raise ODEMException(str(err.args[0])) from err
+            raise err
 
     def export_data(self):
         """re-do metadata and transform into output format"""
 
         export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
         export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
-        exp_dst = self.cfg.get('export', 'local_export_dir')
-        exp_tmp = self.cfg.get('export', 'local_export_tmp')
-        exp_col = self.cfg.get('export', 'export_collection')
-        exp_map = self.cfg.getdict('export', 'export_mappings')
+
+        exp_dst = self.cfg.get('global', 'local_export_dir')
+        exp_tmp = self.cfg.get('global', 'local_export_tmp')
+        exp_col = self.cfg.get('global', 'export_collection')
+        exp_map = self.cfg.getdict('global', 'export_mappings')
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
@@ -482,7 +493,7 @@ class ODEMProcess:
             exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
         saf_name = self.identifiers.get(CATALOG_ULB)
         if export_format == ExportFormat.SAF:
-            export_result = dfx.export_data_from(
+            export_result = export_data_from(
                 self.mets_file,
                 exp_col,
                 saf_final_name=saf_name,
@@ -621,11 +632,9 @@ class OCRDPageParallel(ODEMProcess):
         file_name = os.path.basename(image_path)
         file_id = file_name.split('.')[0]
         page_workdir = os.path.join(self.work_dir_main, file_id)
-
         if os.path.exists(page_workdir):
             shutil.rmtree(page_workdir, ignore_errors=True)
         os.mkdir(page_workdir)
-
         shutil.copy(ocr_log_conf, page_workdir)
         shutil.copy(ocr_makefile, page_workdir)
         os.chdir(page_workdir)
@@ -683,7 +692,6 @@ class OCRDPageParallel(ODEMProcess):
                 container_user,
                 ocrd_process_list,
                 model_config,
-                makefile,
                 ocrd_resources_volumes,
                 tesseract_model_rtl,
             )
