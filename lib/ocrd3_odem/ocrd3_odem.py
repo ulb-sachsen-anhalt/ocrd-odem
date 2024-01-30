@@ -549,8 +549,8 @@ class ODEMProcess:
         with execution duration updated each call by
         requesting it's string representation"""
 
-        self._statistics_ocr['timedelta'] = f'{self.duration}'
-        return self._statistics_ocr
+        self._statistics['timedelta'] = f'{self.duration}'
+        return self._statistics
 
     def _compress(self, work_dir, archive_name):
         zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
@@ -581,7 +581,7 @@ class OCRDPageParallel(ODEMProcess):
         else:
             _outcomes = self.run_sequential()
         if _outcomes:
-            self._statistics_ocr['outcomes'] = _outcomes
+            self._statistics['outcomes'] = _outcomes
         self.to_alto()
         return _outcomes
 
@@ -623,8 +623,6 @@ class OCRDPageParallel(ODEMProcess):
 
         ocr_log_conf = os.path.join(
             PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_logging'))
-        ocr_makefile = os.path.join(
-            PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_makefile'))
 
         # Preprare workspace with makefile
         (image_path, ident) = image_4_ocr
@@ -636,7 +634,6 @@ class OCRDPageParallel(ODEMProcess):
             shutil.rmtree(page_workdir, ignore_errors=True)
         os.mkdir(page_workdir)
         shutil.copy(ocr_log_conf, page_workdir)
-        shutil.copy(ocr_makefile, page_workdir)
         os.chdir(page_workdir)
 
         # move and convert image data at once
