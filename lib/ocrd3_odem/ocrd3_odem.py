@@ -852,23 +852,31 @@ class ODEMTesseract(ODEMProcess):
     def run(self):
         """Wrap specific OCR execution with
         respect to number of executors"""
-
-        _cfg = self.read_pipeline_config()
+        _cfg: configparser.ConfigParser = self.read_pipeline_config()
         self._prepare_workdir_tmp()
         _n_total = len(self.images_4_ocr)
-        # find section for tesseract step
-        # sette, modde oder add eigenschaft modelconfig
-        for sections in bbla:
-            if section type == stepTesseract
-            section
-            error werfen
-        _cfg.set(step_name,"model_configs",mc)
-        mc= self.map_language_to_modelconfig(self.images_4_ocr[0])
+
+        self._modify_model_config(_cfg)
+
         self.ocr_input = [(img, i, _n_total, self.the_logger, _cfg)
-                                for i, img in enumerate(self.images_4_ocr, start=1)]
+                          for i, img in enumerate(self.images_4_ocr, start=1)]
         return super().run()
 
-    def read_pipeline_config(self, path_cfg=None) -> configparser:
+    def _modify_model_config(self, cfg: configparser.ConfigParser)->None:
+        # find section for tesseract step
+        section: str = self._find_tesseract_step_section(cfg)
+        # mod/add model_config prop
+        model_config: str = self.map_language_to_modelconfig(self.images_4_ocr[0])
+        model_config = model_config.replace('.traineddata', '')
+        cfg.set(section, "model_configs", model_config)
+
+    def _find_tesseract_step_section(self, _cfg: configparser.ConfigParser) -> str:
+        sections: List[str] = _cfg.sections()
+        for section in sections:
+            if _cfg.has_option(section, 'type') and _cfg.get(section, 'type') == 'StepTesseract':
+                return section
+
+    def read_pipeline_config(self, path_cfg=None) -> configparser.ConfigParser:
         """Read and process additional pipeline configuration"""
 
         _path_cfg = path_cfg
