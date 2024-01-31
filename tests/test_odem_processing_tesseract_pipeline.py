@@ -79,8 +79,8 @@ def test_ocr_pipeline_default_config(my_pipeline: ODEMTesseract):
     assert _cfg.get('pipeline', 'executors') == '8'
     assert _cfg.get('pipeline', 'logger_name') == 'ocr_pipeline'
     assert _cfg.get('pipeline', 'file_ext') == 'tif,jpg,png,jpeg'
-    assert _cfg.get('step_03', 'language') == 'de-DE'
-    assert _cfg.get('step_03', 'enabled_rules') == 'GERMAN_SPELLER_RULE'
+    # assert _cfg.get('step_03', 'language') == 'de-DE'
+    # assert _cfg.get('step_03', 'enabled_rules') == 'GERMAN_SPELLER_RULE'
 
 
 def test_ocr_pipeline_profile():

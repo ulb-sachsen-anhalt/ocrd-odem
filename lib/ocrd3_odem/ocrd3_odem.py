@@ -109,7 +109,23 @@ class ODEMProcess:
         for the underlying OCR-Engine Tesseract-OCR.
     """
 
-    def __init__(self, record: df.OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
+    @staticmethod
+    def create(
+            workflow_type: OdemWorkflowProcessType | str,
+            record: OAIRecord,
+            work_dir,
+            executors=2,
+            log_dir=None,
+            logger=None
+    ) -> ODEMProcess:
+        if (
+                workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT
+                or workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT.value
+        ):
+            return ODEMTesseract(record, work_dir, executors, log_dir, logger)
+        return OCRDPageParallel(record, work_dir, executors, log_dir, logger)
+
+    def __init__(self, record: OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
         """Create new ODEM Process.
         Args:
             record (OAIRecord): OAI Record dataset
@@ -137,8 +153,9 @@ class ODEMProcess:
         self.store = None
         self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
-        self.statistics      = {}
-        self._statistics_ocr = {'execs': executors}
+        self.ocr_function = None
+        self.ocr_input: List[List[Any]] = []
+        self._statistics = {'execs': executors}
         self._process_start = time.time()
         if logger is not None:
             self.the_logger = logger
