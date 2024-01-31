@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:b="https://bibliothek.uni-halle.de" xmlns:dv="http://dfg-viewer.de/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:vlz="http://visuallibrary.net/vlz/1.0/" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zvdd="http://zvdd.gdz-cms.de/" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/mods.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd">
+  <mets:metsHdr CREATEDATE="2021-12-09T12:08:02" LASTMODDATE="2022-10-20T07:49:18Z">
+    <mets:agent ROLE="OTHER" TYPE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>vls/2012</mets:name>
+      <mets:note>legacy vlid: 1179382</mets:note>
+      <mets:note>legacy date: 2010-01-07T05:41:55Z</mets:note>
+    </mets:agent>
+    <mets:agent TYPE="OTHER" ROLE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>DigitalDerivans V1.8.7</mets:name>
+      <mets:note>PDF FileGroup for PDF_224415859 created at 2024-01-31T14:19:89</mets:note>
+    </mets:agent>
+    <mets:agent TYPE="OTHER" ROLE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>ULB Migration 2021</mets:name>
+      <mets:note>2021-12-09 12:08:03</mets:note>
+    </mets:agent>
+    <mets:agent TYPE="OTHER" ROLE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>DFG-OCRD3-ODEM_ocrd/all:2023-02-07</mets:name>
+      <mets:note>2024-01-31 14:19:10</mets:note>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="md1179382">
+    <mets:mdWrap MIMETYPE="text/xml" MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods version="3.7" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-7.xsd">
+          <mods:titleInfo>
+            <mods:title>Steuer-Zettul, auf das 1777ste Jahr, Nach welchen die Herrschaften und Unterthanen im Görlitzischen, auch zubehörigen Zittau- und Laubanischen Creyße, die beschlossenen Siebenzehen Rauch- und Eilff Mund-Guth-Steuern, zu entrichten haben ; [Datum aufn Voigts-Hofe in Görlitz den 11. Januar. 1777. Hauptmannschaft Görlitz.]</mods:title>
+          </mods:titleInfo>
+          <mods:name type="corporate">
+            <mods:namePart>Görlitz</mods:namePart>
+            <mods:role>
+              <mods:roleTerm type="code" authority="marcrelator">asn</mods:roleTerm>
+              <mods:roleTerm type="text">Beteiligte Person</mods:roleTerm>
+            </mods:role>
+            <mods:displayForm>Görlitz</mods:displayForm>
+          </mods:name>
+          <mods:typeOfResource>text</mods:typeOfResource>
+          <mods:genre authority="aad">Geldwesen</mods:genre>
+          <mods:genre authority="aad">Verordnung</mods:genre>
+          <mods:originInfo eventType="publication">
+            <mods:place>
+              <mods:placeTerm type="text">[S.l.]</mods:placeTerm>
+            </mods:place>
+            <mods:dateIssued encoding="iso8601" keyDate="yes">1777</mods:dateIssued>
+            <mods:issuance>monographic</mods:issuance>
+          </mods:originInfo>
+          <mods:originInfo eventType="digitization">
+            <mods:edition>[Electronic ed.]</mods:edition>
+            <mods:place>
+              <mods:placeTerm type="text">Halle (Saale)</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:publisher>
+            <mods:dateCaptured encoding="iso8601">2010</mods:dateCaptured>
+          </mods:originInfo>
+          <mods:language>
+            <mods:languageTerm authority="iso639-2b" type="code">ger</mods:languageTerm>
+          </mods:language>
+          <mods:physicalDescription>
+            <mods:extent>[2] Bl. ; 2°</mods:extent>
+          </mods:physicalDescription>
+          <mods:identifier type="vd18">10080813</mods:identifier>
+          <mods:identifier type="gbv">224415859</mods:identifier>
+          <mods:identifier type="urn">urn:nbn:de:gbv:3:1-119388</mods:identifier>
+          <mods:location>
+            <mods:physicalLocation>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:physicalLocation>
+            <mods:shelfLocator>Pon Vk 2188, FK</mods:shelfLocator>
+          </mods:location>
+          <mods:extension>
+            <zvdd:zvddWrap>
+              <zvdd:titleWord>Steuer-Zettel Untertanen zugehörgen  Kreise siebzehn 17 elf 11 Mund-Gut-Steuern</zvdd:titleWord>
+            </zvdd:zvddWrap>
+            <vlz:info version="2"/>
+            <b:note type="vls-migration">Autopsie nach Ex. der ULB Sachsen-Anhalt</b:note>
+            <b:externalType recordSyntax="pica">Aa</b:externalType>
+          </mods:extension>
+          <mods:recordInfo>
+            <mods:recordCreationDate encoding="marc">18-02-97</mods:recordCreationDate>
+            <mods:recordChangeDate encoding="marc">08-05-20</mods:recordChangeDate>
+            <mods:recordIdentifier source="gvk-ppn">224415859</mods:recordIdentifier>
+            <mods:descriptionStandard>rak</mods:descriptionStandard>
+          </mods:recordInfo>
+          <mods:accessCondition xlink:href="https://creativecommons.org/publicdomain/mark/1.0/" type="use and reproduction">Public Domain Mark 1.0</mods:accessCondition>
+          <mods:classification authority="ddc">090</mods:classification>
+          <mods:identifier type="doi">doi:10.25673/40342</mods:identifier>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="amd1179382">
+    <mets:rightsMD ID="rights1179382">
+      <mets:mdWrap MIMETYPE="text/xml" MDTYPE="OTHER" OTHERMDTYPE="DVRIGHTS">
+        <mets:xmlData>
+          <dv:rights>
+            <dv:ownerLogo>https://opendata.uni-halle.de/image/mets_viewerLogo.gif</dv:ownerLogo>
+            <dv:owner>Universitäts- und Landesbibliothek Sachsen-Anhalt</dv:owner>
+            <dv:ownerSiteURL>http://www.bibliothek.uni-halle.de</dv:ownerSiteURL>
+            <dv:ownerContact>mailto:auskunft@bibliothek.uni-halle.de</dv:ownerContact>
+            <dv:license>https://creativecommons.org/publicdomain/mark/1.0/</dv:license>
+          </dv:rights>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:rightsMD>
+    <mets:digiprovMD ID="digiprov1179382">
+      <mets:mdWrap MIMETYPE="text/xml" MDTYPE="OTHER" OTHERMDTYPE="DVLINKS">
+        <mets:xmlData>
+          <dv:links>
+            <dv:reference>http://opac.bibliothek.uni-halle.de/DB=1/CLK?IKT=12&amp;TRM=224415859</dv:reference>
+            <dv:presentation>https://opendata.uni-halle.de//handle/1981185920/42296</dv:presentation>
+          </dv:links>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:digiprovMD>
+  </mets:amdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="MAX">
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_1452731">
+        <mets:FLocat xlink:href="https://opendata.uni-halle.de/retrieve/a7ed0f71-0c6a-4f99-be3d-a1839b3d7c36/00000001.jpg" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_1452732">
+        <mets:FLocat xlink:href="https://opendata.uni-halle.de/retrieve/6f4253d7-0128-4305-838c-b45c9e094c31/00000002.jpg" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_1452733">
+        <mets:FLocat xlink:href="https://opendata.uni-halle.de/retrieve/b74e3a19-b390-4a70-827d-96a35430e5cc/00000003.jpg" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_1452734">
+        <mets:FLocat xlink:href="https://opendata.uni-halle.de/retrieve/7b8ca884-f538-440a-af4f-9d99bc5960a0/00000004.jpg" LOCTYPE="URL"/>
+      </mets:file>
+      <mets:file MIMETYPE="image/jpeg" ID="IMG_MAX_1452735">
+        <mets:FLocat xlink:href="https://opendata.uni-halle.de/retrieve/35e1ba8e-74b9-4690-9499-6392e31a627b/00000005.jpg" LOCTYPE="URL"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="FULLTEXT">
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000004">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/anitsche/work/dev/ocrd-odem/_current/odem/wrk-dir/1981185920_42296/FULLTEXT/00000004.xml"/>
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000002">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/anitsche/work/dev/ocrd-odem/_current/odem/wrk-dir/1981185920_42296/FULLTEXT/00000002.xml"/>
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000001">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/anitsche/work/dev/ocrd-odem/_current/odem/wrk-dir/1981185920_42296/FULLTEXT/00000001.xml"/>
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000003">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/anitsche/work/dev/ocrd-odem/_current/odem/wrk-dir/1981185920_42296/FULLTEXT/00000003.xml"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="DOWNLOAD">
+      <mets:file ID="PDF_224415859" MIMETYPE="application/pdf">
+        <mets:FLocat LOCTYPE="URL" xlink:href="224415859.pdf"/>
+      </mets:file>
+    </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div TYPE="physSequence" ID="physroot">
+      <mets:div ID="phys1452731" TYPE="page" CONTENTIDS="urn:nbn:de:gbv:3:1-119388-p0001-6" ORDER="1" ORDERLABEL="[Seite 3]">
+        <mets:fptr FILEID="IMG_MAX_1452731"/>
+        <mets:fptr FILEID="FULLTEXT_00000001"/>
+      </mets:div>
+      <mets:div ID="phys1452732" TYPE="page" CONTENTIDS="urn:nbn:de:gbv:3:1-119388-p0002-2" ORDER="2" ORDERLABEL="[Seite 4]">
+        <mets:fptr FILEID="IMG_MAX_1452732"/>
+        <mets:fptr FILEID="FULLTEXT_00000002"/>
+      </mets:div>
+      <mets:div ID="phys1452733" TYPE="page" CONTENTIDS="urn:nbn:de:gbv:3:1-119388-p0003-7" ORDER="3" ORDERLABEL="[Seite 5]">
+        <mets:fptr FILEID="IMG_MAX_1452733"/>
+        <mets:fptr FILEID="FULLTEXT_00000003"/>
+      </mets:div>
+      <mets:div ID="phys1452734" TYPE="page" CONTENTIDS="urn:nbn:de:gbv:3:1-119388-p0004-3" ORDER="4" ORDERLABEL="[Seite 6]">
+        <mets:fptr FILEID="IMG_MAX_1452734"/>
+        <mets:fptr FILEID="FULLTEXT_00000004"/>
+      </mets:div>
+      <mets:div ID="phys1452735" TYPE="page" CONTENTIDS="urn:nbn:de:gbv:3:1-119388-p0005-9" ORDER="5" ORDERLABEL="[Colorchecker]">
+        <mets:fptr FILEID="IMG_MAX_1452735"/>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+  <mets:structMap TYPE="LOGICAL">
+    <mets:div ID="log1179382" DMDID="md1179382" ADMID="amd1179382" TYPE="monograph" LABEL="Steuer-Zettul, auf das 1777ste Jahr, Nach welchen die Herrschaften und Unterthanen im Görlitzischen, auch zubehörigen Zittau- und Laubanischen Creyße, die beschlossenen Siebenzehen Rauch- und Eilff Mund-Guth-Steuern, zu entrichten haben ; [Datum aufn Voigts-Hofe in Görlitz den 11. Januar. 1777. Hauptmannschaft Görlitz.]" ORDER="1" CONTENTIDS="urn:nbn:de:gbv:3:1-119388">
+      <mets:fptr FILEID="PDF_224415859"/>
+      <mets:div ID="log1452730" TYPE="title_page" LABEL="Titelblatt" ORDER="1"/>
+      <mets:div ID="log1454857" TYPE="section" LABEL="Abschnitt" ORDER="2"/>
+    </mets:div>
+  </mets:structMap>
+  <mets:structLink>
+    <mets:smLink xlink:from="log1179382" xlink:to="physroot"/>
+    <mets:smLink xlink:from="log1452730" xlink:to="phys1452731"/>
+    <mets:smLink xlink:from="log1454857" xlink:to="phys1452732"/>
+    <mets:smLink xlink:from="log1454857" xlink:to="phys1452733"/>
+    <mets:smLink xlink:from="log1454857" xlink:to="phys1452734"/>
+    <mets:smLink xlink:from="log1179382" xlink:to="phys1452735"/>
+  </mets:structLink>
+</mets:mets>

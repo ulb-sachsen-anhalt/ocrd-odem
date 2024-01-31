@@ -853,16 +853,33 @@ class ODEMTesseract(ODEMProcess):
         """Wrap specific OCR execution with
         respect to number of executors"""
         _cfg: configparser.ConfigParser = self.read_pipeline_config()
-        self._prepare_workdir_tmp()
+
         _n_total = len(self.images_4_ocr)
 
         self._modify_model_config(_cfg)
 
         self.ocr_input = [(img, i, _n_total, self.the_logger, _cfg)
                           for i, img in enumerate(self.images_4_ocr, start=1)]
-        return super().run()
+        res = super().run()
 
-    def _modify_model_config(self, cfg: configparser.ConfigParser)->None:
+        fulltext_dir: str = os.path.join(self.work_dir_main, FILEGROUP_OCR)
+        shutil.rmtree(fulltext_dir)
+        os.makedirs(fulltext_dir)
+
+        for img_4_ocr in self.images_4_ocr:
+            img_path = img_4_ocr[0]
+            img_dir = os.path.dirname(img_path)
+            img_basename = os.path.basename(img_path)
+            img_basename_wo_ext = os.path.splitext(img_basename)[0]
+            ocr_file_name = f"{img_basename_wo_ext}.xml"
+            ocr_file_path_src = os.path.join(img_dir, ocr_file_name)
+            ocr_file_path_dest = os.path.join(fulltext_dir, ocr_file_name)
+            if os.path.exists(ocr_file_path_src):
+                shutil.move(ocr_file_path_src, ocr_file_path_dest)
+
+        return res
+
+    def _modify_model_config(self, cfg: configparser.ConfigParser) -> None:
         # find section for tesseract step
         section: str = self._find_tesseract_step_section(cfg)
         # mod/add model_config prop
@@ -889,30 +906,6 @@ class ODEMTesseract(ODEMProcess):
         _cfg.read(_path_cfg)
         self.pipeline_config = _cfg
         return _cfg
-
-    def _prepare_workdir_tmp(self):
-        workdir_tmp = self.cfg.get('ocr', 'ocr_pipeline_workdir_tmp')
-        self.the_logger.warning("no workdir set, use '%s'", workdir_tmp)
-        if not os.path.isdir(workdir_tmp):
-            if os.access(workdir_tmp, os.W_OK):
-                os.makedirs(workdir_tmp)
-            else:
-                self.the_logger.warning("tmp workdir '%s' not writable, use /tmp",
-                                        workdir_tmp)
-                workdir_tmp = '/tmp/ocr-pipeline-workdir'
-                if os.path.exists(workdir_tmp):
-                    self._clean_workdir(workdir_tmp)
-                os.makedirs(workdir_tmp, exist_ok=True)
-        else:
-            self._clean_workdir(workdir_tmp)
-        return workdir_tmp
-
-    def _clean_workdir(self, the_dir):
-        self.the_logger.info("clean existing workdir '%s'", the_dir)
-        for file_ in os.listdir(the_dir):
-            fpath = os.path.join(the_dir, file_)
-            if os.path.isfile(fpath):
-                os.unlink(fpath)
 
     def store_estimations(self, estms):
         """Postprocessing of OCR-Quality Estimation Data"""

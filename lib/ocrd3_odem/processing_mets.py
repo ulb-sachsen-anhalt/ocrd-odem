@@ -296,9 +296,10 @@ def integrate_ocr_file(xml_tree, ocr_files: List) -> int:
         # Assignment takes place via the name of the corresponding
         # image (= name ALTO file)
         _mproc = MetsProcessor(_ocr_file)
-        src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=XMLNS)[0]
+        nsmap = _mproc.tree.nsmap
+        src_info = _mproc.tree.findall('.//sourceImageInformation/fileName', nsmap)[0]
         src_info.text = f'{_file_name}.jpg'
-        first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=XMLNS)[0]
+        first_page_el = _mproc.tree.findall('.//Page', nsmap)[0]
         first_page_el.attrib['ID'] = f'p{_file_name}'
         _mproc.write()
         _n_linked_ocr += _link_fulltext(new_id, xml_tree)
