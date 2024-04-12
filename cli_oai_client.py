@@ -18,7 +18,6 @@ import requests
 from digiflow import (
     OAIRecord,
     LocalStore,
-    send_mail,
 )
 
 from lib.resources_monitoring import ProcessResourceMonitorConfig
@@ -67,10 +66,17 @@ def trnfrm(row):
 
 
 def _notify(subject, message):
-    if CFG.has_section('mail'):
-        sender = CFG.get('mail', 'sender')
-        recipiens = CFG.get('mail', 'recipients')
-        send_mail(subject, message, sender, recipiens)
+    if CFG.has_section('mail') and CFG.has_option('mail', 'connection'):
+        try:
+            from digiflow import (
+                smtp_note,
+            )
+            conn = CFG.get('mail', 'connection')
+            sender = CFG.get('mail', 'sender')
+            recipiens = CFG.get('mail', 'recipients')
+            smtp_note(conn, subject, message, sender, recipiens)
+        except Exception as _exc:
+            LOGGER.error(_exc)
     else:
         LOGGER.warning("No [mail] section in config, no mail sent!")
 
