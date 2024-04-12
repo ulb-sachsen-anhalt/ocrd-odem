@@ -39,6 +39,7 @@ from lib.ocrd3_odem import (
     MARK_OCR_FAIL,
     OdemWorkflowProcessType,
     ODEMProcess,
+    OCRDPageParallel,
     ODEMException,
     get_configparser,
     get_logger,
@@ -66,6 +67,13 @@ CFG = None
 
 class OAIRecordExhaustedException(Exception):
     """Mark that given file contains no open records"""
+
+
+def trnfrm(row):
+    """callback function"""
+    oai_id = row['IDENTIFIER']
+    oai_record = OAIRecord(oai_id)
+    return oai_record
 
 
 def _notify(subject, message):
@@ -273,7 +281,6 @@ if __name__ == "__main__":
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
     HOST = CFG.get('oai-server', 'oai_server_url')
     PORT = CFG.getint('oai-server', 'oai_server_port')
-
     LOGGER.info("OAIServiceClient instance listens %s:%s for '%s' (format:%s)",
                 HOST, PORT, OAI_RECORD_FILE_NAME, DATA_FIELDS)
     CLIENT = OAIServiceClient(OAI_RECORD_FILE_NAME, HOST, PORT)
@@ -322,6 +329,7 @@ if __name__ == "__main__":
             STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
             STORE = LocalStore(STORE_DIR, req_dst_dir)
             PROCESS.store = STORE
+
         process_resource_monitor: ProcessResourceMonitor = ProcessResourceMonitor(
             ProcessResourceMonitorConfig(
                 enable_resource_monitoring=CFG.getboolean('resource-monitoring', 'enable', fallback=False),
@@ -341,6 +349,7 @@ if __name__ == "__main__":
             PROCESS.process_identifier,
             rec_ident
         )
+
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
         if CFG.getboolean('mets', 'prevalidate', fallback=True):
@@ -349,6 +358,7 @@ if __name__ == "__main__":
         PROCESS.clear_existing_entries()
         PROCESS.language_modelconfig()
         PROCESS.set_local_images()
+
         outcomes = process_resource_monitor.monit_vmem(PROCESS.run)
         PROCESS.calculate_statistics_ocr(outcomes)
         _stats_ocr = PROCESS.statistics_ocr
