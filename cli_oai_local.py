@@ -161,7 +161,6 @@ if __name__ == "__main__":
             STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
             STORE = LocalStore(STORE_DIR, req_dst_dir)
             PROCESS.store = STORE
-
         process_resource_monitor: ProcessResourceMonitor = ProcessResourceMonitor(
             ProcessResourceMonitorConfig(
                 enable_resource_monitoring=CFG.getboolean('resource-monitoring', 'enable', fallback=False),
@@ -181,11 +180,10 @@ if __name__ == "__main__":
             PROCESS.process_identifier,
             record.identifier
         )
-
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
-
-        PROCESS.validate_mets()
+        if CFG.getboolean('mets','prevalidate', fallback=True):
+            PROCESS.validate_mets()
         PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.language_modelconfig()
@@ -200,7 +198,8 @@ if __name__ == "__main__":
         if CREATE_PDF:
             PROCESS.create_text_bundle_data()
         PROCESS.postprocess_mets()
-        PROCESS.validate_mets()
+        if CFG.getboolean('mets','postvalidate', fallback=True):
+            PROCESS.validate_mets()
         PROCESS.export_data()
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)

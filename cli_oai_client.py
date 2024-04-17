@@ -320,7 +320,6 @@ if __name__ == "__main__":
             STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
             STORE = LocalStore(STORE_DIR, req_dst_dir)
             PROCESS.store = STORE
-
         process_resource_monitor: ProcessResourceMonitor = ProcessResourceMonitor(
             ProcessResourceMonitorConfig(
                 enable_resource_monitoring=CFG.getboolean('resource-monitoring', 'enable', fallback=False),
@@ -340,17 +339,14 @@ if __name__ == "__main__":
             PROCESS.process_identifier,
             rec_ident
         )
-
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
-
-        # go on
-        PROCESS.validate_mets()
+        if CFG.getboolean('mets','prevalidate', fallback=True):
+            PROCESS.validate_mets()
         PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.language_modelconfig()
         PROCESS.set_local_images()
-
         outcomes = process_resource_monitor.monit_vmem(PROCESS.run)
         PROCESS.calculate_statistics(outcomes)
         PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
@@ -362,7 +358,8 @@ if __name__ == "__main__":
         if CREATE_PDF:
             PROCESS.create_text_bundle_data()
         PROCESS.postprocess_mets()
-        PROCESS.validate_mets()
+        if CFG.getboolean('mets','postvalidate', fallback=True):
+            PROCESS.validate_mets()
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEFORE_EXPORT)
         PROCESS.export_data()
@@ -377,14 +374,13 @@ if __name__ == "__main__":
         shutil.rmtree(req_dst_dir)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
+    except ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
         # * contains no language mapping for mods:language
         # * misses model config for language
         # * contains no images
         # * contains no OCR results but should have at least one page
-
-    except ODEMException as _odem_exc:
         _err_args = _odem_exc.args[0]
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", PROCESS.process_identifier, _err_args)
@@ -408,7 +404,7 @@ if __name__ == "__main__":
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
     except Exception as exc:
-        # pick the whole error context, since some exceptions' args are
+        # pick whole error context, since some exception's args are
         # rather mysterious, i.e. "13" for PermissionError
         _err_args = str(exc)
         _name = type(exc).__name__
