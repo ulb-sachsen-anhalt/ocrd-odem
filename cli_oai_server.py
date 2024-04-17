@@ -6,7 +6,6 @@
 
 import ast
 import configparser
-import csv
 import json
 import logging.config
 import os
