@@ -15,9 +15,6 @@ import time
 from contextlib import (
     contextmanager
 )
-from datetime import (
-    datetime
-)
 from functools import (
     partial
 )
@@ -52,31 +49,9 @@ ODEM_LOG_CONFIG_FILE = PROJECT_ROOT / 'resources' / 'odem_logging.ini'
 ODEM_LOG_NAME = 'odem'
 NEXT_COMMAND = 'next'
 UPDATE_COMMAND = 'update'
-STAT_COMMAND = 'statistic'
 MIME_TXT = 'text/plain'
 MIME_HTML = 'text/html'
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
-IP_HOST = {
-    '141.48.10.237': 'ocr-master',
-    '141.48.10.232': 'ocr-training',
-    '141.48.10.204': 'ocr-worker03',
-    '141.48.10.202': 'ocr-worker04',
-    '141.48.10.235': 'ocr-worker05',
-    '141.48.10.246': 'ocr-worker06',
-    '141.48.10.247': 'ocr-worker07',
-}
-STATS_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="refresh" content="600">
-    <title>{title}</title>
-  </head>
-  <body>
-    {content}
-  </body>
-</html>
-"""
 # mark requested record file contains no open records
 MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
 MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
@@ -144,11 +119,6 @@ class OAIService(SimpleHTTPRequestHandler):
             else:
                 self._set_headers(state)
                 self.wfile.write(json.dumps(data, default=to_json).encode('utf-8'))
-        if command == STAT_COMMAND:
-            state = 200
-            self._set_headers(state, MIME_HTML)
-            stats = self.get_statistics(file_name)
-            self.wfile.write(stats.encode('utf-8'))
 
     def do_POST(self):
         """handle POST request"""
@@ -185,34 +155,6 @@ class OAIService(SimpleHTTPRequestHandler):
         self.send_response(state)
         self.send_header('Content-type', mime_type)
         self.end_headers()
-
-    def get_statistics(self, file_name):
-        """deliver some statistics as html page"""
-        IP_CLIENTS = {}
-        filepth = self.get_data_file(file_name)
-        with open(filepth, encoding="UTF-8") as csvfile:
-            data = csv.DictReader(filter(lambda r: not r.startswith('#'), csvfile),
-                                  dialect='excel-tab')
-            for row in data:
-                info = row['INFO']
-                if info == RECORD_STATE_LABEL_UNSET:
-                    break
-                ip_client = info.split(',')[0].split('@')[0]
-                state_time = row['STATE_TIME']
-                IP_CLIENTS[ip_client] = state_time
-        table = "<table>{}</table>"
-        rows = "<tr><th>HOST</td><th>last collection</th></tr>"
-        tr = "<tr style='background-color:{}'><td>{}</td><td>{}</td></tr>"
-        for ip_client, dt in IP_CLIENTS.items():
-            tdelta = datetime.now() - datetime.fromisoformat(dt)
-            max_hours = 2
-            timeout = tdelta.total_seconds() / 60 / 60 > max_hours
-            color = "lightcoral" if timeout else "lightgreen"
-            host = IP_HOST.get(ip_client, ip_client)
-            rows += tr.format(color, host, str(tdelta).split(".", 1)[0])
-        table = table.format(rows)
-        formatted = STATS_TEMPLATE.format(content=table, title=file_name)
-        return formatted
 
     def get_data_file(self, data_file_name: str):
         """data_file_name comes with no extension!
@@ -267,7 +209,6 @@ class OAIService(SimpleHTTPRequestHandler):
         if data_file_path is None:
             LOGGER.error('do_POST: %s not found', data_file_path)
             return (404, f"data file not found: {data_file_path}")
-
         try:
             handler = OAIRecordHandler(data_file_path)
             _ident = data[RECORD_IDENTIFIER]
