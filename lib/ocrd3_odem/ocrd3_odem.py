@@ -205,7 +205,7 @@ class ODEMProcess:
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
                              self.process_identifier, insp.n_images_ocrable, _ratio,
                              insp.n_images_pages)
-        self._statistics['host'] = socket.gethostname()
+        self._statistics['client'] = socket.gethostname()
 
     def clear_existing_entries(self):
         """Clear METS/MODS of configured file groups"""
