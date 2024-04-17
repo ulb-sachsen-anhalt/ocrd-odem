@@ -4,7 +4,7 @@
    Providing and managing OAI records for more OCR clients
 """
 
-
+import ast
 import configparser
 import csv
 import json
@@ -87,12 +87,12 @@ def to_json(record: OAIRecord) -> dict:
     as input for JSON format"""
 
     return {
-        RECORD_IDENTIFIER : record.identifier,
-        RECORD_RELEASED : record.date_stamp,
-        RECORD_INFO : record.info,
+        RECORD_IDENTIFIER: record.identifier,
+        RECORD_RELEASED: record.date_stamp,
+        RECORD_INFO: record.info,
         RECORD_STATE: record.state,
         RECORD_TIME: record.state_datetime,
-        }
+    }
 
 
 def to_full_record(row):
@@ -204,9 +204,9 @@ class OAIService(SimpleHTTPRequestHandler):
         rows = "<tr><th>HOST</td><th>last collection</th></tr>"
         tr = "<tr style='background-color:{}'><td>{}</td><td>{}</td></tr>"
         for ip_client, dt in IP_CLIENTS.items():
-            tdelta = datetime.now()-datetime.fromisoformat(dt)
+            tdelta = datetime.now() - datetime.fromisoformat(dt)
             max_hours = 2
-            timeout = tdelta.total_seconds()/60/60 > max_hours
+            timeout = tdelta.total_seconds() / 60 / 60 > max_hours
             color = "lightcoral" if timeout else "lightgreen"
             host = IP_HOST.get(ip_client, ip_client)
             rows += tr.format(color, host, str(tdelta).split(".", 1)[0])
@@ -239,23 +239,27 @@ class OAIService(SimpleHTTPRequestHandler):
             return (404, f"no file '{file_name}' in {self.record_list_directory}")
 
         handler = OAIRecordHandler(data_file_path, transform_func=to_full_record)
-        next_record = handler.next_record()
+        next_record: OAIRecord = handler.next_record()
         # if no record in resource available, alert no resource after all, too
         if not next_record:
             _msg = f'{MARK_DATA_EXHAUSTED_PREFIX}{MARK_DATA_EXHAUSTED.format(data_file_path)}'
             return (404, _msg)
 
         # store information which client got the package delivered
-        _info = client_name
+        _info = {'client': client_name}
         if next_record.info != 'n.a.':
-            _info = f"{next_record.info},{client_name}"
+            try:
+                next_record.info = ast.literal_eval(next_record.info)
+                next_record.info['client'] = client_name
+                _info = f"{next_record.info}"
+            except Exception as _exc:
+                LOGGER.warning("can't update record info: %s", _exc.args[0])
         handler.save_record_state(
             next_record.identifier, RECORD_STATE_LABEL_BUSY, **{RECORD_INFO: _info})
         return (200, next_record)
 
     def update_record(self, data_file, data) -> tuple:
         """write data dict send by client
-
         throws RuntimeError if record to update not found
         """
 
@@ -268,7 +272,7 @@ class OAIService(SimpleHTTPRequestHandler):
             handler = OAIRecordHandler(data_file_path)
             _ident = data[RECORD_IDENTIFIER]
             handler.save_record_state(_ident,
-                state=data[RECORD_STATE], **{RECORD_INFO: data[RECORD_INFO]})
+                                      state=data[RECORD_STATE], **{RECORD_INFO: data[RECORD_INFO]})
             _msg = f"update done for {_ident} in '{data_file_path}"
             LOGGER.info(_msg)
             return (200, _msg)
@@ -309,7 +313,7 @@ class OAIRequestHandler():
         """
 
         LOGGER.info("server starts listen at: %s:%s", host, port)
-        LOGGER.info("serve record files from: %s",  pth)
+        LOGGER.info("serve record files from: %s", pth)
         LOGGER.info("call for next record with: %s:%s/<oai-record-file>/next", host, port)
         LOGGER.info("post a record update with: %s:%s/<oai-record-file>/update", host, port)
         with self.http_server(host, port, pth):
@@ -327,6 +331,7 @@ class OAIRequestHandler():
                 # no lock file? --> quit server
                 LOGGER.info('Lockfile deleted, server stopped!')
                 sys.exit()
+
 
 ########
 # Script
