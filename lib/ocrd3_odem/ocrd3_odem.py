@@ -40,6 +40,12 @@ from .odem_commons import (
     DEFAULT_RTL_MODELS,
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
+    STATS_KEY_TYPE,
+    STATS_KEY_N_PAGES,
+    STATS_KEY_N_OCRABLE,
+    STATS_KEY_N_OCR,
+    STATS_KEY_MB,
+    STATS_KEY_MPS,
     PROJECT_ROOT,
     ExportFormat,
     ODEMException,
@@ -197,10 +203,10 @@ class ODEMProcess:
             raise ODEMException(f"{mde.args[0]}") from mde
         self.identifiers = insp.identifiers
         self._statistics[CATALOG_ULB] = insp.record_identifier
-        self._statistics['type'] = insp.type
+        self._statistics[STATS_KEY_TYPE] = insp.type
         self._statistics[STATS_KEY_LANGS] = insp.languages
-        self._statistics['n_images_pages'] = insp.n_images_pages
-        self._statistics['n_images_ocrable'] = insp.n_images_ocrable
+        self._statistics[STATS_KEY_N_PAGES] = insp.n_images_pages
+        self._statistics[STATS_KEY_N_OCRABLE] = insp.n_images_ocrable
         _ratio = insp.n_images_ocrable / insp.n_images_pages * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
                              self.process_identifier, insp.n_images_ocrable, _ratio,
@@ -352,9 +358,9 @@ class ODEMProcess:
         _mod_val_counts = np.unique(_total_mps, return_counts=True)
         mps = list(zip(*_mod_val_counts))
         total_mb = sum([e[3] for e in outcomes if e[0] == 1])
-        self._statistics['n_ocr'] = n_ocr
-        self._statistics['mb'] = round(total_mb, 2)
-        self._statistics['mps'] = mps
+        self._statistics[STATS_KEY_N_OCR] = n_ocr
+        self._statistics[STATS_KEY_MB] = round(total_mb, 2)
+        self._statistics[STATS_KEY_MPS] = mps
 
     def link_ocr(self) -> int:
         """Prepare and link OCR-data"""
@@ -468,7 +474,6 @@ class ODEMProcess:
 
         export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
         export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
-
         exp_dst = self.cfg.get('global', 'local_export_dir')
         exp_tmp = self.cfg.get('global', 'local_export_tmp')
         exp_col = self.cfg.get('global', 'export_collection')

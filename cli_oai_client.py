@@ -7,11 +7,15 @@ import shutil
 import sys
 import time
 
+from ast import (
+    literal_eval,
+)
 from logging import (
     Logger
 )
 from typing import (
-    Optional
+    Dict,
+    Optional,
 )
 import requests
 
@@ -25,6 +29,12 @@ from lib.resources_monitoring.ProcessResourceMonitor import ProcessResourceMonit
 from lib.resources_monitoring.exceptions import (
     NotEnoughDiskSpaceException,
     VirtualMemoryExceededException,
+)
+from lib.ocrd3_odem.odem_commons import (
+    RECORD_IDENTIFIER,
+    RECORD_INFO,
+    RECORD_STATE,
+    RECORD_TIME,
 )
 from lib.ocrd3_odem import (
     MARK_OCR_DONE,
@@ -60,7 +70,7 @@ class OAIRecordExhaustedException(Exception):
 
 def trnfrm(row):
     """callback function"""
-    oai_id = row['IDENTIFIER']
+    oai_id = row[RECORD_IDENTIFIER]
     oai_record = OAIRecord(oai_id)
     return oai_record
 
@@ -138,15 +148,21 @@ class OAIServiceClient:
         if self.logger is not None:
             self.logger.debug("update record  status: %s urn: %s", status, urn)
         right_now = time.strftime(STATETIME_FORMAT)
-        self.record_data['STATE'] = status
-        self.record_data['STATE_TIME'] = right_now
-        self.record_data['IDENTIFIER'] = urn
+        self.record_data[RECORD_IDENTIFIER] = urn
+        self.record_data[RECORD_STATE] = status
+        self.record_data[RECORD_TIME] = right_now
         # if we have to report somethin' new, then append it
         if kwargs is not None:
             _info = f"{kwargs}"
-            if self.record_data['INFO'] != 'n.a.':
-                _info = f"{self.record_data['INFO']},{_info}"
-            self.record_data['INFO'] = _info
+            if self.record_data[RECORD_IDENTIFIER] != 'n.a.':
+                try:
+                    _self_info: Dict = literal_eval(self.record_data[RECORD_IDENTIFIER])
+                    _self_info.update(kwargs)
+                    _info = f"{_self_info}"
+                except:
+                    self.logger.error("Can't parse info field '%s'",
+                           self.record_data[RECORD_IDENTIFIER])
+            self.record_data[RECORD_IDENTIFIER] = _info
         if self.logger is not None:
             self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
         response = requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=30)
@@ -381,37 +397,37 @@ if __name__ == "__main__":
         # * misses model config for language
         # * contains no images
         # * contains no OCR results but should have at least one page
-        _err_args = _odem_exc.args[0]
+        _err_args = {'ODEMException':_odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", PROCESS.process_identifier, _err_args)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', _err_args)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
     except NotEnoughDiskSpaceException as _space_exc:
-        _err_args = _space_exc.args[0]
+        _err_args = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", PROCESS.process_identifier, _err_args)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', _err_args)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
         _clear_sub_dirs(LOCAL_WORK_ROOT)
     except VirtualMemoryExceededException as _vmem_exc:
-        _err_args = _vmem_exc.args[0]
+        _err_args = {'VirtualMemoryExceededException':_vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", PROCESS.process_identifier, _err_args)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', _err_args)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
     except Exception as exc:
         # pick whole error context, since some exception's args are
         # rather mysterious, i.e. "13" for PermissionError
-        _err_args = str(exc)
+        _err_args = {str(exc) :str(exc.args[0])}
         _name = type(exc).__name__
         LOGGER.error("[%s] odem fails with %s:"
                      "'%s'", PROCESS.process_identifier, _name, _err_args)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', _err_args)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
         # don't remove lock file, human interaction required
         sys.exit(1)
 

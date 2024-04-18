@@ -63,13 +63,32 @@ ARG_S_EXECS = 'e'
 ARG_L_EXECS = 'executors'
 
 #
+# record attributes
+#
+RECORD_IDENTIFIER = 'IDENTIFIER'
+RECORD_SPEC = 'SETSPEC'
+RECORD_RELEASED = 'CREATED'
+RECORD_INFO = 'INFO'
+RECORD_STATE = 'STATE'
+RECORD_TIME = 'STATE_TIME'
+
+#
 # ODEM metadata
 #
 # file groups
 FILEGROUP_OCR = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
 # statistic keys
-STATS_KEY_LANGS = 'langs'
+STATS_KEY_LANGS = 'languages'
+STATS_KEY_TYPE = 'pica'
+STATS_KEY_N_PAGES = 'n_images_pages'
+STATS_KEY_N_OCRABLE = 'n_images_ocrable'
+STATS_KEY_N_LINES = 'n_text_lines'
+STATS_KEY_N_EXECS = 'n_execs'
+STATS_KEY_N_OCR = 'n_ocr'
+STATS_KEY_MB = 'mb'
+STATS_KEY_MPS = 'mps'
+
 # default language for fallback
 # when processing local images
 DEFAULT_LANG = 'ger'

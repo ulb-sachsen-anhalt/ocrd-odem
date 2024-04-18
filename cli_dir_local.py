@@ -24,6 +24,8 @@ from lib.ocrd3_odem import (
     ARG_L_LANGUAGES,
     ARG_L_MODEL_MAP,
     ARG_L_SEQUENTIAL_MODE,
+    STATS_KEY_N_PAGES,
+    STATS_KEY_N_OCRABLE,
     CFG_SEC_OCR,
     DEFAULT_EXECUTORS,
     KEY_EXECS,
@@ -119,8 +121,8 @@ if __name__ == "__main__":
         PROCESS.cfg = CFG
         PROCESS.the_logger = LOGGER
         local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
-        PROCESS._statistics['n_images_total'] = len(local_images)
-        PROCESS._statistics['n_images_ocrable'] = 0
+        PROCESS._statistics[STATS_KEY_N_PAGES] = len(local_images)
+        PROCESS._statistics[STATS_KEY_N_OCRABLE] = 0
         PROCESS.images_4_ocr = local_images
         # Type and Value change!!!
         # ODEMProcess.single_ocr() needs Tuple[str,str], in non-local

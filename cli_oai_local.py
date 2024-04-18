@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
-"""MAIN CLI ODEM"""
+"""MAIN CLI OAI LOCAL ODEM"""
 
 import argparse
 import os
 import shutil
-import socket
 import sys
-import time
-
+from ast import (
+    literal_eval,
+)
 from digiflow import (
     OAIRecordHandler,
     OAIRecord,
     LocalStore
 )
 
+from lib.ocrd3_odem.odem_commons import (
+    RECORD_IDENTIFIER,
+    RECORD_INFO,
+)
 from lib.ocrd3_odem import (
     MARK_OCR_BUSY,
     MARK_OCR_DONE,
@@ -27,16 +31,18 @@ from lib.ocrd3_odem import (
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
 
-from cli_oai_client import (
-    STATETIME_FORMAT
-)
-
 DEFAULT_EXECUTORS = 2
 
 
 def trnfrm(row):
-    oai_id = row['IDENTIFIER']
-    return OAIRecord(oai_id)
+    oai_id = row[RECORD_IDENTIFIER]
+    try:
+        _info = literal_eval(row[RECORD_INFO])
+    except:
+        _info = row[RECORD_INFO]
+    _record = OAIRecord(oai_id,)
+    _record.info = _info
+    return _record
 
 
 ########
@@ -204,10 +210,18 @@ if __name__ == "__main__":
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)
         _kwargs = PROCESS.statistics
-        _self_ip_addr = socket.gethostbyname(socket.gethostname())
-        _right_now = time.strftime(STATETIME_FORMAT)
-        _agent = f"{_self_ip_addr}@{_right_now}"
-        _info = f"agent:{_agent},statistics:{_kwargs}"
+        if PROCESS.record.info != 'n.a.':
+            try:
+                if isinstance(PROCESS.record.info, str):
+                    _info = dict(literal_eval(PROCESS.record.info))
+                PROCESS.record.info.update(_kwargs)
+                _info = f"{PROCESS.record.info}"
+            except:
+                PROCESS.the_logger.error("Can't parse '%s', store info literally",
+                                         PROCESS.record.info)
+                _info = f"{_kwargs}"
+        else:
+            _info = f"{_kwargs}"
         handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_info)
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         PROCESS.the_logger.info("[%s] duration: %s/%s (%s)", PROCESS.process_identifier,
@@ -216,11 +230,11 @@ if __name__ == "__main__":
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
     except ODEMException as _odem_exc:
-        _err_args = _odem_exc.args[0]
+        _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with: '%s'", PROCESS.process_identifier, _err_args)
         handler.save_record_state(record.identifier, MARK_OCR_FAIL, INFO=f'{_err_args}')
     except RuntimeError as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
                      record, PROCESS.duration, str(exc))
-        handler.save_record_state(record.identifier, MARK_OCR_FAIL, INFO=exc.args[0])
+        handler.save_record_state(record.identifier, MARK_OCR_FAIL, INFO=f'{str(exc) : exc.args[0]}')
         sys.exit(1)

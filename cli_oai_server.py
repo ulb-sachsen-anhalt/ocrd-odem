@@ -33,16 +33,17 @@ from digiflow import (
     OAIRecordHandler,
 )
 
+from lib.ocrd3_odem.odem_commons import (
+    MARK_OCR_BUSY,    
+    RECORD_IDENTIFIER,
+    RECORD_INFO,
+    RECORD_SPEC,
+    RECORD_RELEASED,
+    RECORD_STATE,
+    RECORD_TIME,
+)
+
 LOCKFILE = 'SERVER_RUNNING'
-RECORD_IDENTIFIER = 'IDENTIFIER'
-RECORD_INFO = 'INFO'
-RECORD_SPEC = 'SETSPEC'
-RECORD_RELEASED = 'CREATED'
-RECORD_STATE = 'STATE'
-RECORD_TIME = 'STATE_TIME'
-RECORD_STATE_LABEL_UNSET = 'n.a.'
-RECORD_STATE_LABEL_BUSY = 'ocr_busy'
-RECORD_STATE_LABEL_DONE = 'ocr_done'
 PROJECT_ROOT = Path(__file__).resolve().parent
 ODEM_LOG_CONFIG_FILE = PROJECT_ROOT / 'resources' / 'odem_logging.ini'
 ODEM_LOG_NAME = 'odem'
@@ -51,7 +52,6 @@ UPDATE_COMMAND = 'update'
 MIME_TXT = 'text/plain'
 MIME_HTML = 'text/html'
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
-# mark requested record file contains no open records
 MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
 MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
 
@@ -122,7 +122,7 @@ class OAIService(SimpleHTTPRequestHandler):
     def do_POST(self):
         """handle POST request"""
         data = 'no data available'
-        client_name = self.address_string().replace('.bibliothek.uni-halle.de', '')
+        client_name = self.address_string()
         LOGGER.info('url path %s from %s', self.path, client_name)
         try:
             _, file_name, command = self.path.split('/')
@@ -190,13 +190,14 @@ class OAIService(SimpleHTTPRequestHandler):
         _info = {'client': client_name}
         if next_record.info != 'n.a.':
             try:
-                next_record.info = ast.literal_eval(next_record.info)
+                if isinstance(next_record.info, str):
+                    next_record.info = ast.literal_eval(next_record.info)
                 next_record.info['client'] = client_name
                 _info = f"{next_record.info}"
             except Exception as _exc:
                 LOGGER.warning("can't update record info: %s", _exc.args[0])
         handler.save_record_state(
-            next_record.identifier, RECORD_STATE_LABEL_BUSY, **{RECORD_INFO: _info})
+            next_record.identifier, MARK_OCR_BUSY, **{RECORD_INFO: _info})
         return (200, next_record)
 
     def update_record(self, data_file, data) -> tuple:
@@ -290,7 +291,7 @@ if __name__ == "__main__":
     # check loggin pre-conditions
     _log_dir = Path(SCRIPT_CONFIGURATION.get('global', 'local_log_dir'))
     if not os.access(_log_dir, os.F_OK and os.W_OK):
-        print(f"cant store log files at invalid logging directory {_log_dir}")
+        print(f"cant store log files at directory {_log_dir}")
         sys.exit(1)
     if not ODEM_LOG_CONFIG_FILE.exists():
         print(f"config file not found {ODEM_LOG_CONFIG_FILE.resolve()}")
