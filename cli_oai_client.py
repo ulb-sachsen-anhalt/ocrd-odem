@@ -68,13 +68,6 @@ class OAIRecordExhaustedException(Exception):
     """Mark that given file contains no open records"""
 
 
-def trnfrm(row):
-    """callback function"""
-    oai_id = row[RECORD_IDENTIFIER]
-    oai_record = OAIRecord(oai_id)
-    return oai_record
-
-
 def _notify(subject, message):
     if CFG.has_section('mail') and CFG.has_option('mail', 'connection'):
         try:
@@ -114,7 +107,7 @@ class OAIServiceClient:
         except requests.exceptions.RequestException as err:
             if self.logger is not None:
                 self.logger.error("OAI server connection fails: %s", err)
-            _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', err)
+            _notify(f'[OCR-D-ODEM] Failure for {self.oai_server_url}', err)
             sys.exit(1)
         status = response.status_code
         result = response.content
@@ -140,7 +133,7 @@ class OAIServiceClient:
         store internally as plain dictionary"""
 
         self.record_data = self._request_record()
-        _oai_record = trnfrm(self.record_data)
+        _oai_record = OAIRecord(self.record_data[RECORD_IDENTIFIER])
         return _oai_record
 
     def update(self, status, urn, **kwargs):
@@ -154,19 +147,20 @@ class OAIServiceClient:
         # if we have to report somethin' new, then append it
         if kwargs is not None:
             _info = f"{kwargs}"
-            if self.record_data[RECORD_IDENTIFIER] != 'n.a.':
+            if self.record_data[RECORD_INFO] != 'n.a.':
                 try:
-                    _self_info: Dict = literal_eval(self.record_data[RECORD_IDENTIFIER])
+                    _self_info = self.record_data[RECORD_INFO]
+                    if isinstance(self.record_data[RECORD_INFO], str):
+                        _self_info: Dict = literal_eval(self.record_data[RECORD_INFO])
                     _self_info.update(kwargs)
                     _info = f"{_self_info}"
                 except:
                     self.logger.error("Can't parse info field '%s'",
-                           self.record_data[RECORD_IDENTIFIER])
-            self.record_data[RECORD_IDENTIFIER] = _info
+                                      self.record_data)
+            self.record_data[RECORD_INFO]= _info
         if self.logger is not None:
             self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
-        response = requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=30)
-        return response
+        return requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=60)
 
 
 CLIENT: Optional[OAIServiceClient] = None
@@ -357,15 +351,16 @@ if __name__ == "__main__":
         )
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
-        if CFG.getboolean('mets','prevalidate', fallback=True):
+        if CFG.getboolean('mets', 'prevalidate', fallback=True):
             PROCESS.validate_mets()
         PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.language_modelconfig()
         PROCESS.set_local_images()
         outcomes = process_resource_monitor.monit_vmem(PROCESS.run)
-        PROCESS.calculate_statistics(outcomes)
-        PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
+        PROCESS.calculate_statistics_ocr(outcomes)
+        _stats_ocr = PROCESS.statistics_ocr
+        PROCESS.the_logger.info("[%s] %s", local_ident, _stats_ocr)
         if ENRICH_METS_FULLTEXT:
             PROCESS.link_ocr()
         if CREATE_PDF:
@@ -374,13 +369,13 @@ if __name__ == "__main__":
         if CREATE_PDF:
             PROCESS.create_text_bundle_data()
         PROCESS.postprocess_mets()
-        if CFG.getboolean('mets','postvalidate', fallback=True):
+        if CFG.getboolean('mets', 'postvalidate', fallback=True):
             PROCESS.validate_mets()
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEFORE_EXPORT)
         PROCESS.export_data()
         # report outcome
-        _response = CLIENT.update(MARK_OCR_DONE, rec_ident, **PROCESS.statistics)
+        _response = CLIENT.update(MARK_OCR_DONE, rec_ident, **_stats_ocr)
         status_code = _response.status_code
         if status_code == 200:
             LOGGER.info("[%s] state %s set", PROCESS.process_identifier, status_code)
@@ -397,7 +392,7 @@ if __name__ == "__main__":
         # * misses model config for language
         # * contains no images
         # * contains no OCR results but should have at least one page
-        _err_args = {'ODEMException':_odem_exc.args[0]}
+        _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", PROCESS.process_identifier, _err_args)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
@@ -412,7 +407,7 @@ if __name__ == "__main__":
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
         _clear_sub_dirs(LOCAL_WORK_ROOT)
     except VirtualMemoryExceededException as _vmem_exc:
-        _err_args = {'VirtualMemoryExceededException':_vmem_exc.args[0]}
+        _err_args = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", PROCESS.process_identifier, _err_args)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
@@ -422,7 +417,7 @@ if __name__ == "__main__":
     except Exception as exc:
         # pick whole error context, since some exception's args are
         # rather mysterious, i.e. "13" for PermissionError
-        _err_args = {str(exc) :str(exc.args[0])}
+        _err_args = {str(exc): str(exc.args[0])}
         _name = type(exc).__name__
         LOGGER.error("[%s] odem fails with %s:"
                      "'%s'", PROCESS.process_identifier, _name, _err_args)

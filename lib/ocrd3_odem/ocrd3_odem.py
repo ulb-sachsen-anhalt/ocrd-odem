@@ -40,7 +40,7 @@ from .odem_commons import (
     DEFAULT_RTL_MODELS,
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
-    STATS_KEY_TYPE,
+    STATS_KEY_MODELS,
     STATS_KEY_N_PAGES,
     STATS_KEY_N_OCRABLE,
     STATS_KEY_N_OCR,
@@ -133,7 +133,8 @@ class ODEMProcess:
         self.store = None
         self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
-        self._statistics = {'execs': executors}
+        self.statistics      = {}
+        self._statistics_ocr = {'execs': executors}
         self._process_start = time.time()
         if logger is not None:
             self.the_logger = logger
@@ -202,16 +203,15 @@ class ODEMProcess:
         except ODEMMetadataMetsException as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
         self.identifiers = insp.identifiers
-        self._statistics[CATALOG_ULB] = insp.record_identifier
-        self._statistics[STATS_KEY_TYPE] = insp.type
-        self._statistics[STATS_KEY_LANGS] = insp.languages
-        self._statistics[STATS_KEY_N_PAGES] = insp.n_images_pages
-        self._statistics[STATS_KEY_N_OCRABLE] = insp.n_images_ocrable
+        self.statistics[CATALOG_ULB] = insp.record_identifier
+        self._statistics_ocr[STATS_KEY_LANGS] = insp.languages
+        self._statistics_ocr[STATS_KEY_N_PAGES] = insp.n_images_pages
+        self._statistics_ocr[STATS_KEY_N_OCRABLE] = insp.n_images_ocrable
         _ratio = insp.n_images_ocrable / insp.n_images_pages * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
                              self.process_identifier, insp.n_images_ocrable, _ratio,
                              insp.n_images_pages)
-        self._statistics['client'] = socket.gethostname()
+        self._statistics_ocr['client'] = socket.gethostname()
 
     def clear_existing_entries(self):
         """Clear METS/MODS of configured file groups"""
@@ -240,7 +240,7 @@ class ODEMProcess:
         self.the_logger.info("[%s] inspect languages '%s'",
                              self.process_identifier, languages)
         if languages is None:
-            languages = self._statistics.get(STATS_KEY_LANGS)
+            languages = self._statistics_ocr.get(STATS_KEY_LANGS)
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
@@ -251,6 +251,7 @@ class ODEMProcess:
                 else:
                     raise ODEMException(f"'{model}' model config not found !")
         _model_conf = '+'.join(_models) if self.cfg.getboolean('ocr', "model_combinable", fallback=True) else _models[0]
+        self._statistics_ocr[STATS_KEY_MODELS] = _model_conf
         self.the_logger.info("[%s] map languages '%s' => '%s'",
                              self.process_identifier, languages, _model_conf)
         return _model_conf
@@ -351,16 +352,16 @@ class ODEMProcess:
         """
         return [(0, 0, 0, 0)]
 
-    def calculate_statistics(self, outcomes: List):
+    def calculate_statistics_ocr(self, outcomes: List):
         """Calculate and aggregate runtime stats"""
         n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
         _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
         _mod_val_counts = np.unique(_total_mps, return_counts=True)
         mps = list(zip(*_mod_val_counts))
         total_mb = sum([e[3] for e in outcomes if e[0] == 1])
-        self._statistics[STATS_KEY_N_OCR] = n_ocr
-        self._statistics[STATS_KEY_MB] = round(total_mb, 2)
-        self._statistics[STATS_KEY_MPS] = mps
+        self._statistics_ocr[STATS_KEY_N_OCR] = n_ocr
+        self._statistics_ocr[STATS_KEY_MB] = round(total_mb, 2)
+        self._statistics_ocr[STATS_KEY_MPS] = mps
 
     def link_ocr(self) -> int:
         """Prepare and link OCR-data"""
@@ -398,12 +399,12 @@ class ODEMProcess:
                     _l_strs = [s.attrib['CONTENT'] for s in _l.findall('.//alto:String', XMLNS)]
                     _txts.append(' '.join(_l_strs))
         txt_content = '\n'.join(_txts)
-        _out_path = os.path.join(self.work_dir_main, f'{self._statistics[CATALOG_ULB]}.pdf.txt')
+        _out_path = os.path.join(self.work_dir_main, f'{self.statistics[CATALOG_ULB]}.pdf.txt')
         with open(_out_path, mode='w', encoding='UTF-8') as _writer:
             _writer.write(txt_content)
         self.the_logger.info("[%s] harvested %d lines from %d ocr files to %s",
                              self.process_identifier, len(_txts), len(_ocrs), _out_path)
-        self._statistics['n_text_lines'] = len(_txts)
+        self._statistics_ocr['n_text_lines'] = len(_txts)
 
     def create_pdf(self):
         """Forward PDF-creation to Derivans"""
@@ -537,13 +538,13 @@ class ODEMProcess:
         return datetime.timedelta(seconds=round(time.time() - self._process_start))
 
     @property
-    def statistics(self):
+    def statistics_ocr(self):
         """Get some statistics as dictionary
         with execution duration updated each call by
         requesting it's string representation"""
 
-        self._statistics['timedelta'] = f'{self.duration}'
-        return self._statistics
+        self._statistics_ocr['timedelta'] = f'{self.duration}'
+        return self._statistics_ocr
 
     def _compress(self, work_dir, archive_name):
         zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
@@ -574,7 +575,7 @@ class OCRDPageParallel(ODEMProcess):
         else:
             _outcomes = self.run_sequential()
         if _outcomes:
-            self._statistics['outcomes'] = _outcomes
+            self._statistics_ocr['outcomes'] = _outcomes
         self.to_alto()
         return _outcomes
 

@@ -40,7 +40,7 @@ from lib.ocrd3_odem.odem_commons import (
     RECORD_SPEC,
     RECORD_RELEASED,
     RECORD_STATE,
-    RECORD_TIME,
+    to_dict,
 )
 
 LOCKFILE = 'SERVER_RUNNING'
@@ -54,19 +54,6 @@ MIME_HTML = 'text/html'
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
 MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
 MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
-
-
-def to_json(record: OAIRecord) -> dict:
-    """Serialize OAIRecord into dictionary
-    as input for JSON format"""
-
-    return {
-        RECORD_IDENTIFIER: record.identifier,
-        RECORD_RELEASED: record.date_stamp,
-        RECORD_INFO: record.info,
-        RECORD_STATE: record.state,
-        RECORD_TIME: record.state_datetime,
-    }
 
 
 def to_full_record(row):
@@ -117,7 +104,7 @@ class OAIService(SimpleHTTPRequestHandler):
                 self.wfile.write(data.encode('utf-8'))
             else:
                 self._set_headers(state)
-                self.wfile.write(json.dumps(data, default=to_json).encode('utf-8'))
+                self.wfile.write(json.dumps(data, default=to_dict).encode('utf-8'))
 
     def do_POST(self):
         """handle POST request"""
@@ -145,7 +132,7 @@ class OAIService(SimpleHTTPRequestHandler):
                     self.wfile.write(data.encode('utf-8'))
                 else:
                     self._set_headers(state)
-                    self.wfile.write(json.dumps(data, default=to_json).encode('utf-8'))
+                    self.wfile.write(json.dumps(data, default=to_dict).encode('utf-8'))
             else:
                 self._set_headers(400, MIME_TXT)
                 self.wfile.write(f"no entry for {ident} in {file_name}!".encode('utf-8'))
@@ -212,8 +199,11 @@ class OAIService(SimpleHTTPRequestHandler):
         try:
             handler = OAIRecordHandler(data_file_path)
             _ident = data[RECORD_IDENTIFIER]
+            _record = handler.get(_ident)
+            _prev_info = _record[RECORD_INFO]
+            _info = f'{_prev_info},{data[RECORD_INFO]}'
             handler.save_record_state(_ident,
-                                      state=data[RECORD_STATE], **{RECORD_INFO: data[RECORD_INFO]})
+                                      state=data[RECORD_STATE], **{RECORD_INFO: _info})
             _msg = f"update done for {_ident} in '{data_file_path}"
             LOGGER.info(_msg)
             return (200, _msg)

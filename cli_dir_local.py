@@ -121,8 +121,8 @@ if __name__ == "__main__":
         PROCESS.cfg = CFG
         PROCESS.the_logger = LOGGER
         local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
-        PROCESS._statistics[STATS_KEY_N_PAGES] = len(local_images)
-        PROCESS._statistics[STATS_KEY_N_OCRABLE] = 0
+        PROCESS._statistics_ocr[STATS_KEY_N_PAGES] = len(local_images)
+        PROCESS._statistics_ocr[STATS_KEY_N_OCRABLE] = 0
         PROCESS.images_4_ocr = local_images
         # Type and Value change!!!
         # ODEMProcess.single_ocr() needs Tuple[str,str], in non-local
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         PROCESS.images_4_ocr = list(zip(PROCESS.images_4_ocr, [pathlib.Path(i).stem for i in PROCESS.images_4_ocr]))
         PROCESS.run()
         PROCESS.the_logger.info("[%s] duration: %s (%s)", req_idn,
-                                PROCESS.duration, PROCESS.statistics)
+                                PROCESS.duration, PROCESS.statistics_ocr)
     except Exception as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
                      req_idn, PROCESS.duration, str(exc))

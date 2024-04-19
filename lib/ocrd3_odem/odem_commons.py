@@ -14,11 +14,16 @@ from pathlib import (
     Path
 )
 from typing import (
-    List
+    Dict,
+    List,
 )
 
 from ocrd_utils import (
     initLogging
+)
+
+from digiflow import (
+    OAIRecord,
 )
 
 #
@@ -80,6 +85,7 @@ FILEGROUP_OCR = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
 # statistic keys
 STATS_KEY_LANGS = 'languages'
+STATS_KEY_MODELS = 'models'
 STATS_KEY_TYPE = 'pica'
 STATS_KEY_N_PAGES = 'n_images_pages'
 STATS_KEY_N_OCRABLE = 'n_images_ocrable'
@@ -182,3 +188,23 @@ def merge_args(the_configuration: ConfigParser, the_args) -> List:
         the_configuration.set(*_upd03)
         _repls.append(_upd03)
     return _repls
+
+
+def to_dict(record: OAIRecord) -> Dict:
+    """Serialize OAIRecord into dictionary
+    as input for JSON format"""
+
+    return {
+        RECORD_IDENTIFIER: record.identifier,
+        RECORD_RELEASED: record.date_stamp,
+        RECORD_INFO: record.info,
+        RECORD_STATE: record.state,
+        RECORD_TIME: record.state_datetime,
+    }
+
+def from_dict(data) -> OAIRecord:
+    """deserialize into OAIRecord"""
+
+    _record = OAIRecord(data[RECORD_IDENTIFIER])
+    _record.info = data[RECORD_INFO]
+    return _record
