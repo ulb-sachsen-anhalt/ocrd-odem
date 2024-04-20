@@ -4,7 +4,6 @@
    Providing and managing OAI records for more OCR clients
 """
 
-import ast
 import configparser
 import json
 import logging.config
@@ -34,7 +33,7 @@ from digiflow import (
 )
 
 from lib.ocrd3_odem.odem_commons import (
-    MARK_OCR_BUSY,    
+    MARK_OCR_BUSY,
     RECORD_IDENTIFIER,
     RECORD_INFO,
     RECORD_SPEC,
@@ -54,6 +53,7 @@ MIME_HTML = 'text/html'
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
 MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
 MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
+LOGGER = None
 
 
 def to_full_record(row):
@@ -176,15 +176,9 @@ class OAIService(SimpleHTTPRequestHandler):
         # store information which client got the package delivered
         _info = {'client': client_name}
         if next_record.info != 'n.a.':
-            try:
-                if isinstance(next_record.info, str):
-                    next_record.info = ast.literal_eval(next_record.info)
-                next_record.info['client'] = client_name
-                _info = f"{next_record.info}"
-            except Exception as _exc:
-                LOGGER.warning("can't update record info: %s", _exc.args[0])
+            _info = f"{next_record.info},{_info}"
         handler.save_record_state(
-            next_record.identifier, MARK_OCR_BUSY, **{RECORD_INFO: _info})
+            next_record.identifier, MARK_OCR_BUSY, **{RECORD_INFO: f'{_info}'})
         return (200, next_record)
 
     def update_record(self, data_file, data) -> tuple:
@@ -199,9 +193,11 @@ class OAIService(SimpleHTTPRequestHandler):
         try:
             handler = OAIRecordHandler(data_file_path)
             _ident = data[RECORD_IDENTIFIER]
-            _record = handler.get(_ident)
-            _prev_info = _record[RECORD_INFO]
-            _info = f'{_prev_info},{data[RECORD_INFO]}'
+            _record: OAIRecord = handler.get(_ident)
+            _prev_info = _record.info
+            _info = f'{data[RECORD_INFO]}'
+            if _prev_info != 'n.a.':
+                _info = f'{_prev_info},{_info}'
             handler.save_record_state(_ident,
                                       state=data[RECORD_STATE], **{RECORD_INFO: _info})
             _msg = f"update done for {_ident} in '{data_file_path}"
