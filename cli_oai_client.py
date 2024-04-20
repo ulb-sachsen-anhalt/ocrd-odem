@@ -7,14 +7,10 @@ import shutil
 import sys
 import time
 
-from ast import (
-    literal_eval,
-)
 from logging import (
     Logger
 )
 from typing import (
-    Dict,
     Optional,
 )
 import requests
@@ -22,6 +18,7 @@ import requests
 from digiflow import (
     OAIRecord,
     LocalStore,
+    smtp_note,
 )
 
 from lib.resources_monitoring import ProcessResourceMonitorConfig
@@ -63,6 +60,9 @@ LOCK_FILE_PATH = os.path.join(os.path.dirname(__file__), LOCK_FILE_NAME)
 # date format pattern
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
 
+LOGGER = None
+CFG = None
+
 
 class OAIRecordExhaustedException(Exception):
     """Mark that given file contains no open records"""
@@ -71,9 +71,6 @@ class OAIRecordExhaustedException(Exception):
 def _notify(subject, message):
     if CFG.has_section('mail') and CFG.has_option('mail', 'connection'):
         try:
-            from digiflow import (
-                smtp_note,
-            )
             conn = CFG.get('mail', 'connection')
             sender = CFG.get('mail', 'sender')
             recipiens = CFG.get('mail', 'recipients')
@@ -103,7 +100,7 @@ class OAIServiceClient:
         """Request next open OAI record from service
            return OAIRecord as json encoded content"""
         try:
-            response = requests.get(f'{self.oai_server_url}/next', timeout=30)
+            response = requests.get(f'{self.oai_server_url}/next', timeout=300)
         except requests.exceptions.RequestException as err:
             if self.logger is not None:
                 self.logger.error("OAI server connection fails: %s", err)
@@ -146,18 +143,7 @@ class OAIServiceClient:
         self.record_data[RECORD_TIME] = right_now
         # if we have to report somethin' new, then append it
         if kwargs is not None:
-            _info = f"{kwargs}"
-            if self.record_data[RECORD_INFO] != 'n.a.':
-                try:
-                    _self_info = self.record_data[RECORD_INFO]
-                    if isinstance(self.record_data[RECORD_INFO], str):
-                        _self_info: Dict = literal_eval(self.record_data[RECORD_INFO])
-                    _self_info.update(kwargs)
-                    _info = f"{_self_info}"
-                except:
-                    self.logger.error("Can't parse info field '%s'",
-                                      self.record_data)
-            self.record_data[RECORD_INFO]= _info
+            self.record_data[RECORD_INFO] = f'{kwargs}'
         if self.logger is not None:
             self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
         return requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=60)
