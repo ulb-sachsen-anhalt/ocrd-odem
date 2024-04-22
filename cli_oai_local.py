@@ -25,9 +25,10 @@ from lib.ocrd3_odem import (
     MARK_OCR_FAIL,
     ODEMProcess,
     OCRDPageParallel,
+    ODEMTesseract,
     ODEMException,
     get_configparser,
-    get_logger,
+    get_logger, OdemWorkflowProcessType,
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
 
@@ -148,8 +149,10 @@ if __name__ == "__main__":
         LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE)
         sys.exit(1)
 
+
     def wrap_save_record_state(status: str, urn, **kwargs):
         handler.save_record_state(urn, status, **kwargs)
+
 
     try:
         handler.save_record_state(record.identifier, MARK_OCR_BUSY)
@@ -158,7 +161,11 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
 
-        PROCESS: ODEMProcess = OCRDPageParallel(record, req_dst_dir, EXECUTORS)
+        proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
+        if proc_type is None:
+            LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
+        PROCESS: ODEMProcess = ODEMProcess.create(proc_type, record, req_dst_dir, EXECUTORS)
+
         PROCESS.the_logger = LOGGER
         PROCESS.the_logger.info("[%s] odem from %s, %d executors", local_ident, OAI_RECORD_FILE, EXECUTORS)
         PROCESS.cfg = CFG

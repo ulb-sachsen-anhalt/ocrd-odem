@@ -20,8 +20,9 @@ from lib.ocrd3_odem import (
     get_configparser, CFG_KEY_RES_VOL,
 )
 
-# store path
+
 PROJECT_ROOT_DIR = pathlib.Path(__file__).resolve().parents[1]
+PROD_RES = PROJECT_ROOT_DIR / 'resources'
 TEST_RES = pathlib.Path(__file__).parents[0] / 'resources'
 
 

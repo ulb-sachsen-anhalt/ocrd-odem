@@ -1,17 +1,19 @@
 """Specification for OCR Postprocessings"""
 
 import os
+import shutil
 
 import lxml.etree as ET
+from digiflow import MetsProcessor
 
 from lib.ocrd3_odem import (
     PUNCTUATIONS,
-	XMLNS,
+    XMLNS,
     ODEMProcess,
-    postprocess_ocrd_file,
+    postprocess_ocrd_file, integrate_ocr_file,
 )
 from .conftest import (
-    fixture_configuration,
+    fixture_configuration, TEST_RES,
 )
 
 
@@ -58,7 +60,7 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: ODEMProcess):
     # arrange
     tmp_path = fixture_27949.work_dir_main
     path_file = tmp_path / 'FULLTEXT' / '00000003.xml'
-    strip_tags = fixture_configuration().getlist('ocr', 'strip_tags') # pylint: disable=no-member
+    strip_tags = fixture_configuration().getlist('ocr', 'strip_tags')  # pylint: disable=no-member
 
     # act
     postprocess_ocrd_file(path_file, strip_tags)
@@ -83,3 +85,18 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: ODEMProcess):
             # is now in it's own STRING element
             if _punc in _content[-1]:
                 assert len(_content) == 1
+
+
+def test_link_ocr_alto_v3_compat(tmp_path):
+    orig_mets = TEST_RES / '1981185920_42296.xml'
+    trgt_mets = tmp_path / '1981185920_42296.xml'
+    orig_alto_dir = TEST_RES / '1981185920_42296_FULLTEXT'
+    trgt_alto_dir = tmp_path / 'FULLTEXT'
+    shutil.copyfile(orig_mets, trgt_mets)
+    shutil.copytree(orig_alto_dir, trgt_alto_dir)
+
+    proc = MetsProcessor(trgt_mets)
+    _n_linked_ocr = integrate_ocr_file(proc.tree, [str(trgt_alto_dir / a) for a in os.listdir(trgt_alto_dir)])
+    proc.write()
+
+    assert _n_linked_ocr == 4
