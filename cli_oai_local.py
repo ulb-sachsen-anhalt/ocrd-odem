@@ -113,8 +113,8 @@ if __name__ == "__main__":
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
     LOCAL_DELETE_BEVOR_EXPORT = []
-    if CFG.has_option('global', 'delete_bevor_export'):
-        LOCAL_DELETE_BEVOR_EXPORT = CFG.getlist('global', 'delete_bevor_export')
+    if CFG.has_option('export', 'delete_before_export'):
+        LOCAL_DELETE_BEVOR_EXPORT = CFG.getlist('global', 'delete_before_export')
     LOCAL_LOG_DIR = CFG.get('global', 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
@@ -206,9 +206,9 @@ if __name__ == "__main__":
         PROCESS.postprocess_mets()
         if CFG.getboolean('mets','postvalidate', fallback=True):
             PROCESS.validate_mets()
-        PROCESS.export_data()
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)
+        PROCESS.export_data()
         _kwargs = PROCESS.statistics_ocr
         if PROCESS.record.info != 'n.a.':
             try:
