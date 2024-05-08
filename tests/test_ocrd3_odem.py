@@ -441,8 +441,8 @@ def test_export_flat_zip(tmp_path):
     _model_dir = prepare_tessdata_dir(tmp_path)
 
     oproc.cfg.set('export', 'export_format', ExportFormat.FLAT_ZIP)
-    oproc.cfg.set('global', 'local_export_tmp', str(path_tmp_export_dir))
-    oproc.cfg.set('global', 'local_export_dir', str(path_export_dir))
+    oproc.cfg.set('export', 'local_export_tmp', str(path_tmp_export_dir))
+    oproc.cfg.set('export', 'local_export_dir', str(path_export_dir))
     oproc.cfg.set(
         CFG_SEC_OCR,
         CFG_KEY_RES_VOL,

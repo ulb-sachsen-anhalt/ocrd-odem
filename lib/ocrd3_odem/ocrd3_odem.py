@@ -475,10 +475,10 @@ class ODEMProcess:
 
         export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
         export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
-        exp_dst = self.cfg.get('global', 'local_export_dir')
-        exp_tmp = self.cfg.get('global', 'local_export_tmp')
-        exp_col = self.cfg.get('global', 'export_collection')
-        exp_map = self.cfg.getdict('global', 'export_mappings')
+        exp_dst = self.cfg.get('export', 'local_export_dir')
+        exp_tmp = self.cfg.get('export', 'local_export_tmp')
+        exp_col = self.cfg.get('export', 'export_collection')
+        exp_map = self.cfg.getdict('export', 'export_mappings')
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
