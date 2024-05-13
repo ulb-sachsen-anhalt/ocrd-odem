@@ -11,7 +11,6 @@ from .processing_ocrd import (
 )
 from .processing_mets import (
     CATALOG_ULB,
-    XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
     ODEMNoImagesForOCRException,

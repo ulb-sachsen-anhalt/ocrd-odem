@@ -7,9 +7,9 @@ import shutil
 import pytest
 
 import lxml.etree as ET
+import digiflow as df
 
 from lib.ocrd3_odem import (
-    XMLNS,
     ODEMMetadataMetsException,
     ODEMNoImagesForOCRException,
 	ODEMMetadataInspecteur,
@@ -71,39 +71,39 @@ def _fixture_postprocessing_mets(tmp_path_factory):
 def test_postprocess_mets_agent_entries_number_fits(post_mets):
     """Ensure METS metadata agents has expected number"""
 
-    assert len(post_mets.xpath('//mets:agent', namespaces=XMLNS)) == 4
+    assert len(post_mets.xpath('//mets:agent', namespaces=df.XMLNS)) == 4
 
 
 def test_postprocess_mets_agent_odem_fits(post_mets):
     """Ensure METS agent odem has used OCR-D 
     baseimage annotated"""
 
-    _agent_odem = post_mets.xpath('//mets:agent', namespaces=XMLNS)[3]
+    _agent_odem = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[3]
     _xp_agent_note = 'mets:note/text()'
     _xp_agent_name = 'mets:name/text()'
     _curr_image = fixture_configuration().get('ocr', 'ocrd_baseimage')
-    assert _agent_odem.xpath(_xp_agent_name, namespaces=XMLNS)[0] == f'DFG-OCRD3-ODEM_{_curr_image}'
+    assert _agent_odem.xpath(_xp_agent_name, namespaces=df.XMLNS)[0] == f'DFG-OCRD3-ODEM_{_curr_image}'
     _today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
-    assert _today in _agent_odem.xpath(_xp_agent_note, namespaces=XMLNS)[0]
+    assert _today in _agent_odem.xpath(_xp_agent_note, namespaces=df.XMLNS)[0]
 
 
 def test_postprocess_mets_agent_derivans_fits(post_mets):
     """Ensure METS agent derivans was re-done"""
 
-    _agent_derivans = post_mets.xpath('//mets:agent', namespaces=XMLNS)[2]
+    _agent_derivans = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[2]
     _xp_agent_note = 'mets:note/text()'
     _xp_agent_name = 'mets:name/text()'
-    assert _agent_derivans.xpath(_xp_agent_name, namespaces=XMLNS)[0] == 'DigitalDerivans V1.6.0-SNAPSHOT'
-    assert _agent_derivans.xpath(_xp_agent_note, namespaces=XMLNS)[0].endswith('2022-05-17T11:27:16')
-    assert not post_mets.xpath('//dv:iiif', namespaces=XMLNS)
-    assert not post_mets.xpath('//dv:sru', namespaces=XMLNS)
+    assert _agent_derivans.xpath(_xp_agent_name, namespaces=df.XMLNS)[0] == 'DigitalDerivans V1.6.0-SNAPSHOT'
+    assert _agent_derivans.xpath(_xp_agent_note, namespaces=df.XMLNS)[0].endswith('2022-05-17T11:27:16')
+    assert not post_mets.xpath('//dv:iiif', namespaces=df.XMLNS)
+    assert not post_mets.xpath('//dv:sru', namespaces=df.XMLNS)
 
 
 def test_postprocess_mets_provenance_removed(post_mets):
     """Ensure METS entries for digital provenance removed"""
 
-    assert not post_mets.xpath('//dv:iiif', namespaces=XMLNS)
-    assert not post_mets.xpath('//dv:sru', namespaces=XMLNS)
+    assert not post_mets.xpath('//dv:iiif', namespaces=df.XMLNS)
+    assert not post_mets.xpath('//dv:sru', namespaces=df.XMLNS)
 
 
 def test_opendata_record_no_images_for_ocr():

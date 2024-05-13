@@ -9,17 +9,13 @@ from unittest import (
 
 import lxml.etree as ET
 import pytest
-from digiflow import (
-    OAIRecord,
-    OAILoadException
-)
+import digiflow as df
 
 from lib.ocrd3_odem import (
     CFG_SEC_OCR,
     KEY_LANGUAGES,
     KEY_MODEL_MAP,
     STATS_KEY_LANGS,
-    XMLNS,
     ODEMProcess,
     ODEMException,
     get_configparser,
@@ -161,7 +157,7 @@ def test_load_mock_called(tmp_path_factory):
     _workdir.mkdir()
     _log_dir = _root_workdir / 'log'
     _log_dir.mkdir()
-    _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
     odem = ODEMProcess(_record, _workdir)
     odem.cfg = fixture_configuration()
     _model_dir = prepare_tessdata_dir(_workdir)
@@ -256,7 +252,7 @@ def test_module_fixture_one_integrated_ocr_in_mets(fixture_27949: ODEMProcess):
     assert len(fixture_27949.ocr_files) == 4
 
     _root = ET.parse(fixture_27949.mets_file).getroot()
-    _phys_links = _root.xpath('//mets:div[@TYPE="physSequence"]/mets:div', namespaces=XMLNS)
+    _phys_links = _root.xpath('//mets:div[@TYPE="physSequence"]/mets:div', namespaces=df.XMLNS)
     # at most 2: one MAX-Image plus according optional FULLTEXT
     assert len(_phys_links[1].getchildren()) == 1
     assert len(_phys_links[2].getchildren()) == 2
@@ -302,7 +298,7 @@ def test_validate_mets(tmp_path):
     """
     if is invalid mets file, throw according exception
     """
-    _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/105054')
+    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/105054')
     _work_dir = tmp_path / '1981185920_105054'
     _work_dir.mkdir()
     _max_dir = _work_dir / 'MAX'
@@ -328,7 +324,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
 
     """
 
-    _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
     _work_dir = tmp_path / '1981185920_44046'
     _work_dir.mkdir()
     _max_dir = _work_dir / 'MAX'
@@ -356,13 +352,13 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     assert odem_processor.images_4_ocr[0][0].endswith('1981185920_44046/MAX/00000001.jpg')
 
 
-@mock.patch('digiflow.OAILoader.load', side_effect=OAILoadException("url '{}' returned '{}'"))
+@mock.patch('digiflow.OAILoader.load', side_effect=df.OAILoadException("url '{}' returned '{}'"))
 def test_no_catch_when_load_exc(mock_load, tmp_path):
-    """Ensure OAILoadException is raised for internal server errors (#9992)
+    """Ensure df.OAILoadException is raised for internal server errors (#9992)
     """
 
     # arrange
-    _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
     _work_dir = tmp_path / '1981185920_44046'
     _work_dir.mkdir()
     odem_processor = ODEMProcess(_record, work_dir=_work_dir)
@@ -374,7 +370,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     odem_processor.the_logger = get_logger(str(_log_dir))
 
     # act
-    with pytest.raises(OAILoadException) as err:
+    with pytest.raises(df.OAILoadException) as err:
         odem_processor.load()
 
     # assert
@@ -394,7 +390,7 @@ def test_record_with_unknown_language(tmp_path):
     trgt_mets = path_workdir / 'test.xml'
     shutil.copyfile(orig_file, trgt_mets)
     (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/72977')
+    record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/72977')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
@@ -435,7 +431,7 @@ def test_export_flat_zip(tmp_path):
     shutil.copytree(orig_files, trgt_files)
 
     (path_workdir / 'log').mkdir()
-    record = OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
     oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.cfg = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)

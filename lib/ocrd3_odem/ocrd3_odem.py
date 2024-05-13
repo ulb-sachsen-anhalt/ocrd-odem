@@ -21,18 +21,10 @@ from typing import (
 )
 import lxml.etree as ET
 import numpy as np
-from digiflow import (
-    OAILoader,
-    OAIRecord,
-    MetsProcessor,
-    BaseDerivansManager,
-    DerivansResult,
-    export_data_from,
-    map_contents,
-)
-from digiflow.digiflow_export import (
-    _move_to_tmp_file
-)
+import digiflow as df
+import digiflow.digiflow_export as dfx
+import digiflow.digiflow_metadata as dfm
+import digiflow.validate as dfv
 
 from .odem_commons import (
     CFG_SEC_OCR,
@@ -52,13 +44,10 @@ from .odem_commons import (
 )
 from .processing_mets import (
     CATALOG_ULB,
-    XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
-    extract_mets_data,
     integrate_ocr_file,
     postprocess_mets,
-    validate_mets,
 )
 from .processing_ocrd import (
     run_ocr_page,
@@ -105,7 +94,7 @@ class ODEMProcess:
         for the underlying OCR-Engine Tesseract-OCR.
     """
 
-    def __init__(self, record: OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
+    def __init__(self, record: df.OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
         """Create new ODEM Process.
         Args:
             record (OAIRecord): OAI Record dataset
@@ -175,7 +164,7 @@ class ODEMProcess:
                               self.process_identifier, request_identifier, req_dst)
         base_url = self.cfg.get('global', 'base_url')
         try:
-            loader = OAILoader(req_dst_dir, base_url=base_url, post_oai=extract_mets_data)
+            loader = df.OAILoader(req_dst_dir, base_url=base_url, post_oai=dfm.extract_mets)
             loader.store = self.store
             loader.load(request_identifier, local_dst=req_dst)
         except RuntimeError as _err:
@@ -220,7 +209,7 @@ class ODEMProcess:
             _blacklisted = self.cfg.getlist('mets', 'blacklist_file_groups')
             _ident = self.process_identifier
             self.the_logger.info("[%s] remove %s", _ident, _blacklisted)
-            _proc = MetsProcessor(self.mets_file)
+            _proc =df.MetsProcessor(self.mets_file)
             _proc.clear_filegroups(_blacklisted)
             _proc.write()
 
@@ -369,7 +358,7 @@ class ODEMProcess:
         self.ocr_files = list_files(self.work_dir_main, FILEGROUP_OCR)
         if not self.ocr_files:
             return 0
-        proc = MetsProcessor(self.mets_file)
+        proc = df.MetsProcessor(self.mets_file)
         _n_linked_ocr = integrate_ocr_file(proc.tree, self.ocr_files)
         proc.write()
         return _n_linked_ocr
@@ -394,9 +383,9 @@ class ODEMProcess:
         for _o in _ocrs:
             with open(_o, mode='r', encoding='UTF-8') as _ocr_file:
                 _alto_root = ET.parse(_ocr_file)
-                _lines = _alto_root.findall('.//alto:TextLine', XMLNS)
+                _lines = _alto_root.findall('.//alto:TextLine', df.XMLNS)
                 for _l in _lines:
-                    _l_strs = [s.attrib['CONTENT'] for s in _l.findall('.//alto:String', XMLNS)]
+                    _l_strs = [s.attrib['CONTENT'] for s in _l.findall('.//alto:String', df.XMLNS)]
                     _txts.append(' '.join(_l_strs))
         txt_content = '\n'.join(_txts)
         _out_path = os.path.join(self.work_dir_main, f'{self.statistics[CATALOG_ULB]}.pdf.txt')
@@ -423,7 +412,7 @@ class ODEMProcess:
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
         path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
-        derivans: BaseDerivansManager = BaseDerivansManager.create(
+        derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
             path_binary=path_bin,
@@ -434,7 +423,7 @@ class ODEMProcess:
         derivans.init()
         # be cautious
         try:
-            dresult: DerivansResult = derivans.start()
+            dresult: df.DerivansResult = derivans.start()
             self.the_logger.info("[%s] create derivates in %.1fs",
                                  self.process_identifier, dresult.duration)
         except subprocess.CalledProcessError as _sub_err:
@@ -464,11 +453,9 @@ class ODEMProcess:
     def validate_mets(self):
         """Forward METS-schema validation"""
         try:
-            validate_mets(self.mets_file)
-        except RuntimeError as err:
-            if len(err.args) > 0 and str(err.args[0]).startswith('invalid schema'):
-                raise ODEMException(str(err.args[0])) from err
-            raise err
+            dfv.validate_xml(self.mets_file)
+        except dfv.InvalidXMLException as err:
+            raise ODEMException(str(err.args[0])) from err
 
     def export_data(self):
         """re-do metadata and transform into output format"""
@@ -487,7 +474,7 @@ class ODEMProcess:
             exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
         saf_name = self.identifiers.get(CATALOG_ULB)
         if export_format == ExportFormat.SAF:
-            export_result = export_data_from(
+            export_result = dfx.export_data_from(
                 self.mets_file,
                 exp_col,
                 saf_final_name=saf_name,
@@ -503,11 +490,11 @@ class ODEMProcess:
                 tmp_dir = exp_tmp
             with tempfile.TemporaryDirectory(prefix=prefix, dir=tmp_dir) as tmp_dir:
                 work_dir = os.path.join(tmp_dir, saf_name)
-                export_mappings = map_contents(source_path_dir, work_dir, exp_map)
+                export_mappings = dfx.map_contents(source_path_dir, work_dir, exp_map)
                 for mapping in export_mappings:
                     mapping.copy()
                 tmp_zip_path, size = self._compress(os.path.dirname(work_dir), saf_name)
-                path_export_processing = _move_to_tmp_file(tmp_zip_path, exp_dst)
+                path_export_processing = dfx._move_to_tmp_file(tmp_zip_path, exp_dst)
                 export_result = path_export_processing, size
 
         else:

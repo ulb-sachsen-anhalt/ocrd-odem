@@ -7,15 +7,8 @@ from typing import (
 )
 
 import lxml.etree as ET
-
-from digiflow import (
-    MetsReader,
-    MetsProcessor,
-    XMLNS,
-    post_oai_extract_metsdata,
-    validate_xml,
-    write_xml_file,
-)
+import digiflow as df
+import digiflow.validate as dfv
 
 from .odem_commons import (
     FILEGROUP_IMG,
@@ -35,15 +28,6 @@ METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
 IMAGE_GROUP_ULB = 'MAX'
 IMAGE_GROUP_DEFAULT = 'DEFAULT'
 
-
-def extract_mets_data(the_self, the_data):
-    """
-    Migration Post-recive OAI METS/MODS callback
-    """
-
-    xml_root = ET.fromstring(the_data)
-    mets_tree = post_oai_extract_metsdata(xml_root)
-    write_xml_file(mets_tree, the_self.path_mets)
 
 
 class ODEMMetadataMetsException(Exception):
@@ -86,7 +70,7 @@ class ODEMMetadataInspecteur:
     def _get_report(self):
         if self._report is None:
             try:
-                self._report = MetsReader(self._data).report
+                self._report = df.MetsReader(self._data).report
             except RuntimeError as _err:
                 raise ODEMMetadataMetsException(_err) from _err
         return self._report
@@ -108,7 +92,7 @@ class ODEMMetadataInspecteur:
                 raise ODEMNoTypeForOCRException(f"{self.process_identifier} invalid PICA type for OCR: {report.type}")
             elif len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
                 raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
-            reader = MetsReader(self._data)
+            reader = df.MetsReader(self._data)
             reader.check()
             self.inspect_metadata_images()
         except RuntimeError as _err:
@@ -159,10 +143,10 @@ class ODEMMetadataInspecteur:
         blacklist_log = self._cfg.getlist('mets', 'blacklist_logical_containers')
         blacklist_lab = self._cfg.getlist('mets', 'blacklist_physical_container_labels')
         mets_root = ET.parse(self._data).getroot()
-        _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_ULB}"]/mets:file', XMLNS)
+        _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_ULB}"]/mets:file', df.XMLNS)
         _n_image_res = len(_image_res)
         if _n_image_res == 0:
-            _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_DEFAULT}"]/mets:file', XMLNS)
+            _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_DEFAULT}"]/mets:file', df.XMLNS)
             _n_image_res = len(_image_res)
         if _n_image_res < 1:
             _msg = f"{self.process_identifier} contains absolutly no images for OCR!"
@@ -192,9 +176,9 @@ def fname_ident_pairs_from_metadata(mets_root, image_res, blacklist_structs, bla
     """
     _pairs = []
     _problems = []
-    _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', XMLNS)
-    _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', XMLNS)
-    _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', XMLNS)
+    _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', df.XMLNS)
+    _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', df.XMLNS)
+    _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', df.XMLNS)
     for img_cnt in image_res:
         _local_file_name = img_cnt[0].get(Q_XLINK_HREF).split('/')[-1]
         _file_id = img_cnt.get('ID')
@@ -263,7 +247,7 @@ def clear_filegroups(xml_file, removals):
     * DEFAULT (created by Share_it)
     """
 
-    proc = MetsProcessor(xml_file)
+    proc = df.MetsProcessor(xml_file)
     proc.clear_filegroups(black_list=removals)
     proc.write()
 
@@ -275,10 +259,10 @@ def integrate_ocr_file(xml_tree, ocr_files: List) -> int:
     """
 
     _n_linked_ocr = 0
-    file_sec = xml_tree.find('.//mets:fileSec', XMLNS)
-    tag_file_group = f'{{{XMLNS["mets"]}}}fileGrp'
-    tag_file = f'{{{XMLNS["mets"]}}}file'
-    tag_flocat = f'{{{XMLNS["mets"]}}}FLocat'
+    file_sec = xml_tree.find('.//mets:fileSec', df.XMLNS)
+    tag_file_group = f'{{{df.XMLNS["mets"]}}}fileGrp'
+    tag_file = f'{{{df.XMLNS["mets"]}}}file'
+    tag_flocat = f'{{{df.XMLNS["mets"]}}}FLocat'
 
     file_grp_fulltext = ET.Element(tag_file_group, USE=FILEGROUP_OCR)
     for _ocr_file in ocr_files:
@@ -295,10 +279,10 @@ def integrate_ocr_file(xml_tree, ocr_files: List) -> int:
         # the sequence container of the physical structMap
         # Assignment takes place via the name of the corresponding
         # image (= name ALTO file)
-        _mproc = MetsProcessor(_ocr_file)
-        src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=XMLNS)[0]
+        _mproc = df.MetsProcessor(_ocr_file)
+        src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=df.XMLNS)[0]
         src_info.text = f'{_file_name}.jpg'
-        first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=XMLNS)[0]
+        first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=df.XMLNS)[0]
         first_page_el.attrib['ID'] = f'p{_file_name}'
         _mproc.write()
         _n_linked_ocr += _link_fulltext(new_id, xml_tree)
@@ -309,16 +293,16 @@ def integrate_ocr_file(xml_tree, ocr_files: List) -> int:
 def _link_fulltext(file_ident, xml_tree):
     file_name = file_ident.split('_')[-1]
     xp_files = f'.//mets:fileGrp[@USE="{FILEGROUP_IMG}"]/mets:file'
-    file_grp_max_files = xml_tree.findall(xp_files, XMLNS)
+    file_grp_max_files = xml_tree.findall(xp_files, df.XMLNS)
     for file_grp_max_file in file_grp_max_files:
         _file_link = file_grp_max_file[0].attrib['{http://www.w3.org/1999/xlink}href']
         _file_label = _file_link.split('/')[-1]
         if file_name in _file_label:
             max_file_id = file_grp_max_file.attrib['ID']
             xp_phys = f'//mets:div/mets:fptr[@FILEID="{max_file_id}"]/..'
-            parents = xml_tree.xpath(xp_phys, namespaces=XMLNS)
+            parents = xml_tree.xpath(xp_phys, namespaces=df.XMLNS)
             if len(parents) == 1:
-                ET.SubElement(parents[0], f"{{{XMLNS['mets']}}}fptr", {
+                ET.SubElement(parents[0], f"{{{df.XMLNS['mets']}}}fptr", {
                     "FILEID": file_ident})
                 # add only once, therefore return
                 return 1
@@ -335,7 +319,7 @@ def is_in(tokens: List[str], label):
 def postprocess_mets(mets_file, label_base_image):
     """wrap work related to processing METS/MODS"""
 
-    mproc = MetsProcessor(mets_file)
+    mproc = df.MetsProcessor(mets_file)
     _process_agents(mproc, label_base_image)
     _clear_provenance_links(mproc)
     mproc.write()
@@ -344,7 +328,7 @@ def _process_agents(mproc, label_base_image):
     # drop existing ODEM marks
     # enrich *only* latest run
     xp_txt_odem = f'//mets:agent[contains(mets:name,"{METS_AGENT_ODEM}")]'
-    agents_odem = mproc.tree.xpath(xp_txt_odem, namespaces=XMLNS)
+    agents_odem = mproc.tree.xpath(xp_txt_odem, namespaces=df.XMLNS)
     for old_odem in agents_odem:
         parent = old_odem.getparent()
         parent.remove(old_odem)
@@ -353,7 +337,7 @@ def _process_agents(mproc, label_base_image):
     # ensure only very recent derivans agent entry exists
 
     xp_txt_derivans = '//mets:agent[contains(mets:name,"DigitalDerivans")]'
-    derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=XMLNS)
+    derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=df.XMLNS)
     if len(derivanses) < 1:
         # no previous derivans agent can happen
         # for data from other institutions
@@ -371,7 +355,7 @@ def _process_agents(mproc, label_base_image):
 
 def _clear_provenance_links(mproc):
     xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
-    old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=XMLNS)
+    old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=df.XMLNS)
     for old_dv in old_dvs:
         parent = old_dv.getparent()
         parent.remove(old_dv)
@@ -381,4 +365,4 @@ def validate_mets(mets_file:str):
     """Forward METS-schema validation"""
 
     xml_root = ET.parse(mets_file).getroot()
-    validate_xml(xml_root)
+    dfv.validate_xml(xml_root)
