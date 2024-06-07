@@ -235,8 +235,8 @@ if __name__ == "__main__":
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
     LOCAL_DELETE_BEFORE_EXPORT = []
-    if CFG.has_option('global', 'delete_before_export'):
-        LOCAL_DELETE_BEFORE_EXPORT = CFG.getlist('global', 'delete_before_export')
+    if CFG.has_option('export', 'delete_before_export'):
+        LOCAL_DELETE_BEFORE_EXPORT = CFG.getlist('export', 'delete_before_export')
     LOG_FILE_NAME = None
     if CFG.has_option('global', 'logfile_name'):
         LOG_FILE_NAME = CFG.get('global', 'logfile_name')

@@ -114,7 +114,7 @@ if __name__ == "__main__":
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
     LOCAL_DELETE_BEVOR_EXPORT = []
     if CFG.has_option('export', 'delete_before_export'):
-        LOCAL_DELETE_BEVOR_EXPORT = CFG.getlist('global', 'delete_before_export')
+        LOCAL_DELETE_BEVOR_EXPORT = CFG.getlist('export', 'delete_before_export')
     LOCAL_LOG_DIR = CFG.get('global', 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
