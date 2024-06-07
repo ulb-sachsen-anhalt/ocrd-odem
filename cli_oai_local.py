@@ -13,6 +13,7 @@ from digiflow import (
     OAIRecord,
     LocalStore
 )
+import digiflow as df
 
 from lib.ocrd3_odem.odem_commons import (
     RECORD_IDENTIFIER,
@@ -28,7 +29,8 @@ from lib.ocrd3_odem import (
     ODEMTesseract,
     ODEMException,
     get_configparser,
-    get_logger, OdemWorkflowProcessType,
+    get_logger, 
+    OdemWorkflowProcessType,
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
 
@@ -144,7 +146,7 @@ if __name__ == "__main__":
     LOGGER.info("use records from '%s'", OAI_RECORD_FILE)
     handler = OAIRecordHandler(
         OAI_RECORD_FILE, data_fields=DATA_FIELDS, transform_func=trnfrm)
-    record = handler.next_record(state=MARK_OCR_OPEN)
+    record: df.OAIRecord = handler.next_record(state=MARK_OCR_OPEN)
     if not record:
         LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE)
         sys.exit(1)
@@ -203,7 +205,7 @@ if __name__ == "__main__":
         PROCESS.set_local_images()
         OUTCOMES = process_resource_monitor.monit_vmem(PROCESS.run)
         PROCESS.calculate_statistics_ocr(OUTCOMES)
-        PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics_ocr)
+        PROCESS.the_logger.info("[%s] %s", local_ident, PROCESS.statistics)
         PROCESS.link_ocr()
         if CREATE_PDF:
             PROCESS.create_pdf()
@@ -216,7 +218,7 @@ if __name__ == "__main__":
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)
         PROCESS.export_data()
-        _kwargs = PROCESS.statistics_ocr
+        _kwargs = PROCESS.statistics
         if PROCESS.record.info != 'n.a.':
             try:
                 if isinstance(PROCESS.record.info, str):
@@ -232,7 +234,7 @@ if __name__ == "__main__":
         handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_info)
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         PROCESS.the_logger.info("[%s] duration: %s/%s (%s)", PROCESS.process_identifier,
-                                PROCESS.duration, _mode, PROCESS.statistics_ocr)
+                                PROCESS.duration, _mode, PROCESS.statistics)
         # finale
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)

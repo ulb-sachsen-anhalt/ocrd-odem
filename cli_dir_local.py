@@ -136,7 +136,7 @@ if __name__ == "__main__":
         PROCESS.images_4_ocr = list(zip(PROCESS.images_4_ocr, [pathlib.Path(i).stem for i in PROCESS.images_4_ocr]))
         PROCESS.run()
         PROCESS.the_logger.info("[%s] duration: %s (%s)", req_idn,
-                                PROCESS.duration, PROCESS.statistics_ocr)
+                                PROCESS.duration, PROCESS.statistics)
     except Exception as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
                      req_idn, PROCESS.duration, str(exc))

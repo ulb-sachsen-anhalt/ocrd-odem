@@ -29,14 +29,14 @@ IMAGE_GROUP_ULB = 'MAX'
 IMAGE_GROUP_DEFAULT = 'DEFAULT'
 
 
-def extract_mets_data(the_self, the_data):
-    """
-    Migration Post-recive OAI METS/MODS callback
-    """
+# def extract_mets_data(the_self, the_data):
+#     """
+#     Migration Post-recive OAI METS/MODS callback
+#     """
 
-    xml_root = ET.fromstring(the_data)
-    mets_tree = post_oai_extract_metsdata(xml_root)
-    write_xml_file(mets_tree, the_self.path_mets)
+#     xml_root = ET.fromstring(the_data)
+#     mets_tree = df.post_oai_extract_metsdata(xml_root)
+#     df.write_xml_file(mets_tree, the_self.path_mets)
 
 
 class ODEMMetadataMetsException(Exception):

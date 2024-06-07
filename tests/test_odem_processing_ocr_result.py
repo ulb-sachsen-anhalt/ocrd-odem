@@ -7,7 +7,6 @@ import digiflow as df
 
 from lib.ocrd3_odem import (
     PUNCTUATIONS,
-	XMLNS,
     ODEMProcess,
     postprocess_ocrd_file,
 )

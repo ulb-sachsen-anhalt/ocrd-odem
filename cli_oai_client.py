@@ -361,7 +361,7 @@ if __name__ == "__main__":
 
         outcomes = process_resource_monitor.monit_vmem(PROCESS.run)
         PROCESS.calculate_statistics_ocr(outcomes)
-        _stats_ocr = PROCESS.statistics_ocr
+        _stats_ocr = PROCESS.statistics
         PROCESS.the_logger.info("[%s] %s", local_ident, _stats_ocr)
         if ENRICH_METS_FULLTEXT:
             PROCESS.link_ocr()
