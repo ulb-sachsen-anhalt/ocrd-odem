@@ -47,6 +47,7 @@ from .odem_commons import (
 )
 from .processing_mets import (
     CATALOG_ULB,
+    XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
     extract_mets_data,
@@ -442,7 +443,7 @@ class ODEMProcess:
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
         path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
-        derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
+        derivans: BaseDerivansManager = BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
             path_binary=path_bin,
@@ -453,7 +454,7 @@ class ODEMProcess:
         derivans.init()
         # be cautious
         try:
-            dresult: df.DerivansResult = derivans.start()
+            dresult: DerivansResult = derivans.start()
             self.the_logger.info("[%s] create derivates in %.1fs",
                                  self.process_identifier, dresult.duration)
         except subprocess.CalledProcessError as _sub_err:
@@ -796,99 +797,3 @@ class OCRDPageParallel(ODEMProcess):
         self.ocr_files = _cnv
         self.the_logger.info("[%s] converted '%d' files page-to-alto",
                              self.process_identifier, len(_cnv))
-
-
-class ODEMTesseract(ODEMProcess):
-    """Tesseract Runner"""
-
-    def __init__(self, record, workspace, n_execs=1):
-        super().__init__(record, workspace, executors=n_execs)
-        self.ocr_function = run_pipeline
-        self.pipeline_config = None
-
-    def run(self):
-        """Wrap specific OCR execution with
-        respect to number of executors"""
-
-        _cfg = self.read_pipeline_config()
-        self._prepare_workdir_tmp()
-        _n_total = len(self.images_4_ocr)
-        self.ocr_input_paths = [(img, i, _n_total, self.the_logger, _cfg)
-                                for i, img in enumerate(self.images_4_ocr, start=1)]
-        return super().run()
-
-    def read_pipeline_config(self, path_cfg=None) -> configparser:
-        """Read and process additional pipeline configuration"""
-
-        _path_cfg = path_cfg
-        if path_cfg is None:
-            if self.cfg.has_option('ocr', 'ocr_pipeline_config'):
-                _path_cfg = os.path.abspath(self.cfg.get('ocr', 'ocr_pipeline_config'))
-        if not os.path.isfile(_path_cfg):
-            raise ODEMException(f"Invalid ocr-pipeline conf {_path_cfg}")
-        _cfg = configparser.ConfigParser()
-        _cfg.read(_path_cfg)
-        self.pipeline_config = _cfg
-        return _cfg
-
-    def _prepare_workdir_tmp(self):
-        workdir_tmp = self.cfg.get('ocr', 'ocr_pipeline_workdir_tmp')
-        self.the_logger.warning("no workdir set, use '%s'", workdir_tmp)
-        if not os.path.isdir(workdir_tmp):
-            if os.access(workdir_tmp, os.W_OK):
-                os.makedirs(workdir_tmp)
-            else:
-                self.the_logger.warning("tmp workdir '%s' not writable, use /tmp",
-                                        workdir_tmp)
-                workdir_tmp = '/tmp/ocr-pipeline-workdir'
-                if os.path.exists(workdir_tmp):
-                    self._clean_workdir(workdir_tmp)
-                os.makedirs(workdir_tmp, exist_ok=True)
-        else:
-            self._clean_workdir(workdir_tmp)
-        return workdir_tmp
-
-    def _clean_workdir(self, the_dir):
-        self.the_logger.info("clean existing workdir '%s'", the_dir)
-        for file_ in os.listdir(the_dir):
-            fpath = os.path.join(the_dir, file_)
-            if os.path.isfile(fpath):
-                os.unlink(fpath)
-
-    def store_estimations(self, estms):
-        """Postprocessing of OCR-Quality Estimation Data"""
-
-        valids = [r for r in estms if r[1] != -1]
-        invalids = [r for r in estms if r[1] == -1]
-        sorteds = sorted(valids, key=lambda r: r[1])
-        aggregations = analyze(sorteds)
-        end_time = time.strftime('%Y-%m-%d_%H-%M', time.localtime())
-        if not os.path.isdir(self.work_dir_main):
-            self.the_logger.warning('unable to choose store for estm data: %s',
-                                    str(self.work_dir_main))
-            return
-
-        file_name = os.path.basename(self.work_dir_main)
-        file_path = os.path.join(
-            self.work_dir_main, f"{file_name}_{end_time}.wtr")
-        self.the_logger.info("store mean '%.3f' in '%s'",
-                             aggregations[0], file_path)
-        if aggregations:
-            (mean, bins) = aggregations
-            b_1 = len(bins[0])
-            b_2 = len(bins[1])
-            b_3 = len(bins[2])
-            b_4 = len(bins[3])
-            b_5 = len(bins[4])
-            n_v = len(valids)
-            n_i = len(invalids)
-            self.the_logger.info("WTE (Mean): '%.1f' (1: %d/%d, ... 5: %d/%d)",
-                                 mean, b_1, n_v, b_5, n_v)
-            with open(file_path, 'w', encoding="UTF-8") as outfile:
-                outfile.write(
-                    f"{mean},{b_1},{b_2},{b_3},{b_4},{b_5},{len(estms)},{n_i}\n")
-                for s in sorteds:
-                    outfile.write(
-                        f"{s[0]},{s[1]:.3f},{s[2]},{s[3]},{s[4]},{s[5]},{s[6]},{s[7]}\n")
-                outfile.write("\n")
-                return file_path
