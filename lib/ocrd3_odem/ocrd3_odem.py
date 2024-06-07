@@ -47,7 +47,6 @@ from .odem_commons import (
 )
 from .processing_mets import (
     CATALOG_ULB,
-    XMLNS,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
     extract_mets_data,
@@ -112,20 +111,18 @@ class ODEMProcess:
     @staticmethod
     def create(
             workflow_type: OdemWorkflowProcessType | str,
-            record: OAIRecord,
+            record: df.OAIRecord,
             work_dir,
             executors=2,
             log_dir=None,
             logger=None
     ) -> ODEMProcess:
-        if (
-                workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT
-                or workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT.value
-        ):
+        if (workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT
+            or workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT.value):
             return ODEMTesseract(record, work_dir, executors, log_dir, logger)
         return OCRDPageParallel(record, work_dir, executors, log_dir, logger)
 
-    def __init__(self, record: OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
+    def __init__(self, record: df.OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
         """Create new ODEM Process.
         Args:
             record (OAIRecord): OAI Record dataset
@@ -154,8 +151,8 @@ class ODEMProcess:
         self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
         self.ocr_function = None
-        self.ocr_input: List[List[Any]] = []
-        self._statistics = {'execs': executors}
+        self.ocr_input: List[List] = []
+        self._statistics_ocr = {'execs': executors}
         self._process_start = time.time()
         if logger is not None:
             self.the_logger = logger
@@ -196,7 +193,7 @@ class ODEMProcess:
                               self.process_identifier, request_identifier, req_dst)
         base_url = self.cfg.get('global', 'base_url')
         try:
-            loader = OAILoader(req_dst_dir, base_url=base_url, post_oai=extract_mets_data)
+            loader = df.OAILoader(req_dst_dir, base_url=base_url, post_oai=extract_mets_data)
             loader.store = self.store
             loader.load(request_identifier, local_dst=req_dst)
         except RuntimeError as _err:
@@ -224,16 +221,16 @@ class ODEMProcess:
         except ODEMMetadataMetsException as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
         self.identifiers = insp.identifiers
-        self._statistics[CATALOG_ULB] = insp.record_identifier
-        self._statistics['type'] = insp.type
-        self._statistics[STATS_KEY_LANGS] = insp.languages
-        self._statistics['n_images_pages'] = insp.n_images_pages
-        self._statistics['n_images_ocrable'] = insp.n_images_ocrable
+        self._statistics_ocr[CATALOG_ULB] = insp.record_identifier
+        self._statistics_ocr['type'] = insp.type
+        self._statistics_ocr[STATS_KEY_LANGS] = insp.languages
+        self._statistics_ocr['n_images_pages'] = insp.n_images_pages
+        self._statistics_ocr['n_images_ocrable'] = insp.n_images_ocrable
         _ratio = insp.n_images_ocrable / insp.n_images_pages * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
                              self.process_identifier, insp.n_images_ocrable, _ratio,
                              insp.n_images_pages)
-        self._statistics['host'] = socket.gethostname()
+        self._statistics_ocr['host'] = socket.gethostname()
 
     def clear_existing_entries(self):
         """Clear METS/MODS of configured file groups"""
@@ -242,7 +239,7 @@ class ODEMProcess:
             _blacklisted = self.cfg.getlist('mets', 'blacklist_file_groups')
             _ident = self.process_identifier
             self.the_logger.info("[%s] remove %s", _ident, _blacklisted)
-            _proc = MetsProcessor(self.mets_file)
+            _proc = df.MetsProcessor(self.mets_file)
             _proc.clear_filegroups(_blacklisted)
             _proc.write()
 
@@ -445,7 +442,7 @@ class ODEMProcess:
         )
         derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
         path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
-        derivans: BaseDerivansManager = BaseDerivansManager.create(
+        derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
             path_binary=path_bin,
@@ -456,7 +453,7 @@ class ODEMProcess:
         derivans.init()
         # be cautious
         try:
-            dresult: DerivansResult = derivans.start()
+            dresult: df.DerivansResult = derivans.start()
             self.the_logger.info("[%s] create derivates in %.1fs",
                                  self.process_identifier, dresult.duration)
         except subprocess.CalledProcessError as _sub_err:
@@ -487,8 +484,8 @@ class ODEMProcess:
         """Forward METS-schema validation"""
         try:
             validate_mets(self.mets_file)
-        except RuntimeError as err:
-            if len(err.args) > 0 and str(err.args[0]).startswith('invalid schema'):
+        except dfv.InvalidXMLException as err:
+            if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
                 raise ODEMException(str(err.args[0])) from err
             raise err
 
@@ -498,10 +495,10 @@ class ODEMProcess:
         export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
         export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
 
-        exp_dst = self.cfg.get('global', 'local_export_dir')
-        exp_tmp = self.cfg.get('global', 'local_export_tmp')
-        exp_col = self.cfg.get('global', 'export_collection')
-        exp_map = self.cfg.getdict('global', 'export_mappings')
+        exp_dst = self.cfg.get('export', 'local_export_dir')
+        exp_tmp = self.cfg.get('export', 'local_export_tmp')
+        exp_col = self.cfg.get('export', 'export_collection')
+        exp_map = self.cfg.getdict('export', 'export_mappings')
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
@@ -510,7 +507,7 @@ class ODEMProcess:
             exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
         saf_name = self.identifiers.get(CATALOG_ULB)
         if export_format == ExportFormat.SAF:
-            export_result = export_data_from(
+            export_result = df.export_data_from(
                 self.mets_file,
                 exp_col,
                 saf_final_name=saf_name,
@@ -526,11 +523,11 @@ class ODEMProcess:
                 tmp_dir = exp_tmp
             with tempfile.TemporaryDirectory(prefix=prefix, dir=tmp_dir) as tmp_dir:
                 work_dir = os.path.join(tmp_dir, saf_name)
-                export_mappings = map_contents(source_path_dir, work_dir, exp_map)
+                export_mappings = df.map_contents(source_path_dir, work_dir, exp_map)
                 for mapping in export_mappings:
                     mapping.copy()
                 tmp_zip_path, size = self._compress(os.path.dirname(work_dir), saf_name)
-                path_export_processing = _move_to_tmp_file(tmp_zip_path, exp_dst)
+                path_export_processing = dfx._move_to_tmp_file(tmp_zip_path, exp_dst)
                 export_result = path_export_processing, size
 
         else:
@@ -566,8 +563,8 @@ class ODEMProcess:
         with execution duration updated each call by
         requesting it's string representation"""
 
-        self._statistics['timedelta'] = f'{self.duration}'
-        return self._statistics
+        self._statistics_ocr['timedelta'] = f'{self.duration}'
+        return self._statistics_ocr
 
     def _compress(self, work_dir, archive_name):
         zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
@@ -598,7 +595,7 @@ class OCRDPageParallel(ODEMProcess):
         else:
             _outcomes = self.run_sequential()
         if _outcomes:
-            self._statistics['outcomes'] = _outcomes
+            self._statistics_ocr['outcomes'] = _outcomes
         self.to_alto()
         return _outcomes
 
@@ -804,7 +801,7 @@ class OCRDPageParallel(ODEMProcess):
 class ODEMTesseract(ODEMProcess):
     """Tesseract Runner"""
 
-    def __init__(self, record, workspace, n_execs):
+    def __init__(self, record, workspace, n_execs=1):
         super().__init__(record, workspace, executors=n_execs)
         self.ocr_function = run_pipeline
         self.pipeline_config = None

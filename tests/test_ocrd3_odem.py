@@ -289,7 +289,7 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: ODEMProce
     # assert
     _txt_bundle_file = tmp_path / '198114125.pdf.txt'
     assert os.path.exists(_txt_bundle_file)
-    assert 77 == fixture_27949.statistics_ocr['n_text_lines']
+    assert 77 == fixture_27949.statistics['n_text_lines']
     with open(_txt_bundle_file, encoding='utf-8') as bundle_handle:
         assert 77 == len(bundle_handle.readlines())
 
@@ -398,7 +398,7 @@ def test_record_with_unknown_language(tmp_path):
                   f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     oproc.mets_file = str(trgt_mets)
     oproc.inspect_metadata()
-    _langs = oproc.statistics_ocr.get(STATS_KEY_LANGS)
+    _langs = oproc.statistics.get(STATS_KEY_LANGS)
 
     # act
     with pytest.raises(ODEMException) as odem_exc:
@@ -447,7 +447,7 @@ def test_export_flat_zip(tmp_path):
 
     oproc.mets_file = str(trgt_mets)
     oproc.inspect_metadata()
-    _langs = oproc.statistics_ocr.get(STATS_KEY_LANGS)
+    _langs = oproc.statistics.get(STATS_KEY_LANGS)
 
     # act
     zipfilepath, _ = oproc.export_data()
