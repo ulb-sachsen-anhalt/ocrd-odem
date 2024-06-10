@@ -386,8 +386,7 @@ if __name__ == "__main__":
         else:
             LOGGER.error("[%s] update request failed: %s", PROCESS.process_identifier, status_code)
         # finale
-        shutil.rmtree(req_dst_dir)
-        PROCESS.clear_resources(remove_metadata=True)
+        PROCESS.clear_resources(remove_all=True)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
     except o3o.ODEMNoTypeForOCRException as type_unknown:
@@ -423,7 +422,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
-        PROCESS.clear_resources()
+        PROCESS.clear_resources(remove_all=True)
     except VirtualMemoryExceededException as _vmem_exc:
         err_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -432,6 +431,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
+        PROCESS.clear_resources(remove_all=True)
     except Exception as exc:
         # pick whole error context, since some exception's args are
         # rather mysterious, i.e. "13" for PermissionError
