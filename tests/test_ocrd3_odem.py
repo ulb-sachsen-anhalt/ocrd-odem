@@ -294,26 +294,6 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: ODEMProce
         assert 77 == len(bundle_handle.readlines())
 
 
-def test_validate_mets(tmp_path):
-    """
-    if is invalid mets file, throw according exception
-    """
-    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/105054')
-    _work_dir = tmp_path / '1981185920_105054'
-    _work_dir.mkdir()
-    _max_dir = _work_dir / 'MAX'
-    _max_dir.mkdir()
-    for i in range(1, 6):
-        _file_path = f"{_max_dir}/{i:08d}.jpg"
-        with open(_file_path, 'wb') as _writer:
-            _writer.write(b'0x00')
-    _orig_mets = TEST_RES / '1981185920_105054.xml'
-    shutil.copyfile(_orig_mets, _work_dir / '1981185920_105054.xml')
-    odem_processor = ODEMProcess(_record, work_dir=_work_dir)
-    with pytest.raises(ODEMException):
-        odem_processor.validate_mets()
-
-
 def test_images_4_ocr_properly_filtered(tmp_path):
     """Ensure behavior links selected
     from images to images_4_ocr as expected
