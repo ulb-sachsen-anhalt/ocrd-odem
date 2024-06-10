@@ -315,10 +315,13 @@ def test_validate_mets_37167_schema_fails(tmp_path):
 def test_validate_mets_37167_ddb_fails(tmp_path):
     """
     This time METS/MODS is valid but DDB validation is
-    requested which fails of 2024-06-10 with 3 errors:
+    requested which fails of 2024-06-10 with 4 errors:
     * relatedItem missing type attribute
     * extra mets:dmdSec not linked to LOGICAL MAP with 
-      only shelfLocator (this we had already at Rahbar?)
+      only shelfLocator and also missing titleInfo
+      (these are all related to each other)
+      
+      => this we had already at Rahbar
     """
     rec = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/37167')
     work_dir = tmp_path / '1981185920_37167'
@@ -332,10 +335,11 @@ def test_validate_mets_37167_ddb_fails(tmp_path):
         odem_processor.validate_metadata()
 
     ddb_complains = exec.value.args[0]
-    assert len(ddb_complains) == 3
-    assert '[relatedItem_04]  dmd_id:DMDLOG_0000' in ddb_complains[0]
-    assert '[location_01]  dmd_id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[1]
-    assert '[dmdSec_04]  id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[2]
+    assert len(ddb_complains) == 4
+    assert '[titleInfo_02]  dmd_id:DMDPHYS_0000 test:Pon Ya 4371' in ddb_complains[0]
+    assert '[relatedItem_04]  dmd_id:DMDLOG_0000' in ddb_complains[1]
+    assert '[location_01]  dmd_id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[2]
+    assert '[dmdSec_04]  id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[3]
 
 
 def test_validate_mets_37167_finally_succeeds(tmp_path):
