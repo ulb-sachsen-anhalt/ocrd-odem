@@ -197,9 +197,9 @@ if __name__ == "__main__":
         )
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
+        PROCESS.inspect_metadata()
         if CFG.getboolean('mets','prevalidate', fallback=True):
             PROCESS.validate_metadata()
-        PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.language_modelconfig()
         PROCESS.set_local_images()
