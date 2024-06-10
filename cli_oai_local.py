@@ -27,12 +27,9 @@ from lib.ocrd3_odem import (
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
     ODEMProcess,
-    OCRDPageParallel,
-    ODEMTesseract,
     ODEMException,
     get_configparser,
     get_logger, 
-    OdemWorkflowProcessType,
 )
 from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
 
@@ -244,6 +241,10 @@ if __name__ == "__main__":
         # we don't ocr this one
         LOGGER.warning("[%s] odem skips '%s'", 
                        PROCESS.process_identifier, type_unknown.args[0])
+        handler.save_record_state(record.identifier, o3o.MARK_OCR_SKIP)
+    except o3o.ODEMNoImagesForOCRException as not_ocrable:
+        LOGGER.warning("[%s] odem no ocrables '%s'", 
+                       PROCESS.process_identifier,  not_ocrable.args)
         handler.save_record_state(record.identifier, o3o.MARK_OCR_SKIP)
     except ODEMException as _odem_exc:
         _err_args = {'ODEMException': _odem_exc.args[0]}

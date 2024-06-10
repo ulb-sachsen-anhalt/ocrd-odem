@@ -41,9 +41,7 @@ from lib.ocrd3_odem import (
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
-    OdemWorkflowProcessType,
     ODEMProcess,
-    OCRDPageParallel,
     ODEMException,
     get_configparser,
     get_logger,
@@ -304,10 +302,10 @@ if __name__ == "__main__":
             LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE_NAME)
             sys.exit(1)
     except OAIRecordExhaustedException as _rec_ex:
-        _err_args = _rec_ex.args[0]
+        err_dict = _rec_ex.args[0]
         LOGGER.warning("no data for '%s' from '%s':'%s': %s",
-                       OAI_RECORD_FILE_NAME, HOST, PORT, _err_args)
-        _notify('[OCR-D-ODEM] Date done', _err_args)
+                       OAI_RECORD_FILE_NAME, HOST, PORT, err_dict)
+        _notify('[OCR-D-ODEM] Date done', err_dict)
         # don't remove lock file, human interaction required
         sys.exit(1)
 
@@ -398,10 +396,15 @@ if __name__ == "__main__":
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
     except o3o.ODEMNoTypeForOCRException as type_unknown:
-        # we don't ocr this one
         LOGGER.warning("[%s] odem skips '%s'", 
                        PROCESS.process_identifier,  type_unknown.args)
-        CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident)
+        err_dict = {'NoTypeForOCR': type_unknown.args[0]}
+        CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
+    except o3o.ODEMNoImagesForOCRException as not_ocrable:
+        LOGGER.warning("[%s] odem no ocrables '%s'", 
+                       PROCESS.process_identifier,  not_ocrable.args)
+        err_dict = {'NoImagesForOCR': not_ocrable.args[0]}
+        CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
     except ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
@@ -409,37 +412,37 @@ if __name__ == "__main__":
         # * misses model config for language
         # * contains no images
         # * contains no OCR results but should have at least one page
-        _err_args = {'ODEMException': _odem_exc.args[0]}
+        err_dict = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
-                     "'%s'", PROCESS.process_identifier, _err_args)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, **_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
+                     "'%s'", PROCESS.process_identifier, err_dict)
+        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, **err_dict)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
     except NotEnoughDiskSpaceException as _space_exc:
-        _err_args = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
+        err_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
-                     "'%s'", PROCESS.process_identifier, _err_args)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
+                     "'%s'", PROCESS.process_identifier, err_dict)
+        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
         _clear_sub_dirs(LOCAL_WORK_ROOT)
     except VirtualMemoryExceededException as _vmem_exc:
-        _err_args = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
+        err_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
-                     "'%s'", PROCESS.process_identifier, _err_args)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
+                     "'%s'", PROCESS.process_identifier, err_dict)
+        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
     except Exception as exc:
         # pick whole error context, since some exception's args are
         # rather mysterious, i.e. "13" for PermissionError
-        _err_args = {str(exc): str(exc.args[0])}
+        err_dict = {str(exc): str(exc.args[0])}
         _name = type(exc).__name__
         LOGGER.error("[%s] odem fails with %s:"
-                     "'%s'", PROCESS.process_identifier, _name, _err_args)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
-        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
+                     "'%s'", PROCESS.process_identifier, _name, err_dict)
+        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+        _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         # don't remove lock file, human interaction required
         sys.exit(1)
 
