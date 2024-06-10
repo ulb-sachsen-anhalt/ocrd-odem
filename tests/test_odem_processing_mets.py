@@ -139,11 +139,11 @@ def test_opendata_record_no_printwork():
     inspc = ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
-    with pytest.raises(ODEMMetadataMetsException) as odem_exc:
+    with pytest.raises(o3o.ODEMNoTypeForOCRException) as odem_exc:
         inspc.inspect()
 
     # assert
-    assert f"{_oai_urn} invalid PICA type for OCR: Ac" ==  odem_exc.value.args[0]
+    assert f"{_oai_urn} no PICA type for OCR: Ac" ==  odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present():

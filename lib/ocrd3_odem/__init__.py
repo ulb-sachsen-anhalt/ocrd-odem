@@ -16,6 +16,7 @@ from .processing_mets import (
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
     ODEMNoImagesForOCRException,
+    ODEMNoTypeForOCRException,
     integrate_ocr_file,
     postprocess_mets
 )

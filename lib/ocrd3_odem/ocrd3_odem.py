@@ -217,7 +217,7 @@ class ODEMProcess:
         try:
             insp.inspect()
             self.images_4_ocr = insp.image_pairs
-        except ODEMMetadataMetsException as mde:
+        except RuntimeError as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
         self.identifiers = insp.identifiers
         self._statistics_ocr[CATALOG_ULB] = insp.record_identifier

@@ -15,6 +15,8 @@ from digiflow import (
 )
 import digiflow as df
 
+import lib.ocrd3_odem as o3o
+
 from lib.ocrd3_odem.odem_commons import (
     RECORD_IDENTIFIER,
     RECORD_INFO,
@@ -238,6 +240,11 @@ if __name__ == "__main__":
         # finale
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
+    except o3o.ODEMNoTypeForOCRException as type_unknown:
+        # we don't ocr this one
+        LOGGER.warning("[%s] odem skips '%s'", 
+                       PROCESS.process_identifier, type_unknown.args[0])
+        handler.save_record_state(record.identifier, o3o.MARK_OCR_SKIP)
     except ODEMException as _odem_exc:
         _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with: '%s'", PROCESS.process_identifier, _err_args)

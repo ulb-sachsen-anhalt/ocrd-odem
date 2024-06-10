@@ -21,6 +21,8 @@ from digiflow import (
     smtp_note,
 )
 
+import lib.ocrd3_odem as o3o
+
 from lib.resources_monitoring import ProcessResourceMonitorConfig
 from lib.resources_monitoring.ProcessResourceMonitor import ProcessResourceMonitor
 from lib.resources_monitoring.exceptions import (
@@ -387,6 +389,11 @@ if __name__ == "__main__":
         shutil.rmtree(req_dst_dir)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
+    except o3o.ODEMNoTypeForOCRException as type_unknown:
+        # we don't ocr this one
+        LOGGER.warning("[%s] odem skips '%s'", 
+                       PROCESS.process_identifier,  type_unknown.args)
+        CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident)
     except ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
