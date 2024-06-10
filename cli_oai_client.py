@@ -353,7 +353,7 @@ if __name__ == "__main__":
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(PROCESS.load)
         if CFG.getboolean('mets', 'prevalidate', fallback=True):
-            PROCESS.validate_mets()
+            PROCESS.validate_metadata()
         PROCESS.inspect_metadata()
         PROCESS.clear_existing_entries()
         PROCESS.language_modelconfig()
@@ -372,7 +372,7 @@ if __name__ == "__main__":
             PROCESS.create_text_bundle_data()
         PROCESS.postprocess_mets()
         if CFG.getboolean('mets', 'postvalidate', fallback=True):
-            PROCESS.validate_mets()
+            PROCESS.validate_metadata()
         if not MUST_KEEP_RESOURCES:
             PROCESS.delete_before_export(LOCAL_DELETE_BEFORE_EXPORT)
         PROCESS.export_data()

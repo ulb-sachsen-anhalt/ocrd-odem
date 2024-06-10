@@ -1,10 +1,7 @@
 """Encapsulate Implementations concerning METS/MODS handling"""
 
 import os
-
-from typing import (
-    List,
-)
+import typing
 
 import lxml.etree as ET
 import digiflow as df
@@ -13,6 +10,7 @@ import digiflow.validate as dfv
 from .odem_commons import (
     FILEGROUP_IMG,
     FILEGROUP_OCR,
+    ODEMException,
 )
 
 TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
@@ -27,16 +25,6 @@ METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
 
 IMAGE_GROUP_ULB = 'MAX'
 IMAGE_GROUP_DEFAULT = 'DEFAULT'
-
-
-# def extract_mets_data(the_self, the_data):
-#     """
-#     Migration Post-recive OAI METS/MODS callback
-#     """
-
-#     xml_root = ET.fromstring(the_data)
-#     mets_tree = df.post_oai_extract_metsdata(xml_root)
-#     df.write_xml_file(mets_tree, the_self.path_mets)
 
 
 class ODEMMetadataMetsException(Exception):
@@ -261,7 +249,7 @@ def clear_filegroups(xml_file, removals):
     proc.write()
 
 
-def integrate_ocr_file(xml_tree, ocr_files: List) -> int:
+def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
     """Enrich given OCR-Files into XML tree
     
     Returns number of linked files
@@ -319,7 +307,7 @@ def _link_fulltext(file_ident, xml_tree):
     return 0
 
 
-def is_in(tokens: List[str], label):
+def is_in(tokens: typing.List[str], label):
     """label contained somewhere in a list of tokens?"""
 
     return any(t in label for t in tokens)
@@ -370,8 +358,18 @@ def _clear_provenance_links(mproc):
         parent.remove(old_dv)
 
 
-def validate_mets(mets_file:str):
+def validate(mets_file:str, validate_ddb=False, digi_type='Aa'):
     """Forward METS-schema validation"""
 
     xml_root = ET.parse(mets_file).getroot()
-    dfv.validate_xml(xml_root)
+    try:
+        dfv.validate_xml(xml_root)
+        if validate_ddb:
+            df.ddb_validation(path_mets=mets_file, digi_type=digi_type)
+    except dfv.InvalidXMLException as err:
+            if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
+                raise ODEMException(str(err.args[0])) from err
+            raise err
+    except df.DigiflowDDBException as ddb_err:
+        raise ODEMException(ddb_err.args[0]) from ddb_err
+    return True

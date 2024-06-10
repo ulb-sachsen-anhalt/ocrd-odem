@@ -49,10 +49,9 @@ from .processing_mets import (
     CATALOG_ULB,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
-    # extract_mets_data,
     integrate_ocr_file,
     postprocess_mets,
-    validate_mets,
+    validate,
 )
 from .processing_ocrd import (
     run_ocr_page,
@@ -480,14 +479,18 @@ class ODEMProcess:
 
         postprocess_mets(self.mets_file, self.cfg.get('ocr', 'ocrd_baseimage'))
 
-    def validate_mets(self):
-        """Forward METS-schema validation"""
-        try:
-            validate_mets(self.mets_file)
-        except dfv.InvalidXMLException as err:
-            if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
-                raise ODEMException(str(err.args[0])) from err
-            raise err
+    def validate_metadata(self):
+        """Forward (optional) validation concerning
+        METS/MODS XML-schema and/or current DDB-schematron
+        validation for 'digitalisierte medien'
+        """
+        check_ddb = False
+        if self.cfg.has_option('mets', 'ddb_validation'):
+            check_ddb = self.cfg.getboolean('mets', 'ddb_validation', fallback=False)
+        dtype = 'Aa'
+        if 'pica' in self.record.info:
+            dtype = self.record.info['pica']
+        return validate(self.mets_file, validate_ddb=check_ddb, digi_type=dtype)
 
     def export_data(self):
         """re-do metadata and transform into output format"""

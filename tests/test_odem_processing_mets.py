@@ -9,6 +9,8 @@ import pytest
 import lxml.etree as ET
 import digiflow as df
 
+import lib.ocrd3_odem as o3o
+
 from lib.ocrd3_odem import (
     ODEMMetadataMetsException,
     ODEMNoImagesForOCRException,
@@ -273,3 +275,82 @@ def test_mets_mods_sbb_vol01_filtering_custom():
     _image_page_pairs = inspc.image_pairs
     assert not any('PHYS_0001' in p[1] for p in _image_page_pairs)
     assert len(_image_page_pairs) == 129
+
+
+def test_validate_mets_105054_schema_fails(tmp_path):
+    """
+    If Schema validation is required, then throw according exception
+    in this case: alert invalid order data format
+    """
+    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/105054')
+    _work_dir = tmp_path / '1981185920_105054'
+    _work_dir.mkdir()
+    _orig_mets = TEST_RES / '1981185920_105054.xml'
+    shutil.copyfile(_orig_mets, _work_dir / '1981185920_105054.xml')
+    odem_processor = o3o.ODEMProcess(_record, work_dir=_work_dir)
+    odem_processor.cfg = fixture_configuration()
+    with pytest.raises(o3o.ODEMException) as exec:
+        odem_processor.validate_metadata()
+
+    assert "'order': '1.1979' is not a valid value of the atomic type 'xs:integer'" in exec.value.args[0]
+    
+    
+def test_validate_mets_37167_schema_fails(tmp_path):
+    """
+    if is invalid mets file, throw according exception
+    """
+    rec = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/37167')
+    work_dir = tmp_path / '1981185920_37167'
+    work_dir.mkdir()
+    original_mets = TEST_RES / '1981185920_37167_01.xml'
+    shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
+    odem_processor = o3o.ODEMProcess(rec, work_dir=work_dir)
+    odem_processor.cfg = fixture_configuration()
+    with pytest.raises(o3o.ODEMException) as exec:
+        odem_processor.validate_metadata()
+
+    assert "recordIdentifier': This element is not expected" in exec.value.args[0]
+
+
+def test_validate_mets_37167_ddb_fails(tmp_path):
+    """
+    This time METS/MODS is valid but DDB validation is
+    requested which fails of 2024-06-10 with 3 errors:
+    * relatedItem missing type attribute
+    * extra mets:dmdSec not linked to LOGICAL MAP with 
+      only shelfLocator (this we had already at Rahbar?)
+    """
+    rec = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/37167')
+    work_dir = tmp_path / '1981185920_37167'
+    work_dir.mkdir()
+    original_mets = TEST_RES / '1981185920_37167_02.xml'
+    shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
+    odem_processor = o3o.ODEMProcess(rec, work_dir=work_dir)
+    odem_processor.cfg = fixture_configuration()
+    odem_processor.cfg.set('mets', 'ddb_validation', 'True')
+    with pytest.raises(o3o.ODEMException) as exec:
+        odem_processor.validate_metadata()
+
+    ddb_complains = exec.value.args[0]
+    assert len(ddb_complains) == 3
+    assert '[relatedItem_04]  dmd_id:DMDLOG_0000' in ddb_complains[0]
+    assert '[location_01]  dmd_id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[1]
+    assert '[dmdSec_04]  id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[2]
+
+
+def test_validate_mets_37167_finally_succeeds(tmp_path):
+    """
+    This time METS/MODS and also DDB-validation are both pleased,
+    therefore a plain 'True' shall be returned
+    """
+    
+    rec = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/37167')
+    work_dir = tmp_path / '1981185920_37167'
+    work_dir.mkdir()
+    original_mets = TEST_RES / '1981185920_37167_03.xml'
+    shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
+    odem_processor = o3o.ODEMProcess(rec, work_dir=work_dir)
+    odem_processor.cfg = fixture_configuration()
+    odem_processor.cfg.set('mets', 'ddb_validation', 'True')
+    
+    assert odem_processor.validate_metadata()
