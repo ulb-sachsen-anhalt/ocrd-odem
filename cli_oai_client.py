@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """MAIN CLI ODEM OAI Client"""
 # pylint: disable=invalid-name
+
 import argparse
+import ast
 import os
 import shutil
 import sys
@@ -153,7 +155,13 @@ class OAIServiceClient:
         self.record_data[RECORD_TIME] = right_now
         # if we have to report somethin' new, then append it
         if kwargs is not None and len(kwargs) > 0:
-            self.record_data[RECORD_INFO] = f'{kwargs}'
+            try:
+                prev_info = ast.literal_eval(self.record_data[RECORD_INFO])
+                prev_info.update(kwargs)
+                self.record_data[RECORD_INFO] = f'{prev_info}'
+            except:
+                self.logger.error("failed to update info data for %s",
+                                  self.record_data[RECORD_IDENTIFIER])
         if self.logger is not None:
             self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
         return requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=60)
@@ -404,7 +412,7 @@ if __name__ == "__main__":
         _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", PROCESS.process_identifier, _err_args)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=_err_args)
+        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, **_err_args)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{_err_args}')
     except NotEnoughDiskSpaceException as _space_exc:
         _err_args = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
