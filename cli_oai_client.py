@@ -185,12 +185,6 @@ def oai_arg_parser(value):
     return value
 
 
-def _clear_sub_dirs(root_dir: str):
-    for sub_dir in os.listdir(root_dir):
-        LOGGER.debug("remove dir %s in %s", sub_dir, root_dir)
-        shutil.rmtree(os.path.join(root_dir, sub_dir))
-
-
 ########
 # MAIN #
 ########
@@ -393,6 +387,7 @@ if __name__ == "__main__":
             LOGGER.error("[%s] update request failed: %s", PROCESS.process_identifier, status_code)
         # finale
         shutil.rmtree(req_dst_dir)
+        PROCESS.clear_resources(remove_metadata=True)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
     except o3o.ODEMNoTypeForOCRException as type_unknown:
@@ -400,11 +395,13 @@ if __name__ == "__main__":
                        PROCESS.process_identifier,  type_unknown.args)
         err_dict = {'NoTypeForOCR': type_unknown.args[0]}
         CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
+        PROCESS.clear_resources(remove_all=True)
     except o3o.ODEMNoImagesForOCRException as not_ocrable:
         LOGGER.warning("[%s] odem no ocrables '%s'", 
                        PROCESS.process_identifier,  not_ocrable.args)
         err_dict = {'NoImagesForOCR': not_ocrable.args[0]}
         CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
+        PROCESS.clear_resources(remove_all=True)
     except ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
@@ -417,6 +414,7 @@ if __name__ == "__main__":
                      "'%s'", PROCESS.process_identifier, err_dict)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, **err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
+        PROCESS.clear_resources()
     except NotEnoughDiskSpaceException as _space_exc:
         err_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -425,7 +423,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        PROCESS.process_identifier, LOCAL_WORK_ROOT)
-        _clear_sub_dirs(LOCAL_WORK_ROOT)
+        PROCESS.clear_resources()
     except VirtualMemoryExceededException as _vmem_exc:
         err_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -443,6 +441,7 @@ if __name__ == "__main__":
                      "'%s'", PROCESS.process_identifier, _name, err_dict)
         CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
+        PROCESS.clear_resources()
         # don't remove lock file, human interaction required
         sys.exit(1)
 

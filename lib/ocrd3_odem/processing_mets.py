@@ -355,14 +355,16 @@ def _clear_provenance_links(mproc):
         parent.remove(old_dv)
 
 
-def validate(mets_file:str, validate_ddb=False, digi_type='Aa'):
+def validate(mets_file:str, ddb_ignores, 
+             validate_ddb=False, digi_type='Aa'):
     """Forward METS-schema validation"""
 
     xml_root = ET.parse(mets_file).getroot()
     try:
         dfv.validate_xml(xml_root)
         if validate_ddb:
-            df.ddb_validation(path_mets=mets_file, digi_type=digi_type)
+            df.ddb_validation(path_mets=mets_file, digi_type=digi_type,
+                              ignore_rules=ddb_ignores)
     except dfv.InvalidXMLException as err:
             if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
                 raise ODEMException(str(err.args[0])) from err

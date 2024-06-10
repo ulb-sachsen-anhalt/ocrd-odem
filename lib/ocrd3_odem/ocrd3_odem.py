@@ -146,7 +146,7 @@ class ODEMProcess:
         self.export_dir = None
         self.the_logger: logging.Logger = None
         self.cfg: configparser.ConfigParser = None
-        self.store = None
+        self.store: df.LocalStore = None
         self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
         self.ocr_function = None
@@ -197,6 +197,19 @@ class ODEMProcess:
             loader.load(request_identifier, local_dst=req_dst)
         except RuntimeError as _err:
             raise ODEMException(_err.args[0]) from _err
+
+    def clear_resources(self, remove_all=False):
+        """Remove OAI-Resources from store or even
+        anything related to current process
+        """
+
+        if self.store is not None:
+            sweeper = df.OAIFileSweeper(self.store.dir_store_root, '.xml')
+            sweeper.sweep()
+            if remove_all:
+                shutil.rmtree(self.store.dir_store_root)
+        if os.path.exists(self.work_dir_main):
+            shutil.rmtree(self.work_dir_main)
 
     def inspect_metadata(self):
         """Inspected record data and try to
@@ -485,12 +498,17 @@ class ODEMProcess:
         validation for 'digitalisierte medien'
         """
         check_ddb = False
+        ignore_ddb = []
         if self.cfg.has_option('mets', 'ddb_validation'):
             check_ddb = self.cfg.getboolean('mets', 'ddb_validation', fallback=False)
+        if self.cfg.has_option('mets', 'ddb_validation_ignore'):
+            raw_ignore_str = self.cfg.get('mets', 'ddb_validation_ignore')
+            ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
         dtype = 'Aa'
         if 'pica' in self.record.info:
             dtype = self.record.info['pica']
-        return validate(self.mets_file, validate_ddb=check_ddb, digi_type=dtype)
+        return validate(self.mets_file, validate_ddb=check_ddb, 
+                        digi_type=dtype, ddb_ignores=ignore_ddb)
 
     def export_data(self):
         """re-do metadata and transform into output format"""
