@@ -152,7 +152,7 @@ class OAIServiceClient:
         self.record_data[RECORD_STATE] = status
         self.record_data[RECORD_TIME] = right_now
         # if we have to report somethin' new, then append it
-        if kwargs is not None:
+        if kwargs is not None and len(kwargs) > 0:
             self.record_data[RECORD_INFO] = f'{kwargs}'
         if self.logger is not None:
             self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
