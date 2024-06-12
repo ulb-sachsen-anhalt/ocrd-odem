@@ -6,6 +6,7 @@ from __future__ import annotations
 import concurrent.futures
 import configparser
 import datetime
+import typing
 import logging
 import os
 import shutil
@@ -13,21 +14,15 @@ import socket
 import subprocess
 import tempfile
 import time
+import typing
+
 from enum import Enum
-from pathlib import (
-    Path
-)
-from typing import (
-    Dict,
-    List,
-    Optional,
-)
-import lxml.etree as ET
+from pathlib import Path
+
 import numpy as np
 import digiflow as df
 import digiflow.digiflow_export as dfx
 import digiflow.digiflow_metadata as dfm
-import digiflow.validate as dfv
 
 from .odem_commons import (
     CFG_SEC_OCR,
@@ -36,8 +31,6 @@ from .odem_commons import (
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
     STATS_KEY_MODELS,
-    STATS_KEY_N_PAGES,
-    STATS_KEY_N_OCRABLE,
     STATS_KEY_N_OCR,
     STATS_KEY_MB,
     STATS_KEY_MPS,
@@ -46,9 +39,8 @@ from .odem_commons import (
     ODEMException,
 )
 from .processing_mets import (
-    CATALOG_ULB,
     ODEMMetadataInspecteur,
-    ODEMMetadataMetsException,
+    extract_text_content,
     integrate_ocr_file,
     postprocess_mets,
     validate,
@@ -57,7 +49,7 @@ from .processing_ocrd import (
     run_ocr_page,
 )
 from .processing_ocr_pipeline import (
-    analyze,
+    STEP_MOVE_PATH_TARGET,
     run_pipeline,
 )
 from .processing_ocr_results import (
@@ -107,20 +99,6 @@ class ODEMProcess:
         for the underlying OCR-Engine Tesseract-OCR.
     """
 
-    @staticmethod
-    def create(
-            workflow_type: OdemWorkflowProcessType | str,
-            record: df.OAIRecord,
-            work_dir,
-            executors=2,
-            log_dir=None,
-            logger=None
-    ) -> ODEMProcess:
-        if (workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT
-            or workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT.value):
-            return ODEMTesseract(record, work_dir, executors, log_dir, logger)
-        return OCRDPageParallel(record, work_dir, executors, log_dir, logger)
-
     def __init__(self, record: df.OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
         """Create new ODEM Process.
         Args:
@@ -132,11 +110,10 @@ class ODEMProcess:
                 Defaults to None.
         """
 
-        self.identifiers: Optional[Dict]
         self.record = record
-        self.n_executors = executors
         self.work_dir_main = work_dir
         self.digi_type = None
+        self.mods_identifier = None
         self.local_mode = record is None
         self.process_identifier = None
         if self.local_mode:
@@ -145,12 +122,12 @@ class ODEMProcess:
             self.process_identifier = record.local_identifier
         self.export_dir = None
         self.the_logger: logging.Logger = None
-        self.cfg: configparser.ConfigParser = None
+        self.odem_configuration: configparser.ConfigParser = None
         self.store: df.LocalStore = None
-        self.images_4_ocr: List = []  # List[str] | List[Tuple[str, str]]
+        self.images_4_ocr: typing.List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
         self.ocr_function = None
-        self.ocr_input: List[List] = []
+        self.ocr_input: typing.List = []
         self._statistics_ocr = {'execs': executors}
         self._process_start = time.time()
         if logger is not None:
@@ -190,7 +167,7 @@ class ODEMProcess:
         req_dst = os.path.join(req_dst_dir, local_identifier + '.xml')
         self.the_logger.debug("[%s] download %s to %s",
                               self.process_identifier, request_identifier, req_dst)
-        base_url = self.cfg.get('global', 'base_url')
+        base_url = self.odem_configuration.get('global', 'base_url')
         try:
             loader = df.OAILoader(req_dst_dir, base_url=base_url, post_oai=dfm.extract_mets)
             loader.store = self.store
@@ -226,14 +203,16 @@ class ODEMProcess:
 
         insp = ODEMMetadataInspecteur(self.mets_file,
                                       self.record.identifier,
-                                      cfg=self.cfg)
+                                      cfg=self.odem_configuration)
         try:
-            insp.inspect()
+            the_report = insp.metadata_report()
+            self.digi_type = the_report.type
             self.images_4_ocr = insp.image_pairs
         except RuntimeError as mde:
             raise ODEMException(f"{mde.args[0]}") from mde
-        self.identifiers = insp.identifiers
-        self._statistics_ocr[CATALOG_ULB] = insp.record_identifier
+        self.mods_identifier = insp.mods_record_identifier
+        for t, ident in insp.identifiers.items():
+            self._statistics_ocr[t] = ident
         self._statistics_ocr['type'] = insp.type
         self._statistics_ocr[STATS_KEY_LANGS] = insp.languages
         self._statistics_ocr['n_images_pages'] = insp.n_images_pages
@@ -247,8 +226,8 @@ class ODEMProcess:
     def clear_existing_entries(self):
         """Clear METS/MODS of configured file groups"""
 
-        if self.cfg:
-            _blacklisted = self.cfg.getlist('mets', 'blacklist_file_groups')
+        if self.odem_configuration:
+            _blacklisted = self.odem_configuration.getlist('mets', 'blacklist_file_groups')
             _ident = self.process_identifier
             self.the_logger.info("[%s] remove %s", _ident, _blacklisted)
             _proc = df.MetsProcessor(self.mets_file)
@@ -266,7 +245,7 @@ class ODEMProcess:
         """
 
         _models = []
-        model_mappings: dict = self.cfg.getdict(  # pylint: disable=no-member
+        model_mappings: dict = self.odem_configuration.getdict(  # pylint: disable=no-member
             'ocr', 'model_mapping')
         self.the_logger.info("[%s] inspect languages '%s'",
                              self.process_identifier, languages)
@@ -281,7 +260,7 @@ class ODEMProcess:
                     _models.append(model)
                 else:
                     raise ODEMException(f"'{model}' model config not found !")
-        _model_conf = '+'.join(_models) if self.cfg.getboolean('ocr', "model_combinable", fallback=True) else _models[0]
+        _model_conf = '+'.join(_models) if self.odem_configuration.getboolean('ocr', "model_combinable", fallback=True) else _models[0]
         self._statistics_ocr[STATS_KEY_MODELS] = _model_conf
         self.the_logger.info("[%s] map languages '%s' => '%s'",
                              self.process_identifier, languages, _model_conf)
@@ -303,8 +282,8 @@ class ODEMProcess:
 
         _file_lang_suffixes = DEFAULT_LANG
         # inspect language arg
-        if self.cfg.has_option(CFG_SEC_OCR, KEY_LANGUAGES):
-            _file_lang_suffixes = self.cfg.get(CFG_SEC_OCR, KEY_LANGUAGES).split('+')
+        if self.odem_configuration.has_option(CFG_SEC_OCR, KEY_LANGUAGES):
+            _file_lang_suffixes = self.odem_configuration.get(CFG_SEC_OCR, KEY_LANGUAGES).split('+')
             return self.language_modelconfig(_file_lang_suffixes)
         # inspect final '_' segment of local file names
         if self.local_mode:
@@ -324,14 +303,14 @@ class ODEMProcess:
     def _is_model_available(self, model) -> bool:
         """Determine whether model is available"""
 
-        resource_dir_mappings = self.cfg.getdict(CFG_SEC_OCR, CFG_KEY_RES_VOL, fallback={})
+        resource_dir_mappings = self.odem_configuration.getdict(CFG_SEC_OCR, CFG_KEY_RES_VOL, fallback={})
         for host_dir, _ in resource_dir_mappings.items():
             training_file = host_dir + '/' + model
             if os.path.exists(training_file):
                 return True
         return False
 
-    def get_local_image_paths(self, image_local_dir=None) -> List[str]:
+    def get_local_image_paths(self, image_local_dir=None) -> typing.List[str]:
         """Build dataset from two different scenarios
         (-therefore setting images is divided from filtering):
 
@@ -348,7 +327,7 @@ class ODEMProcess:
             image_dir = image_local_dir
 
         # gather local images, propably recursive
-        images: List[str] = sorted([
+        images: typing.List[str] = sorted([
             os.path.join(curr, the_file)
             for curr, _, the_files in os.walk(image_dir)
             for the_file in the_files
@@ -377,13 +356,7 @@ class ODEMProcess:
             _images_of_interest.append((_the_file, _urn))
         self.images_4_ocr = _images_of_interest
 
-    def run(self) -> List:
-        """Execute OCR workflow
-        Subject to actual ODEM flavor
-        """
-        return [(0, 0, 0, 0)]
-
-    def calculate_statistics_ocr(self, outcomes: List):
+    def calculate_statistics_ocr(self, outcomes: typing.List):
         """Calculate and aggregate runtime stats"""
         n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
         _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
@@ -411,7 +384,7 @@ class ODEMProcess:
         # inspect each single created ocr file
         # drop unwanted elements
         # clear punctual regions
-        strip_tags = self.cfg.getlist('ocr', 'strip_tags')
+        strip_tags = self.odem_configuration.getlist('ocr', 'strip_tags')
         for _ocr_file in self.ocr_files:
             postprocess_ocrd_file(_ocr_file, strip_tags)
 
@@ -420,40 +393,32 @@ class ODEMProcess:
         read ocr-file sequential according to their number label
         and extract every row into additional text file"""
 
-        _ocrs = sorted(self.ocr_files)
-        _txts = []
-        for _o in _ocrs:
-            with open(_o, mode='r', encoding='UTF-8') as _ocr_file:
-                _alto_root = ET.parse(_ocr_file)
-                _lines = _alto_root.findall('.//alto:TextLine', df.XMLNS)
-                for _l in _lines:
-                    _l_strs = [s.attrib['CONTENT'] for s in _l.findall('.//alto:String', df.XMLNS)]
-                    _txts.append(' '.join(_l_strs))
-        txt_content = '\n'.join(_txts)
-        _out_path = os.path.join(self.work_dir_main, f'{self.statistics[CATALOG_ULB]}.pdf.txt')
+        txt_lines = extract_text_content(self.ocr_files)
+        txt_content = '\n'.join(txt_lines)
+        _out_path = os.path.join(self.work_dir_main, f'{self.mods_identifier}.pdf.txt')
         with open(_out_path, mode='w', encoding='UTF-8') as _writer:
             _writer.write(txt_content)
         self.the_logger.info("[%s] harvested %d lines from %d ocr files to %s",
-                             self.process_identifier, len(_txts), len(_ocrs), _out_path)
-        self._statistics_ocr['n_text_lines'] = len(_txts)
+                             self.process_identifier, len(txt_lines), len(self.ocr_files), _out_path)
+        self._statistics_ocr['n_text_lines'] = len(txt_lines)
 
     def create_pdf(self):
         """Forward PDF-creation to Derivans"""
 
-        _cfg_path_dir_bin = self.cfg.get('derivans', 'derivans_dir_bin', fallback=None)
+        _cfg_path_dir_bin = self.odem_configuration.get('derivans', 'derivans_dir_bin', fallback=None)
         path_bin = None
         if _cfg_path_dir_bin is not None:
             path_bin = os.path.join(PROJECT_ROOT, _cfg_path_dir_bin)
-        _cfg_path_dir_project = self.cfg.get('derivans', 'derivans_dir_project', fallback=None)
+        _cfg_path_dir_project = self.odem_configuration.get('derivans', 'derivans_dir_project', fallback=None)
         path_prj = None
         if _cfg_path_dir_project is not None:
             path_prj = os.path.join(PROJECT_ROOT, _cfg_path_dir_project)
         path_cfg = os.path.join(
             PROJECT_ROOT,
-            self.cfg.get('derivans', 'derivans_config')
+            self.odem_configuration.get('derivans', 'derivans_config')
         )
-        derivans_image = self.cfg.get('derivans', 'derivans_image', fallback=None)
-        path_logging = self.cfg.get('derivans', 'derivans_logdir', fallback=None)
+        derivans_image = self.odem_configuration.get('derivans', 'derivans_image', fallback=None)
+        path_logging = self.odem_configuration.get('derivans', 'derivans_logdir', fallback=None)
         derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
             self.mets_file,
             container_image_name=derivans_image,
@@ -490,7 +455,7 @@ class ODEMProcess:
     def postprocess_mets(self):
         """wrap work related to processing METS/MODS"""
 
-        postprocess_mets(self.mets_file, self.cfg.get('ocr', 'ocrd_baseimage'))
+        postprocess_mets(self.mets_file, self.odem_configuration.get('ocr', 'ocrd_baseimage'))
 
     def validate_metadata(self):
         """Forward (optional) validation concerning
@@ -499,34 +464,34 @@ class ODEMProcess:
         """
         check_ddb = False
         ignore_ddb = []
-        if self.cfg.has_option('mets', 'ddb_validation'):
-            check_ddb = self.cfg.getboolean('mets', 'ddb_validation', fallback=False)
-        if self.cfg.has_option('mets', 'ddb_validation_ignore'):
-            raw_ignore_str = self.cfg.get('mets', 'ddb_validation_ignore')
+        if self.odem_configuration.has_option('mets', 'ddb_validation'):
+            check_ddb = self.odem_configuration.getboolean('mets', 'ddb_validation', fallback=False)
+        if self.odem_configuration.has_option('mets', 'ddb_validation_ignore'):
+            raw_ignore_str = self.odem_configuration.get('mets', 'ddb_validation_ignore')
             ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
-        dtype = 'Aa'
-        if 'pica' in self.record.info:
-            dtype = self.record.info['pica']
+        # dtype = 'Aa'
+        # if 'pica' in self.record.info:
+        #     dtype = self.record.info['pica']
         return validate(self.mets_file, validate_ddb=check_ddb, 
-                        digi_type=dtype, ddb_ignores=ignore_ddb)
+                        digi_type=self.digi_type, ddb_ignores=ignore_ddb)
 
     def export_data(self):
         """re-do metadata and transform into output format"""
 
-        export_format: str = self.cfg.get('export', 'export_format', fallback=ExportFormat.SAF)
-        export_mets: bool = self.cfg.getboolean('export', 'export_mets', fallback=True)
+        export_format: str = self.odem_configuration.get('export', 'export_format', fallback=ExportFormat.SAF)
+        export_mets: bool = self.odem_configuration.getboolean('export', 'export_mets', fallback=True)
 
-        exp_dst = self.cfg.get('export', 'local_export_dir')
-        exp_tmp = self.cfg.get('export', 'local_export_tmp')
-        exp_col = self.cfg.get('export', 'export_collection')
-        exp_map = self.cfg.getdict('export', 'export_mappings')
+        exp_dst = self.odem_configuration.get('export', 'local_export_dir')
+        exp_tmp = self.odem_configuration.get('export', 'local_export_tmp')
+        exp_col = self.odem_configuration.get('export', 'export_collection')
+        exp_map = self.odem_configuration.getdict('export', 'export_mappings')
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
         exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
         if export_mets:
             exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
-        saf_name = self.identifiers.get(CATALOG_ULB)
+        saf_name = self.mods_identifier
         if export_format == ExportFormat.SAF:
             export_result = df.export_data_from(
                 self.mets_file,
@@ -550,10 +515,8 @@ class ODEMProcess:
                 tmp_zip_path, size = self._compress(os.path.dirname(work_dir), saf_name)
                 path_export_processing = dfx._move_to_tmp_file(tmp_zip_path, exp_dst)
                 export_result = path_export_processing, size
-
         else:
             raise ODEMException(f'Unsupported export format: {export_format}')
-
         self.the_logger.info("[%s] exported data: %s",
                              self.process_identifier, export_result)
         if export_result:
@@ -589,7 +552,6 @@ class ODEMProcess:
 
     def _compress(self, work_dir, archive_name):
         zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
-
         previous_dir = os.getcwd()
         os.chdir(os.path.join(work_dir, archive_name))
         cmd = f'zip -q -r {zip_file_path} ./*'
@@ -600,71 +562,102 @@ class ODEMProcess:
         return zip_file_path, f"{zip_size}MiB"
 
 
-class OCRDPageParallel(ODEMProcess):
-    """Use page parallel workflow"""
+class ODEMPipelineRunner:
+    """Wrap actual ODEM process execution"""
+
+    def __init__(self, identifier, n_executors, 
+                 internal_logger, odem_ocr_pipeline) -> None:
+        self.process_identifier = identifier
+        self.n_executors = n_executors
+        self.logger:logging.Logger = internal_logger
+        self.odem_ocr_pipeline: ODEMOCRPipeline = odem_ocr_pipeline
 
     def run(self):
-        """Wrap specific OCR execution with
-        respect to number of executors"""
-
-        if not self.cfg.has_option('ocr', 'ocrd_process_list'):
-            raise ODEMException("No option 'ocrd_process_list' in section: 'ocr'")
-
-        _outcomes = [(0, 0, 0, 0)]
+        input_data = self.odem_ocr_pipeline.get_input()
+        the_outcomes = [(0, 0, 0, 0)]
         if self.n_executors > 1:
-            _outcomes = self.run_parallel()
+            the_outcomes = self.run_parallel(input_data)
         else:
-            _outcomes = self.run_sequential()
-        if _outcomes:
-            self._statistics_ocr['outcomes'] = _outcomes
-        self.to_alto()
-        return _outcomes
+            the_outcomes = self.run_sequential(input_data)
+        return the_outcomes
 
-    def run_parallel(self):
-        """Run workflow parallel given poolsize"""
+    def run_parallel(self, input_data):
+        """Run workflow parallel with given executors"""
 
-        self.the_logger.info("[%s] %d images run_parallel by %d executors",
-                             self.process_identifier, len(self.images_4_ocr), self.n_executors)
+        n_inputs = len(input_data)
+        self.logger.info("[%s] %d inputs run_parallel by %d executors",
+                             self.process_identifier, n_inputs, self.n_executors)
         try:
             with concurrent.futures.ThreadPoolExecutor(
                     max_workers=self.n_executors,
-                    thread_name_prefix='odem'
+                    thread_name_prefix='odem.ocrd'
             ) as executor:
-                outcomes = list(executor.map(self.ocrd_page, self.images_4_ocr))
-                return outcomes
+                return list(executor.map(self.odem_ocr_pipeline.process, input_data))
         except (OSError, AttributeError) as err:
-            self.the_logger.error(err)
-            raise RuntimeError(f"OCR-D parallel: {err.args[0]}") from err
+            self.logger.error(err)
+            raise ODEMException(f"ODEM parallel: {err.args[0]}") from err
 
-    def run_sequential(self):
+    def run_sequential(self, input_data):
         """run complete workflow plain sequential
         For debugging or small machines
         """
 
-        _len_img = len(self.images_4_ocr)
-        _estm_min = _len_img * DEFAULT_RUNTIME_PAGE
-        self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
-                             self.process_identifier, _len_img, _estm_min)
+        len_img = len(input_data)
+        estm_min = len_img * DEFAULT_RUNTIME_PAGE
+        self.logger.info("[%s] %d inputs run_sequential, estm. %dmin",
+                             self.process_identifier, len_img, estm_min)
         try:
-            outcomes = [self.ocrd_page(_img)
-                        for _img in self.images_4_ocr]
+            outcomes = [self.odem_ocr_pipeline.process(the_input)
+                        for the_input in input_data]
             return outcomes
         except (OSError, AttributeError) as err:
-            self.the_logger.error(err)
-            raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
+            self.logger.error(err)
+            raise ODEMException(f"ODEM sequential: {err.args[0]}") from err
 
-    def ocrd_page(self, image_4_ocr):
+
+class ODEMOCRPipeline:
+    """Base Interface"""
+
+    @staticmethod
+    def create(
+            workflow_type: OdemWorkflowProcessType | str,
+            odem: ODEMProcess,
+    ) -> ODEMOCRPipeline:
+        if (workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT
+            or workflow_type == OdemWorkflowProcessType.ODEM_TESSERACT.value):
+            return ODEMTesseract(odem)
+        return OCRDPageParallel(odem)
+
+    def get_input(self) -> typing.List:
+        pass
+
+    def process(self):
+        pass
+
+
+class OCRDPageParallel(ODEMOCRPipeline):
+    """Use page parallel workflow"""
+
+    def __init__(self, odem_process: ODEMProcess):
+        self.odem = odem_process
+        self.cfg = odem_process.odem_configuration
+        self.logger = odem_process.the_logger
+
+    def get_input(self):
+        return self.odem.images_4_ocr
+
+    def process(self, input_data):
         """Create OCR Data"""
 
         ocr_log_conf = os.path.join(
             PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_logging'))
 
         # Preprare workspace with makefile
-        (image_path, ident) = image_4_ocr
-        os.chdir(self.work_dir_main)
+        (image_path, ident) = input_data
+        os.chdir(self.odem.work_dir_main)
         file_name = os.path.basename(image_path)
         file_id = file_name.split('.')[0]
-        page_workdir = os.path.join(self.work_dir_main, file_id)
+        page_workdir = os.path.join(self.odem.work_dir_main, file_id)
         if os.path.exists(page_workdir):
             shutil.rmtree(page_workdir, ignore_errors=True)
         os.mkdir(page_workdir)
@@ -677,8 +670,8 @@ class OCRDPageParallel(ODEMProcess):
         # init ocr-d workspace
         ocrd_workspace_setup(page_workdir, processed_image_path)
 
-        # # find out the needed model config for tesseract
-        model_config = self.map_language_to_modelconfig(image_path)
+        # find model config for tesseract
+        model_config = self.odem.map_language_to_modelconfig(image_path)
 
         stored = 0
         mps = 0
@@ -692,14 +685,14 @@ class OCRDPageParallel(ODEMProcess):
         (mps, dpi) = get_imageinfo(image_path)
 
         # how to identify data set?
-        if self.record:
-            _ident = self.process_identifier
+        if self.odem.record:
+            _ident = self.odem.process_identifier
         else:
-            _ident = os.path.basename(self.work_dir_main)
+            _ident = os.path.basename(self.odem.work_dir_main)
         # OCR Generation
         profiling = ('n.a.', 0)
 
-        container_name: str = f'{self.process_identifier}_{os.path.basename(page_workdir)}'
+        container_name: str = f'{self.odem.process_identifier}_{os.path.basename(page_workdir)}'
         container_memory_limit: str = self.cfg.get('ocr', 'docker_container_memory_limit', fallback=None)
         container_user = self.cfg.get('ocr', 'docker_container_user', fallback=os.getuid())
         container_timeout: int = self.cfg.getint(
@@ -709,10 +702,10 @@ class OCRDPageParallel(ODEMProcess):
         )
         base_image = self.cfg.get('ocr', 'ocrd_baseimage')
         ocrd_process_list = self.cfg.getlist('ocr', 'ocrd_process_list')
-        tesseract_model_rtl: List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
-        ocrd_resources_volumes: Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
+        tesseract_model_rtl: typing.List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
+        ocrd_resources_volumes: typing.Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
 
-        if self.local_mode:
+        if self.odem.local_mode:
             container_name = os.path.basename(page_workdir)
         try:
             profiling = run_ocr_page(
@@ -729,21 +722,21 @@ class OCRDPageParallel(ODEMProcess):
             )
             # will be unset in case of magic mocking for test
             if profiling:
-                self.the_logger.info("[%s] '%s' in %s (%.1fMP, %dDPI, %.1fMB)",
+                self.logger.info("[%s] '%s' in %s (%.1fMP, %dDPI, %.1fMB)",
                                      _ident, profiling[1], profiling[0], mps, dpi, filesize_mb)
-            self.the_logger.info("[%s] run ocr creation in '%s'",
+            self.logger.info("[%s] run ocr creation in '%s'",
                                  _ident, page_workdir)
             stored = self._store_fulltext(page_workdir, image_path)
             if stored:
                 self._preserve_log(page_workdir, ident)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-            self.the_logger.error("[%s] image '%s' failed due to subprocess timeout: %s",
+            self.logger.error("[%s] image '%s' failed due to subprocess timeout: %s",
                                   _ident, base_image, exc)
         except Exception as plain_exc:
-            self.the_logger.error("[%s] generic exc '%s' for image '%s'",
+            self.logger.error("[%s] generic exc '%s' for image '%s'",
                                   _ident, plain_exc, base_image)
 
-        os.chdir(self.work_dir_main)
+        os.chdir(self.odem.work_dir_main)
         if self.cfg.getboolean('ocr', 'keep_temp_orcd_data', fallback=False) is False:
             shutil.rmtree(page_workdir, ignore_errors=True)
         return stored, 1, mps, filesize_mb
@@ -754,7 +747,7 @@ class OCRDPageParallel(ODEMProcess):
         identifier (local section of system OAI handle)"""
 
         _root_log = self.cfg.get('global', 'local_log_dir')
-        _local_ident = self.process_identifier.replace('/', '_')
+        _local_ident = self.odem.process_identifier.replace('/', '_')
         _local_ocr_log = os.path.join(_root_log, _local_ident)
         if not os.path.exists(_local_ocr_log):
             os.makedirs(_local_ocr_log, exist_ok=True)
@@ -762,13 +755,13 @@ class OCRDPageParallel(ODEMProcess):
         _org_log = os.path.join(work_subdir, 'ocrd.log')
         if os.path.exists(_org_log):
             _ts = time.strftime(ODEM_PAGE_TIME_FORMAT, time.localtime())
-            _log_label = f'ocrd_odem_{self.process_identifier}_{image_ident}_{_ts}.log'
+            _log_label = f'ocrd_odem_{self.odem.process_identifier}_{image_ident}_{_ts}.log'
             _rebranded = os.path.join(work_subdir, _log_label)
             os.rename(_org_log, _rebranded)
             shutil.copy(_rebranded, _local_ocr_log)
         else:
-            self.the_logger.warning("[%s] No ocrd.log in %s",
-                                    self.process_identifier, work_subdir)
+            self.logger.warning("[%s] No ocrd.log in %s",
+                                    self.odem.process_identifier, work_subdir)
 
     def _store_fulltext(self, image_subdir, original_image_path) -> int:
         """Move OCR Result from Workspace Subdir to export folder if exists"""
@@ -778,23 +771,23 @@ class OCRDPageParallel(ODEMProcess):
         old_id = os.path.basename(image_subdir)
         ocr_result_dir = os.path.join(image_subdir, 'PAGE')
         if not os.path.isdir(ocr_result_dir):
-            self.the_logger.info("[%s] no ocr results for '%s'",
-                                 self.process_identifier, ocr_result_dir)
+            self.logger.info("[%s] no ocr results for '%s'",
+                                 self.odem.process_identifier, ocr_result_dir)
             return 0
         ocrs = [os.path.join(ocr_result_dir, ocr)
                 for ocr in os.listdir(ocr_result_dir)
                 if str(ocr).endswith('.xml')]
-        self.the_logger.debug("[%s] %s ocr files",
-                              self.process_identifier, ocrs)
+        self.logger.debug("[%s] %s ocr files",
+                              self.odem.process_identifier, ocrs)
         if ocrs and len(ocrs) == 1:
             # propably need to rename
             # since file now is like 'PAGE_01.xml'
             renamed = os.path.join(ocr_result_dir, old_id + '.xml')
             os.rename(ocrs[0], renamed)
             # regular case: OAI Workflow
-            if not self.local_mode:
+            if not self.odem.local_mode:
                 # export to 'PAGE' dir
-                wd_fulltext = os.path.join(self.work_dir_main, 'PAGE')
+                wd_fulltext = os.path.join(self.odem.work_dir_main, 'PAGE')
                 if not os.path.exists(wd_fulltext):
                     os.mkdir(wd_fulltext)
 
@@ -815,133 +808,60 @@ class OCRDPageParallel(ODEMProcess):
         if len(_cnv) == 0 and n_candidates > 0:
             raise ODEMException(f"No OCR result for {n_candidates} candidates created!")
         self.ocr_files = _cnv
-        self.the_logger.info("[%s] converted '%d' files page-to-alto",
-                             self.process_identifier, len(_cnv))
+        self.logger.info("[%s] converted '%d' files page-to-alto",
+                             self.odem.process_identifier, len(_cnv))
 
 
-class ODEMTesseract(ODEMProcess):
+class ODEMTesseract(ODEMOCRPipeline):
     """Tesseract Runner"""
 
-    def run(self):
-        """Wrap specific OCR execution with
-        respect to number of executors"""
+    def __init__(self, odem_process: ODEMProcess):
+        self.odem = odem_process
+        self.odem_configuration = odem_process.odem_configuration
+        self.logger = odem_process.the_logger
+        self.pipeline_configuration = None
 
-        _cfg = self.read_pipeline_config()
-        self._prepare_workdir_tmp()
-        _n_total = len(self.images_4_ocr)
-        self.ocr_input_paths = [(img, i, _n_total, self.the_logger, _cfg)
-                                for i, img in enumerate(self.images_4_ocr, start=1)]
-        _outcomes = [(0, 0, 0, 0)]
-        if self.n_executors > 1:
-            _outcomes = self.run_parallel()
-        else:
-            _outcomes = self.run_sequential()
-        if _outcomes:
-            self._statistics_ocr['outcomes'] = _outcomes
-        return _outcomes
+    def get_input(self):
+        images_4_ocr = self.odem.images_4_ocr
+        n_total = len(images_4_ocr)
+        pipeline_cfg = self.read_pipeline_config()
+        input_data = [(img, i, n_total, self.logger, pipeline_cfg)
+                      for i, img in enumerate(self.odem.images_4_ocr, start=1)]
+        return input_data
 
-    def run_parallel(self):
-        """Run workflow parallel given poolsize"""
-        self.the_logger.info("[%s] %d images run_parallel by %d executors",
-                     self.process_identifier, len(self.ocr_input_paths), self.n_executors)
-        try:
-            with concurrent.futures.ThreadPoolExecutor(
-                    max_workers=self.n_executors,
-                    thread_name_prefix='odem'
-            ) as executor:
-                outcomes = list(executor.map(run_pipeline, self.ocr_input_paths))
-                return outcomes
-        except (OSError, AttributeError) as err:
-            self.the_logger.error(err)
-            raise RuntimeError(f"OCR-D parallel: {err.args[0]}") from err
+    def process(self, input_data):
 
-    def run_sequential(self):
-        """run complete workflow plain sequential
-        For debugging or small machines"""
-        _len_img = len(self.ocr_input_paths)
-        _estm_min = _len_img * DEFAULT_RUNTIME_PAGE
-        self.the_logger.info("[%s] %d images run_sequential, estm. %dmin",
-                     self.process_identifier, _len_img, _estm_min)
-        try:
-            outcomes = [run_pipeline(_img)
-                        for _img in self.ocr_input_paths]
-            return outcomes
-        except (OSError, AttributeError) as err:
-            self.the_logger.error(err)
-            raise RuntimeError(f"OCR-D sequential: {err.args[0]}") from err
-
-    def read_pipeline_config(self, path_cfg=None) -> configparser:
-        """Read and process additional pipeline configuration"""
-
-        _path_cfg = path_cfg
-        if path_cfg is None:
-            if self.cfg.has_option('ocr', 'ocr_pipeline_config'):
-                _path_cfg = os.path.abspath(self.cfg.get('ocr', 'ocr_pipeline_config'))
-        if not os.path.isfile(_path_cfg):
-            raise ODEMException(f"Invalid ocr-pipeline conf {_path_cfg}")
-        _cfg = configparser.ConfigParser()
-        _cfg.read(_path_cfg)
-        self.pipeline_config = _cfg
-        return _cfg
-
-    def _prepare_workdir_tmp(self):
-        workdir_tmp = self.cfg.get('ocr', 'ocr_pipeline_workdir_tmp')
-        self.the_logger.warning("no workdir set, use '%s'", workdir_tmp)
-        if not os.path.isdir(workdir_tmp):
-            if os.access(workdir_tmp, os.W_OK):
-                os.makedirs(workdir_tmp)
-            else:
-                self.the_logger.warning("tmp workdir '%s' not writable, use /tmp",
-                                        workdir_tmp)
-                workdir_tmp = '/tmp/ocr-pipeline-workdir'
-                if os.path.exists(workdir_tmp):
-                    self._clean_workdir(workdir_tmp)
-                os.makedirs(workdir_tmp, exist_ok=True)
-        else:
-            self._clean_workdir(workdir_tmp)
-        return workdir_tmp
-
-    def _clean_workdir(self, the_dir):
-        self.the_logger.info("clean existing workdir '%s'", the_dir)
-        for file_ in os.listdir(the_dir):
-            fpath = os.path.join(the_dir, file_)
-            if os.path.isfile(fpath):
-                os.unlink(fpath)
-
-    def store_estimations(self, estms):
-        """Postprocessing of OCR-Quality Estimation Data"""
-
-        valids = [r for r in estms if r[1] != -1]
-        invalids = [r for r in estms if r[1] == -1]
-        sorteds = sorted(valids, key=lambda r: r[1])
-        aggregations = analyze(sorteds)
-        end_time = time.strftime('%Y-%m-%d_%H-%M', time.localtime())
-        if not os.path.isdir(self.work_dir_main):
-            self.the_logger.warning('unable to choose store for estm data: %s',
-                                    str(self.work_dir_main))
-            return
-
-        file_name = os.path.basename(self.work_dir_main)
-        file_path = os.path.join(
-            self.work_dir_main, f"{file_name}_{end_time}.wtr")
-        self.the_logger.info("store mean '%.3f' in '%s'",
-                             aggregations[0], file_path)
-        if aggregations:
-            (mean, bins) = aggregations
-            b_1 = len(bins[0])
-            b_2 = len(bins[1])
-            b_3 = len(bins[2])
-            b_4 = len(bins[3])
-            b_5 = len(bins[4])
-            n_v = len(valids)
-            n_i = len(invalids)
-            self.the_logger.info("WTE (Mean): '%.1f' (1: %d/%d, ... 5: %d/%d)",
-                                 mean, b_1, n_v, b_5, n_v)
-            with open(file_path, 'w', encoding="UTF-8") as outfile:
-                outfile.write(
-                    f"{mean},{b_1},{b_2},{b_3},{b_4},{b_5},{len(estms)},{n_i}\n")
-                for s in sorteds:
-                    outfile.write(
-                        f"{s[0]},{s[1]:.3f},{s[2]},{s[3]},{s[4]},{s[5]},{s[6]},{s[7]}\n")
-                outfile.write("\n")
-                return file_path
+        image_path = input_data[0][0]
+        pipeline_result = run_pipeline(input_data)
+        stored = pipeline_result is not None
+        mps = 0
+        filesize_mb = 0
+        filestat = os.stat(image_path)
+        if filestat:
+            filesize_mb = filestat.st_size / 1048576
+        (mps, _) = get_imageinfo(image_path)
+        return stored, 1, mps, filesize_mb
+        
+    def read_pipeline_config(self, path_config=None) -> configparser.ConfigParser:
+        """Read pipeline configuration and replace
+        model_configs with known language data"""
+        
+        if self.pipeline_configuration is None:
+            if path_config is None:
+                if self.odem_configuration.has_option('ocr', 'ocr_pipeline_config'):
+                    path_config = os.path.abspath(self.odem_configuration.get('ocr', 'ocr_pipeline_config'))
+            if not os.path.isfile(path_config):
+                raise ODEMException(f"no ocr-pipeline conf {path_config} !")
+            pipe_cfg = configparser.ConfigParser()
+            pipe_cfg.read(path_config)
+            self.logger.info(f"use config '{path_config}'")
+            for sect in pipe_cfg.sections():
+                if pipe_cfg.has_option(sect, 'model_configs'):
+                    known_langs = self.odem._statistics_ocr.get(STATS_KEY_LANGS)
+                    model_files = self.odem.language_modelconfig(known_langs)
+                    models = model_files.replace('.traineddata','')
+                    pipe_cfg.set(sect, 'model_configs', models)
+                if pipe_cfg.has_option(sect, STEP_MOVE_PATH_TARGET):
+                    pipe_cfg.set(sect, STEP_MOVE_PATH_TARGET, f'{self.odem.work_dir_main}/FULLTEXT')
+            self.pipeline_configuration = pipe_cfg
+        return self.pipeline_configuration

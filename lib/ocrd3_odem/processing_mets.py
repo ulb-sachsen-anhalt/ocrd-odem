@@ -15,10 +15,11 @@ from .odem_commons import (
 
 TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
 TYPE_PRINTS_LOGICAL = ['monograph', 'volume', 'issue', 'additional']
-CATALOG_ULB = 'gvk-ppn'
-CATALOG_OTH = 'gbv-ppn'
-CATALOG_SWB = 'swb-ppn' # SLUB OAI related
-CATALOGUE_IDENTIFIERS = [CATALOG_ULB, CATALOG_OTH, CATALOG_SWB]
+CATALOG_ULB  = 'gvk-ppn'
+CATALOG_ULB2 = 'kxp-ppn' # ULB ZD related
+CATALOG_OTH  = 'gbv-ppn'
+CATALOG_SWB  = 'swb-ppn' # SLUB OAI related
+CATALOGUE_IDENTIFIERS = [CATALOG_ULB, CATALOG_ULB2, CATALOG_OTH, CATALOG_SWB]
 RECORD_IDENTIFIER = 'recordIdentifier'
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
@@ -72,7 +73,7 @@ class ODEMMetadataInspecteur:
                 raise ODEMMetadataMetsException(_err) from _err
         return self._report
 
-    def inspect(self):
+    def metadata_report(self) -> df.MetsReaderReport:
         """Gather knowledge about digital object's.
         First, try to determin what kind of retro-digit
         we are handling by inspecting it's final PICA mark
@@ -93,6 +94,7 @@ class ODEMMetadataInspecteur:
         self.inspect_metadata_images()
         if not any(ident in CATALOGUE_IDENTIFIERS for ident in report.identifiers):
             raise ODEMMetadataMetsException(f"No {CATALOGUE_IDENTIFIERS} in {self.process_identifier}")
+        return report
 
     @property
     def identifiers(self):
@@ -100,13 +102,19 @@ class ODEMMetadataInspecteur:
         return self._get_report().identifiers
     
     @property
-    def record_identifier(self):
-        """Get main MODS recordIdentifier if present"""
-        _idents = self._get_report().identifiers
-        if CATALOG_ULB in _idents:
-            return _idents[CATALOG_ULB]
-        elif CATALOG_OTH in _idents:
-            return _idents[CATALOG_OTH]
+    def mods_record_identifier(self):
+        """Get main MODS recordIdentifier if present
+        guess if more than 1 ppn-like entry exist
+        """
+        idents = dict(self._get_report().identifiers)
+        if 'urn' in idents:
+            del idents['urn']
+        if len(idents) == 1:
+            return list(idents.values())[0]
+        if CATALOG_ULB in idents:
+            return idents[CATALOG_ULB]
+        elif CATALOG_OTH in idents:
+            return idents[CATALOG_OTH]
         else:
             _proc_in = self.process_identifier
             if ':' in _proc_in:
@@ -274,14 +282,23 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
         # Assignment takes place via the name of the corresponding
         # image (= name ALTO file)
         _mproc = df.MetsProcessor(_ocr_file)
-        src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=df.XMLNS)[0]
+        ns_map = _sanitize_namespaces(_mproc.tree)
+        src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=ns_map)[0]
         src_info.text = f'{_file_name}.jpg'
-        first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=df.XMLNS)[0]
+        first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=ns_map)[0]
         first_page_el.attrib['ID'] = f'p{_file_name}'
         _mproc.write()
         _n_linked_ocr += _link_fulltext(new_id, xml_tree)
     file_sec.append(file_grp_fulltext)
     return _n_linked_ocr
+
+
+def _sanitize_namespaces(tree):
+    ns_map = tree.nsmap
+    if None in ns_map and '/alto/' in ns_map[None]:
+        mapping = ns_map[None]
+        ns_map = {'alto': mapping}
+    return ns_map
 
 
 def _link_fulltext(file_ident, xml_tree):
@@ -372,3 +389,19 @@ def validate(mets_file:str, ddb_ignores,
     except df.DigiflowDDBException as ddb_err:
         raise ODEMException(ddb_err.args[0]) from ddb_err
     return True
+
+
+def extract_text_content(ocr_files: typing.List) -> str:
+    """Extract textual content from ALTO files' String element
+    """
+    sorted_files = sorted(ocr_files)
+    txt_contents = []
+    for ocr_file in sorted_files:
+        with open(ocr_file, mode='r', encoding='UTF-8') as _ocr_file:
+            ocr_root = ET.parse(_ocr_file).getroot()
+            ns_map = _sanitize_namespaces(ocr_root)
+            all_lines = ocr_root.findall('.//alto:TextLine', ns_map)
+            for single_line in all_lines:
+                line_strs = [s.attrib['CONTENT'] for s in single_line.findall('.//alto:String', ns_map)]
+                txt_contents.append(' '.join(line_strs))
+    return txt_contents

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:b="https://bibliothek.uni-halle.de" xmlns:dv="http://dfg-viewer.de/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/mods.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd">
+  <mets:metsHdr CREATEDATE="2022-03-01T09:36:51.005+01:00" LASTMODDATE="2024-01-25T12:43:26Z">
+    <mets:agent TYPE="OTHER" ROLE="OTHER" OTHERTYPE="SOFTWARE">
+      <mets:name>DigitalDerivans V1.8.5</mets:name>
+      <mets:note>PDF FileGroup for PDF_16691561019210131 created at 2024-01-25T09:38:87</mets:note>
+    </mets:agent>
+    <mets:metsDocumentID>6999</mets:metsDocumentID>
+  </mets:metsHdr>
+  <mets:dmdSec ID="uuid-d2b658c4-c882-3d53-9575-791db910d232">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods>
+          <mods:typeOfResource>text</mods:typeOfResource>
+          <mods:originInfo eventType="publication">
+            <mods:dateIssued encoding="iso8601">1921-01-31</mods:dateIssued>
+          </mods:originInfo>
+          <mods:originInfo eventType="digitization">
+            <mods:publisher>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:publisher>
+            <mods:place>
+              <mods:placeTerm type="text">Halle (Saale)</mods:placeTerm>
+            </mods:place>
+            <mods:dateCaptured encoding="iso8601">2024</mods:dateCaptured>
+          </mods:originInfo>
+          <mods:identifier type="urn">urn:nbn:de:gbv:3:1-171133730-16691561019210131-18</mods:identifier>
+          <mods:recordInfo>
+            <mods:recordIdentifier source="kxp-ppn">16691561019210131</mods:recordIdentifier>
+            <mods:recordCreationDate encoding="marc">29-10-94</mods:recordCreationDate>
+            <mods:recordChangeDate encoding="marc">04-09-22</mods:recordChangeDate>
+          </mods:recordInfo>
+          <mods:titleInfo>
+            <mods:title>Klassenkampf</mods:title>
+          </mods:titleInfo>
+          <mods:relatedItem type="host">
+            <mods:recordInfo>
+              <mods:recordIdentifier source="kxp-ppn">1774602105</mods:recordIdentifier>
+            </mods:recordInfo>
+            <mods:identifier type="zdb">3098062-8</mods:identifier>
+            <mods:relatedItem type="original">
+              <mods:identifier type="zdb">347407-0</mods:identifier>
+              <mods:recordInfo>
+                <mods:recordIdentifier source="kxp-ppn">166915610</mods:recordIdentifier>
+              </mods:recordInfo>
+            </mods:relatedItem>
+            <mods:titleInfo>
+              <mods:title>Klassenkampf</mods:title>
+            </mods:titleInfo>
+          </mods:relatedItem>
+          <mods:language>
+            <mods:languageTerm type="code" authority="iso639-2b">ger</mods:languageTerm>
+            <mods:scriptTerm type="code" authority="iso15924">Latf</mods:scriptTerm>
+          </mods:language>
+          <mods:extension>
+            <b:externalType recordSyntax="pica">AZ</b:externalType>
+            <b:collection>1516514412012/175735</b:collection>
+            <b:imageDefaultDimension>!2000,2000</b:imageDefaultDimension>
+          </mods:extension>
+          <mods:location>
+            <mods:physicalLocation>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:physicalLocation>
+            <mods:shelfLocator>Fi 17 R</mods:shelfLocator>
+          </mods:location>
+          <mods:classification authority="ddc">090</mods:classification>
+          <mods:part order="19210131">
+            <mods:detail type="volume">
+              <mods:number>1. Jahrgang</mods:number>
+            </mods:detail>
+            <mods:detail type="issue">
+              <mods:number>Nr. 25</mods:number>
+            </mods:detail>
+          </mods:part>
+          <mods:accessCondition type="use and reproduction" xlink:href="https://creativecommons.org/publicdomain/mark/1.0/">Public Domain Mark 1.0</mods:accessCondition>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="uuid-8b448422-34d5-3d38-9623-4f0ee2f562e6">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods>
+          <mods:typeOfResource>text</mods:typeOfResource>
+          <mods:titleInfo>
+            <mods:title>Beilage zum Klassenkampf.</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="uuid-0d6258b2-961c-3bda-b09f-4d7714faf597">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods>
+          <mods:typeOfResource>text</mods:typeOfResource>
+          <mods:titleInfo>
+            <mods:title>Leben Wissen Kunst</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="admd1">
+    <mets:rightsMD ID="uuid-11f5eb3a-85e7-34da-8d1d-c8dac090079a">
+      <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVRIGHTS">
+        <mets:xmlData>
+          <dv:rights>
+            <dv:owner>Universitäts- und Landesbibliothek Sachsen-Anhalt</dv:owner>
+            <dv:ownerLogo>https://opendata2.uni-halle.de/image/mets_viewerLogo.gif</dv:ownerLogo>
+            <dv:ownerSiteURL>http://www.bibliothek.uni-halle.de</dv:ownerSiteURL>
+            <dv:ownerContact>mailto:auskunft@bibliothek.uni-halle.de</dv:ownerContact>
+            <dv:license>https://creativecommons.org/publicdomain/mark/1.0/</dv:license>
+          </dv:rights>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:rightsMD>
+    <mets:digiprovMD ID="uuid-1e12968b-637d-331d-a20f-a924069d3912">
+      <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVLINKS">
+        <mets:xmlData>
+          <dv:links>
+            <dv:reference>https://opac.lbs-halle.gbv.de/DB=1/XMLPRS=N/PPN?PPN=166915610</dv:reference>
+            <dv:presentation>https://opendata2.uni-halle.de//handle/1516514412012/175762</dv:presentation>
+            <dv:iiif>https://opendata2.uni-halle.de//json/iiif/1516514412012/175762/c8a25f28-35a6-45e9-81ad-197955e0ed59/manifest</dv:iiif>
+          </dv:links>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:digiprovMD>
+  </mets:amdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="MAX">
+      <mets:file ID="uuid-1afac903-df42-4ca2-b310-eec8101a1f4a" MIMETYPE="image/jpeg">
+        <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata2.uni-halle.de/retrieve/cd8607a7-ca76-4034-9a75-07fe65aec991/00000001.jpg" />
+      </mets:file>
+      <mets:file ID="uuid-d7e29f60-6efe-46d7-8d72-4bb1a2fe4a2e" MIMETYPE="image/jpeg">
+        <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata2.uni-halle.de/retrieve/11890b4c-faeb-494a-bf16-ba7bba58f084/00000002.jpg" />
+      </mets:file>
+      <mets:file ID="uuid-cbbacd95-f0b8-4beb-be2b-d4cae2ff52a5" MIMETYPE="image/jpeg">
+        <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata2.uni-halle.de/retrieve/9e44742a-b9d5-4c04-b9ed-26d12f64de7b/00000003.jpg" />
+      </mets:file>
+      <mets:file ID="uuid-0bc8a8ed-f3b8-440a-b8f0-59c58866e5b0" MIMETYPE="image/jpeg">
+        <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata2.uni-halle.de/retrieve/1475c78c-ffed-472c-8215-18983f27b595/00000004.jpg" />
+      </mets:file>
+      <mets:file ID="uuid-3db01f68-e741-410e-bac2-a058860d8387" MIMETYPE="image/jpeg">
+        <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata2.uni-halle.de/retrieve/15fe513f-0cb6-40d0-9a10-ca0c949ea15f/00000005.jpg" />
+      </mets:file>
+      <mets:file ID="uuid-0a15564a-44ca-4fa1-9c81-4749e3068c21" MIMETYPE="image/jpeg">
+        <mets:FLocat LOCTYPE="URL" xlink:href="https://opendata2.uni-halle.de/retrieve/ccec7934-1359-484c-9cbf-e775a9b330f7/00000006.jpg" />
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="FULLTEXT">
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000004">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/hartwig/02-Testpool/01-odem/odem-wrk-dir/1516514412012_175762/FULLTEXT/00000004.xml" />
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000001">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/hartwig/02-Testpool/01-odem/odem-wrk-dir/1516514412012_175762/FULLTEXT/00000001.xml" />
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000006">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/hartwig/02-Testpool/01-odem/odem-wrk-dir/1516514412012_175762/FULLTEXT/00000006.xml" />
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000003">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/hartwig/02-Testpool/01-odem/odem-wrk-dir/1516514412012_175762/FULLTEXT/00000003.xml" />
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000005">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/hartwig/02-Testpool/01-odem/odem-wrk-dir/1516514412012_175762/FULLTEXT/00000005.xml" />
+      </mets:file>
+      <mets:file MIMETYPE="application/alto+xml" ID="FULLTEXT_00000002">
+        <mets:FLocat LOCTYPE="URL" xlink:href="/home/hartwig/02-Testpool/01-odem/odem-wrk-dir/1516514412012_175762/FULLTEXT/00000002.xml" />
+      </mets:file>
+    </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div TYPE="physSequence" ID="uuid-c63637b1-a3cf-4ed4-9c52-ea25d08037e6">
+      <mets:div ID="uuid-6b7701e1-77e7-4371-ab7a-51bbc32dffab" TYPE="page" ORDER="1" ORDERLABEL="[Seite 1]" CONTENTIDS="urn:nbn:de:gbv:3:1-171133730-16691561019210131-18/fragment/page=0001">
+        <mets:fptr FILEID="uuid-1afac903-df42-4ca2-b310-eec8101a1f4a" />
+        <mets:fptr FILEID="FULLTEXT_00000001" />
+      </mets:div>
+      <mets:div ID="uuid-26e1bb70-5bad-4e82-930a-54a480212f69" TYPE="page" ORDER="2" ORDERLABEL="[Seite 2]" CONTENTIDS="urn:nbn:de:gbv:3:1-171133730-16691561019210131-18/fragment/page=0002">
+        <mets:fptr FILEID="uuid-d7e29f60-6efe-46d7-8d72-4bb1a2fe4a2e" />
+        <mets:fptr FILEID="FULLTEXT_00000002" />
+      </mets:div>
+      <mets:div ID="uuid-3a1fe843-9603-4705-91fb-3e95b10b35fa" TYPE="page" ORDER="3" ORDERLABEL="[Seite 3]" CONTENTIDS="urn:nbn:de:gbv:3:1-171133730-16691561019210131-18/fragment/page=0003">
+        <mets:fptr FILEID="uuid-cbbacd95-f0b8-4beb-be2b-d4cae2ff52a5" />
+        <mets:fptr FILEID="FULLTEXT_00000003" />
+      </mets:div>
+      <mets:div ID="uuid-6469644a-5caf-4818-a440-bb3c6cefb893" TYPE="page" ORDER="4" ORDERLABEL="[Seite 4]" CONTENTIDS="urn:nbn:de:gbv:3:1-171133730-16691561019210131-18/fragment/page=0004">
+        <mets:fptr FILEID="uuid-0bc8a8ed-f3b8-440a-b8f0-59c58866e5b0" />
+        <mets:fptr FILEID="FULLTEXT_00000004" />
+      </mets:div>
+      <mets:div ID="uuid-9aa7d96a-1c62-46c9-b4b1-28f464068f13" TYPE="page" ORDER="5" ORDERLABEL="[Seite 5]" CONTENTIDS="urn:nbn:de:gbv:3:1-171133730-16691561019210131-18/fragment/page=0005">
+        <mets:fptr FILEID="uuid-3db01f68-e741-410e-bac2-a058860d8387" />
+        <mets:fptr FILEID="FULLTEXT_00000005" />
+      </mets:div>
+      <mets:div ID="uuid-1d34c898-7836-42ca-acd3-5da5ea71925b" TYPE="page" ORDER="6" ORDERLABEL="[Seite 6]" CONTENTIDS="urn:nbn:de:gbv:3:1-171133730-16691561019210131-18/fragment/page=0006">
+        <mets:fptr FILEID="uuid-0a15564a-44ca-4fa1-9c81-4749e3068c21" />
+        <mets:fptr FILEID="FULLTEXT_00000006" />
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+  <mets:structMap TYPE="LOGICAL">
+    <mets:div ID="uuid-bd6f03f7-5679-4763-85f6-b4f85c0d3094" TYPE="newspaper">
+      <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175908" LOCTYPE="URL" />
+      <mets:div ID="uuid-6016d26c-3763-415b-92d1-1262f158d324" TYPE="year" ORDERLABEL="1921" LABEL="1921">
+        <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175907" LOCTYPE="URL" />
+        <mets:div TYPE="month" ORDERLABEL="1921-01" ID="uuid-f8f5fba7-7bab-486e-87dc-926b0cc4b491" ADMID="uuid-1e12968b-637d-331d-a20f-a924069d3912 uuid-11f5eb3a-85e7-34da-8d1d-c8dac090079a">
+          <mets:div TYPE="day" ID="uuid-34d91f23-048c-4c4c-9de9-f6b347c05a2b" ORDERLABEL="1921-01-31">
+            <mets:div ADMID="admd1" ID="uuid-66b4db94-8d30-4278-8529-ce44b5398bab" DMDID="uuid-d2b658c4-c882-3d53-9575-791db910d232" TYPE="issue" ORDER="1" LABEL="Nr. 25">
+              <mets:fptr FILEID="PDF_16691561019210131" />
+              <mets:div ADMID="admd1" ID="uuid-5a0577be-3e5d-47e8-b03b-2ddd14c2393a" DMDID="uuid-8b448422-34d5-3d38-9623-4f0ee2f562e6" TYPE="additional" ORDER="1" LABEL="Beilage zum Klassenkampf." />
+              <mets:div ADMID="admd1" ID="uuid-f4e5816e-a1c1-4ff1-a04b-cdef6323ec01" DMDID="uuid-0d6258b2-961c-3bda-b09f-4d7714faf597" TYPE="additional" ORDER="2" LABEL="Leben Wissen Kunst" />
+            </mets:div>
+          </mets:div>
+        </mets:div>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+  <mets:structLink>
+    <mets:smLink xlink:to="uuid-6b7701e1-77e7-4371-ab7a-51bbc32dffab" xlink:from="uuid-66b4db94-8d30-4278-8529-ce44b5398bab" />
+    <mets:smLink xlink:to="uuid-26e1bb70-5bad-4e82-930a-54a480212f69" xlink:from="uuid-66b4db94-8d30-4278-8529-ce44b5398bab" />
+    <mets:smLink xlink:to="uuid-3a1fe843-9603-4705-91fb-3e95b10b35fa" xlink:from="uuid-66b4db94-8d30-4278-8529-ce44b5398bab" />
+    <mets:smLink xlink:to="uuid-6469644a-5caf-4818-a440-bb3c6cefb893" xlink:from="uuid-66b4db94-8d30-4278-8529-ce44b5398bab" />
+    <mets:smLink xlink:to="uuid-9aa7d96a-1c62-46c9-b4b1-28f464068f13" xlink:from="uuid-66b4db94-8d30-4278-8529-ce44b5398bab" />
+    <mets:smLink xlink:to="uuid-1d34c898-7836-42ca-acd3-5da5ea71925b" xlink:from="uuid-66b4db94-8d30-4278-8529-ce44b5398bab" />
+    <mets:smLink xlink:to="uuid-9aa7d96a-1c62-46c9-b4b1-28f464068f13" xlink:from="uuid-5a0577be-3e5d-47e8-b03b-2ddd14c2393a" />
+    <mets:smLink xlink:to="uuid-1d34c898-7836-42ca-acd3-5da5ea71925b" xlink:from="uuid-f4e5816e-a1c1-4ff1-a04b-cdef6323ec01" />
+  </mets:structLink>
+</mets:mets>

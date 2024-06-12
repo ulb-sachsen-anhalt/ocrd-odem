@@ -1,40 +1,26 @@
 """Processing OCR-Pipeline"""
 
+import abc
+import collections
+import configparser
+import logging
 import os
 import re
 import shutil
 import subprocess
 import sys
 import time
+import typing
 
-from abc import (
-    ABC, abstractmethod
-)
-from collections import (
-    OrderedDict
-)
-from configparser import (
-    ConfigParser,
-)
-from typing import (
-    Dict,
-    List,
-    Tuple
-)
+from pathlib import Path
 
-import lxml.etree as ET
 import requests
-from digiflow import (
-    write_xml_file,
-)
 
-from .odem_commons import (
-    ODEMException,
-)
-from .ocr_model import (
-    TextLine,
-    get_lines,
-)
+import digiflow as df
+import lxml.etree as ET
+
+from .odem_commons import ODEMException
+from .ocr_model import TextLine, get_lines
 
 NAMESPACES = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}
 
@@ -42,6 +28,8 @@ NAMESPACES = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}
 DEFAULT_LANGTOOL_URL = 'http://localhost:8010'
 DEFAULT_LANGTOOL_LANG = 'de-DE'
 DEFAULT_LANGTOOL_RULE = 'GERMAN_SPELLER_RULE'
+
+STEP_MOVE_PATH_TARGET = 'path_target'
 
 # python process-wrapper
 os.environ['OMP_THREAD_LIMIT'] = '1'
@@ -53,26 +41,24 @@ class StepException(Exception):
     """Mark Step Execution Exception"""
 
 
-class StepI(ABC):
+class StepI(abc.ABC):
     """step that handles input data"""
 
-    @abstractmethod
+    @abc.abstractmethod
     def execute(self):
         """Step Action to execute"""
 
     @property
-    def path_in(self):
+    def path_in(self) -> Path:
         """Input data path"""
         return self._path_in
 
     @path_in.setter
     def path_in(self, path_in):
-        if not os.path.exists(path_in):
-            raise RuntimeError('path {} invalid'.format(path_in))
-        if not isinstance(path_in, str):
-            path_in = str(path_in)
+        path_in = Path(path_in).absolute()
+        if not path_in.exists():
+            raise StepException(f"Path '{path_in}' invalid!")
         self._path_in = path_in
-        (self._path_in_dir, self._filename) = split_path(self._path_in)
 
 
 class StepIO(StepI):
@@ -81,18 +67,18 @@ class StepIO(StepI):
     def __init__(self):
         super().__init__()
         self._filename = None
-        self._path_in_dir = None
-        self._path_next = None
-        self._path_next_dir = None
+        self._path_next: Path = None
 
     @property
-    def path_next(self):
+    def path_next(self) -> Path:
         """calculate path_out for result data"""
+        if self._path_next is None:
+            self._path_next = Path(self._path_in)
         return self._path_next
 
     @path_next.setter
     def path_next(self, path_next):
-        self._path_next = path_next
+        self._path_next = Path(path_next).absolute()
 
 
 class StepIOExtern(StepIO):
@@ -102,8 +88,11 @@ class StepIOExtern(StepIO):
         super().__init__()
         self._cmd = None
         self._bin = None
+        self._env = None
+        if not isinstance(params, dict):
+            raise StepException(f"Invalid params '{params}'!")
         try:
-            self._params = OrderedDict(params)
+            self._params = collections.OrderedDict(params)
             if 'type' in self._params:
                 del self._params['type']
         except ValueError as exc:
@@ -111,7 +100,14 @@ class StepIOExtern(StepIO):
             raise StepException(msg) from exc
 
     def execute(self):
-        subprocess.run(self.cmd, shell=True, check=True)
+        try:
+            completed_process = subprocess.run(self.cmd, 
+                                               shell=True, 
+                                               capture_output=True,
+                                               check=True, env=self._env)
+            return completed_process
+        except subprocess.SubprocessError as sub_exc:
+            raise StepException(sub_exc) from sub_exc
 
     @property
     def cmd(self):
@@ -126,14 +122,18 @@ class StepIOExtern(StepIO):
 class StepTesseract(StepIOExtern):
     """Central Call to Tessract OCR"""
 
-    def __init__(self, params: Dict):
+    def __init__(self, params: typing.Dict):
         super().__init__(params)
         self._bin = 'tesseract'
+        self._tessdata = None
         if 'tesseract_bin' in self._params:
             self._bin = self._params['tesseract_bin']
             del self._params['tesseract_bin']
         if 'path_out_dir' in self._params:
             self._path_out_dir = self._params['path_out_dir']
+        if 'tessdata_prefix' in self._params:
+            self._tessdata = self._params['tessdata_prefix']
+            del self._params['tessdata_prefix']
 
         # common process params
         # where to store alto data, dpi and language
@@ -155,8 +155,9 @@ class StepTesseract(StepIOExtern):
         if 'output_configs' in self._params:
             del self._params['output_configs']
         # otherwise output
-        outputs = [k for k, v in self._params.items() if v is None and k in [
-            'alto', 'txt', 'pdf']]
+        outputs = [k for k, v in self._params.items() 
+                   if v is None and k in ['alto', 'txt', 'pdf']
+                  ]
         if len(outputs) > 0:
             for output in outputs:
                 del self._params[output]
@@ -166,17 +167,9 @@ class StepTesseract(StepIOExtern):
 
     @property
     def path_next(self):
-        _filename = self._filename
-        if not _filename.endswith('.xml'):
-            _filename += '.xml'
-
-        # calculate abs path
-        self._path_next = None
-        if self._path_next_dir:
-            self._path_next = os.path.join(self._path_next_dir, _filename)
-        else:
-            self._path_next = os.path.join(self._path_in_dir, _filename)
-        return self._path_next
+        if not self._path_in.suffix == '.xml':
+            return self._path_in.with_suffix('.xml')
+        return self._path_in
 
     @property
     def cmd(self):
@@ -184,6 +177,8 @@ class StepTesseract(StepIOExtern):
         Update Command with specific in/output paths
         """
         out_file = os.path.splitext(self.path_next)[0]
+        if self._tessdata is not None:
+            self._env = {"TESSDATA_PREFIX" : self._tessdata}
         self._cmd = f"{self._bin} {self.path_in} {out_file} {dict2line(self._params, ' ')}"
         return self._cmd
 
@@ -204,7 +199,7 @@ def parse_dict(the_dict):
 class StepPostReplaceChars(StepIO):
     """Postprocess: Replace suspicious character sequences"""
 
-    def __init__(self, params: Dict):
+    def __init__(self, params: typing.Dict):
         super().__init__()
         dict_chars = params.get('dict_chars', '{}')
         self.dict_chars = parse_dict(dict_chars)
@@ -267,7 +262,7 @@ class StepPostReplaceChars(StepIO):
 class StepPostReplaceCharsRegex(StepPostReplaceChars):
     """Postprocess: Replace via regular expressions"""
 
-    def __init__(self, params: Dict):
+    def __init__(self, params: typing.Dict):
         super().__init__({})
         self.pattern = params['pattern']
         self.old = params['old']
@@ -276,7 +271,6 @@ class StepPostReplaceCharsRegex(StepPostReplaceChars):
 
     def _replace(self, lines):
         for line in lines:
-            # for string_element in self.regex_replacements:
             matcher = re.search(self.pattern, line)
             if matcher:
                 match = matcher.group(1)
@@ -287,31 +281,25 @@ class StepPostReplaceCharsRegex(StepPostReplaceChars):
 
 
 class StepPostMoveAlto(StepIO):
-    """Postprocess: move Alto file to original scandata folder"""
+    """Postprocess: move output to desired directory"""
 
-    def __init__(self, params: Dict):
+    def __init__(self, params: typing.Dict):
         super().__init__()
-        if 'path_target' in params:
-            self._path_out = params['path_target']
+        if STEP_MOVE_PATH_TARGET in params:
+            self._path_out = Path(params[STEP_MOVE_PATH_TARGET])
 
     def execute(self):
-        shutil.copyfile(self._path_in, self._path_out)
-
-    @property
-    def path_next(self):
-        (folder, _) = split_path(self._path_out)
-        return os.path.join(folder, self._filename + '.xml')
-
-    @path_next.setter
-    def path_next(self, path_target):
-        (folder, _) = split_path(path_target)
-        self._path_out = os.path.join(folder, self._filename + '.xml')
+        if not self._path_out.exists():
+            self._path_out.mkdir(parents=True)
+        path_target = self._path_out / self._path_in.name
+        os.rename(self._path_in, path_target)
+        self._path_next = path_target
 
 
 class StepPostRemoveFile(StepI):
     """Cleanup and remove temporal TIF-Files before they flood the Discs"""
 
-    def __init__(self, params: Dict):
+    def __init__(self, params: typing.Dict):
         super().__init__()
         self._file_removed = False
         self._suffix = params.get('file_suffix', 'tif')
@@ -331,7 +319,7 @@ class StepPostRemoveFile(StepI):
 class StepEstimateOCR(StepI):
     """Estimate OCR-Quality of current run by using Web-Service language-tool"""
 
-    def __init__(self, params: Dict):
+    def __init__(self, params: typing.Dict):
         super().__init__()
         self.service_url = params.get('service_url', DEFAULT_LANGTOOL_URL)
         self.lang = params.get('language', DEFAULT_LANGTOOL_LANG)
@@ -417,7 +405,7 @@ class StepEstimateOCR(StepI):
                 self.n_lines_out)
 
 
-def textlines2data(lines: List[TextLine], minlen: int = 2) -> Tuple:
+def textlines2data(lines: typing.List[TextLine], minlen: int = 2) -> typing.Tuple:
     """Transform text lines after preprocessing into data set"""
 
     non_empty_lines = [l.get_textline_content()
@@ -528,8 +516,7 @@ class StepPostprocessALTO(StepIO):
 
         # remove empty sections
         drop_empty_contents(xml_root)
-
-        write_xml_file(xml_root, self.path_in)
+        df.write_xml_file(xml_root, self.path_in)
 
     @staticmethod
     def _append_source_infos(descr_tree, file_name, namespace):
@@ -587,73 +574,69 @@ def profile(func):
 
 def run_pipeline(*args):
     """Wrap run ocr-pipeline"""
-    _start_path = args[0][0]
-    if isinstance(_start_path, Tuple):
-        _start_path = _start_path[0]
-    _number = args[0][1]
-    _total = args[0][2]
-    _logger = args[0][3]
-    _step_config: ConfigParser = args[0][4]
-    batch_label = f"{_number:04d}/{_total:04d}"
-    next_in = _start_path
-    file_name = os.path.basename(_start_path)
+    start_path = args[0][0]
+    if isinstance(start_path, typing.Tuple):
+        start_path = start_path[0]
+    n_curr = args[0][1]
+    n_total = args[0][2]
+    the_logger: logging.Logger = args[0][3]
+    step_config: configparser.ConfigParser = args[0][4]
+    batch_label = f"{n_curr:04d}/{n_total:04d}"
+    next_in = start_path
+    file_name = os.path.basename(start_path)
     outcome = (file_name, MARK_MISSING_ESTM)
 
     try:
-        the_steps = init_steps(_step_config)
-        _logger.info("[%s] [%s] start pipeline with %d steps",
+        the_steps = init_steps(step_config)
+        the_logger.info("[%s] [%s] start pipeline with %d steps",
                      file_name, batch_label, len(the_steps))
-
-        # for step in STEPS:
         for step in the_steps:
             step.path_in = next_in
             if isinstance(step, StepIOExtern):
-                _logger.debug("[%s] call '%s'", file_name, step.cmd)
-            # the actual execution
+                the_logger.debug("[%s] call '%s' (env: '%s')", 
+                              file_name, step.cmd, step._env)
             profile_result = profile(step.execute)
-            # log current step
             if hasattr(step, 'statistics') and len(step.statistics) > 0:
                 if profile_result and isinstance(step, StepEstimateOCR):
                     outcome = (file_name,) + step.statistics
-                _logger.info("[%s] %s, statistics: %s",
+                the_logger.info("[%s] %s, statistics: %s",
                              file_name, profile_result,
                              str(step.statistics))
             else:
-                _logger.debug("[%s] %s", file_name, profile_result)
-            # prepare next step
+                the_logger.debug("[%s] %s", file_name, profile_result)
             if hasattr(step, 'path_next') and step.path_next is not None:
-                _logger.debug("[%s] step.path_next: %s",
+                the_logger.debug("[%s] step.path_next: %s",
                               file_name, step.path_next)
                 next_in = step.path_next
 
-        _logger.info("[%s] [%s] done pipeline with %d steps",
+        the_logger.info("[%s] [%s] done pipeline with %d steps",
                      file_name, batch_label, len(the_steps))
         return outcome
 
     # if a single step-based images crashes, we will go on anyway
-    except StepException as exc:
-        _logger.error(
-            "[%s] %s: %s",
-            _start_path,
-            step,
-            exc.args[0])
+    except (StepException) as exc:
+        the_logger.error(
+            "[%s] %s: %s", start_path, step, exc.args)
         raise ODEMException(exc) from exc
         # OSError means something really severe, like
         # non-existing resources/connections that will harm
         # all images in pipeline, therefore signal halt
     except OSError as os_exc:
-        _logger.critical("[%s] %s: %s", _start_path, step, str(os_exc))
+        the_logger.critical("[%s] %s: %s", start_path, step, os_exc.args)
+        sys.exit(1)
+    except Exception as generic_exc:
+        the_logger.critical("[%s] %s: %s", start_path, step, generic_exc.args)
         sys.exit(1)
 
 
-def init_steps(steps_config: ConfigParser) -> List[StepI]:
+def init_steps(steps_config: configparser.ConfigParser) -> typing.List[StepI]:
     """
     Create all configured steps (each time again)
     labeled like 'step_01', step_02' and so forth
     to ensure their sequence
     """
 
-    steps: List[StepI] = []
+    steps: typing.List[StepI] = []
     step_configs = [
         s for s in steps_config.sections() if s.startswith('step_')]
     sorted_steps = sorted(step_configs, key=lambda s: int(s.split('_')[1]))
@@ -667,14 +650,6 @@ def init_steps(steps_config: ConfigParser) -> List[StepI]:
         except KeyError as _:
             raise StepException(f"Unknown step '{the_type}'!")
     return steps
-
-
-def split_path(path_in):
-    """create tuple with dirname and filename (minus ext)"""
-    path_in_folder = os.path.dirname(path_in)
-    file_name_in = path_in.split(os.sep)[-1]
-    filename = file_name_in.split('.')[0]
-    return (path_in_folder, filename)
 
 
 def dict2line(the_dict, the_glue):

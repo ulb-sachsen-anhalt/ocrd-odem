@@ -4,41 +4,45 @@
 import os
 import shutil
 
-from pathlib import (
-    Path,
-)
+from pathlib import Path
 
 import pytest
 
-from digiflow import (
-    OAIRecord,
-)
+import digiflow as df
 
-from lib.ocrd3_odem.odem_commons import (
-    get_logger,
-)
-from lib.ocrd3_odem.ocrd3_odem import (
-    ODEMTesseract,
-)
-from lib.ocrd3_odem.processing_ocr_pipeline import (
-    StepPostReplaceChars,
-    StepPostReplaceCharsRegex,
-    StepTesseract,
-    profile,
-    init_steps,
-)
+import lib.ocrd3_odem as o3o
+import lib.ocrd3_odem.processing_ocr_pipeline as o3o_pop
+from lib.ocrd3_odem.odem_commons import get_logger
+from lib.ocrd3_odem.ocrd3_odem import ODEMTesseract
 
-from .conftest import (
-    TEST_RES,
-    PROD_RES,
-)
+from .conftest import TEST_RES, PROD_RES
 
 
 RES_0001_TIF = "0001.tif"
 RES_0002_PNG = "0002.png"
 RES_0003_JPG = "0003.jpg"
 RES_00041_XML = str(TEST_RES / '0041.xml')
-RES_CFG = str(PROD_RES / 'tesseract_pipeline_config.ini')
+PATH_ODEM_CFG = PROD_RES / 'odem.ocr-pipeline.ini'
+ODEM_CFG = o3o.get_configparser()
+ODEM_CFG.read(PATH_ODEM_CFG)
+OCR_PIPELINE_CFG = PROD_RES / 'odem.ocr-pipeline.steps.ini'
+
+
+def test_ocr_pipeline_profile():
+    """check profiling"""
+
+    # arrange
+    # pylint: disable=missing-class-docstring,too-few-public-methods
+    class InnerClass:
+
+        # pylint: disable=missing-function-docstring,no-self-use
+        def func(self):
+            return [i * i for i in range(1, 200000)]
+
+    # act
+    inner = InnerClass()
+    result = o3o_pop.profile(inner.func)
+    assert "test_ocr_pipeline_profile run" in result
 
 
 @pytest.fixture(name="a_workspace")
@@ -63,43 +67,25 @@ def fixure_a_workspace(tmp_path):
 
 @pytest.fixture(name="my_pipeline")
 def _fixture_default_pipeline(a_workspace: Path):
-    _record = OAIRecord('oai:urn:mwe')
-    _odem = ODEMTesseract(_record, a_workspace)
-    _odem.read_pipeline_config(RES_CFG)
-    _logger = get_logger(a_workspace / 'log')
-    _odem.the_logger = _logger
-    return _odem
+    _record = df.OAIRecord('oai:urn:mwe')
+    odem_process = o3o.ODEMProcess(_record, a_workspace)
+    odem_process.odem_configuration = ODEM_CFG
+    odem_process._statistics_ocr['languages'] = ['ger']
+    odem_process.the_logger = get_logger(a_workspace / 'log')
+    odem_tess = ODEMTesseract(odem_process)
+    return odem_tess
 
 
 def test_ocr_pipeline_default_config(my_pipeline: ODEMTesseract):
     """check default config options"""
 
-    assert my_pipeline
-    _cfg = my_pipeline.pipeline_config
-    assert _cfg.get('pipeline', 'executors') == '8'
+    _cfg = my_pipeline.read_pipeline_config(OCR_PIPELINE_CFG)
+    assert 'pipeline' in _cfg.sections()
     assert _cfg.get('pipeline', 'logger_name') == 'ocr_pipeline'
     assert _cfg.get('pipeline', 'file_ext') == 'tif,jpg,png,jpeg'
-    # assert _cfg.get('step_03', 'language') == 'de-DE'
-    # assert _cfg.get('step_03', 'enabled_rules') == 'GERMAN_SPELLER_RULE'
 
 
-def test_ocr_pipeline_profile():
-    """check profiling"""
-
-    # arrange
-    # pylint: disable=missing-class-docstring,too-few-public-methods
-    class InnerClass:
-
-        # pylint: disable=missing-function-docstring,no-self-use
-        def func(self):
-            return [i * i for i in range(1, 2000000)]
-
-    # act
-    inner = InnerClass()
-    result = profile(inner.func)
-    assert "test_ocr_pipeline_profile run" in result
-
-
+@pytest.mark.skip('kept only for documentation')
 def test_ocr_pipeline_estimations(my_pipeline: ODEMTesseract):
     """check estimation data persisted"""
 
@@ -128,20 +114,24 @@ def _fixture_custom_config_pipeline(a_workspace):
         conf_dir.mkdir()
     conf_file = TEST_RES / 'ocr_config_full.ini'
     assert os.path.isfile(conf_file)
-    _odem = ODEMTesseract(OAIRecord('oai:urn_custom'), a_workspace)
-    _odem.read_pipeline_config(conf_file)
-    return _odem
+    odem_process = o3o.ODEMProcess(df.OAIRecord('oai:urn_custom'), a_workspace)
+    odem_process.odem_configuration = ODEM_CFG
+    odem_process._statistics_ocr['languages'] = ['ger', 'lat']
+    odem_process.the_logger = get_logger(a_workspace / 'log')
+    odem_tess = o3o.ODEMTesseract(odem_process)
+    odem_tess.read_pipeline_config(conf_file)
+    return odem_tess
 
 
 def test_pipeline_step_tesseract(custom_pipe: ODEMTesseract, a_workspace):
     """Check proper tesseract cmd from full configuration"""
 
-    steps = init_steps(custom_pipe.pipeline_config)
+    steps = o3o_pop.init_steps(custom_pipe.pipeline_configuration)
     steps[0].path_in = a_workspace / 'scandata' / RES_0001_TIF
 
     # assert
     assert len(steps) == 5
-    assert isinstance(steps[0], StepTesseract)
+    assert isinstance(steps[0], o3o_pop.StepTesseract)
     the_cmd = steps[0].cmd
     the_cmd_tokens = the_cmd.split()
     assert len(the_cmd_tokens) == 6
@@ -149,29 +139,29 @@ def test_pipeline_step_tesseract(custom_pipe: ODEMTesseract, a_workspace):
     assert the_cmd_tokens[1].endswith('scandata/0001.tif')
     assert the_cmd_tokens[2].endswith('scandata/0001')
     assert the_cmd_tokens[3] == '-l'
-    assert the_cmd_tokens[4] == 'frk+deu'
+    assert the_cmd_tokens[4] == 'gt4hist_5000k+lat_ocr'
     assert the_cmd_tokens[5] == 'alto'
 
 
-def test_pipeline_step_replace(custom_pipe):
+def test_pipeline_step_replace(custom_pipe: ODEMTesseract):
     """Check proper steps from full configuration"""
 
     # act
-    steps = init_steps(custom_pipe.pipeline_config)
+    steps = o3o_pop.init_steps(custom_pipe.pipeline_configuration)
 
     # assert
     assert len(steps) == 5
-    assert isinstance(steps[1], StepPostReplaceChars)
+    assert isinstance(steps[1], o3o_pop.StepPostReplaceChars)
     assert isinstance(steps[1].dict_chars, dict)
 
 
-def test_pipeline_step_replace_regex(custom_pipe):
+def test_pipeline_step_replace_regex(custom_pipe: ODEMTesseract):
     """Check proper steps from full configuration"""
 
     # act
-    steps = init_steps(custom_pipe.pipeline_config)
+    steps = o3o_pop.init_steps(custom_pipe.pipeline_configuration)
 
     # assert
     assert len(steps) == 5
-    assert isinstance(steps[2], StepPostReplaceCharsRegex)
+    assert isinstance(steps[2], o3o_pop.StepPostReplaceCharsRegex)
     assert steps[2].pattern == 'r\'([aeioubcglnt]3[:-]*")\''

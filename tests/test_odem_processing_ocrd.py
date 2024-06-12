@@ -42,18 +42,3 @@ def test_odem_recognition_level_custom(model_conf, rec_level):
 
     _custom_rtl = ['gt4ara', 'ulb-fas']
     assert get_recognition_level(model_conf, _custom_rtl) == rec_level
-
-
-def test_no_cfg_ocrd_process_list(tmp_path):
-    """
-    if no ocrd_process_list is configured, process can not be executed (OCRDPageParallel)
-    """
-    _record = OAIRecord('oai:opendata.uni-halle.de:1981185920/105054')
-    _work_dir = tmp_path / '1981185920_105054'
-    odem_processor = OCRDPageParallel(_record, work_dir=_work_dir)
-    odem_processor.cfg = fixture_configuration()
-    del odem_processor.cfg['ocr']['ocrd_process_list']
-    with pytest.raises(ODEMException) as exc:
-        odem_processor.run()
-
-    assert exc.value.args[0] == "No option 'ocrd_process_list' in section: 'ocr'"

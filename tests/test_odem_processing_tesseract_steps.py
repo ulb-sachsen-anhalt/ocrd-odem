@@ -5,42 +5,24 @@ import json
 import os
 import shutil
 
-from unittest import (
-    mock
-)
+from pathlib import Path
+from unittest import mock
 
 import lxml.etree as ET
 
 import requests
-
 import pytest
 
-from lib.ocrd3_odem.processing_ocr_pipeline import (
-    NAMESPACES,
-    StepIO,
-    StepTesseract,
-    StepPostMoveAlto,
-    StepPostReplaceChars,
-    StepPostReplaceCharsRegex,
-    StepPostRemoveFile,
-    StepException,
-    StepEstimateOCR,
-    StepPostprocessALTO,
-    analyze,
-    get_lines,
-    textlines2data,
-)
+import lib.ocrd3_odem.processing_ocr_pipeline as o3o_pop
 
-from .conftest import (
-    TEST_RES,
-)
+from .conftest import TEST_RES
 
 
 def test_stepio_not_initable():
     """StepIO cant be instantiated"""
 
     with pytest.raises(TypeError) as exec_info:
-        StepIO()    # pylint: disable=abstract-class-instantiated
+        o3o_pop.StepIO()    # pylint: disable=abstract-class-instantiated
     assert "Can't instantiate" in str(exec_info.value)
 
 
@@ -58,18 +40,18 @@ def fixture_path_existing(tmp_path):
     path1.write_bytes(bytearray([120, 3, 255, 0, 100]))
     path2 = max_dir / TIF_002
     path2.write_bytes(bytearray([120, 3, 255, 0, 100]))
-    return str(max_dir)
+    return max_dir
 
 
-def test_step_tesseract_list_langs(max_dir):
+def test_step_tesseract_list_langs(max_dir: Path):
     """Tesseract list-langs"""
 
     # arrange
     args = {'--list-langs': None}
 
     # act
-    step = StepTesseract(args)
-    step.path_in = os.path.join(max_dir, TIF_001)
+    step = o3o_pop.StepTesseract(args)
+    step.path_in = max_dir / TIF_001
 
     # assert
     assert ' --list-langs' in step.cmd
@@ -82,11 +64,11 @@ def test_step_tesseract_path_out_folder(max_dir):
     args = {'-l': 'deu', 'alto': None}
 
     # act
-    step = StepTesseract(args)
+    step = o3o_pop.StepTesseract(args)
     step.path_in = os.path.join(max_dir, TIF_001)
 
     # assert
-    assert '001.xml' in step.path_next
+    assert step.path_next.name == '001.xml' 
 
 
 def test_step_tesseract_change_input(max_dir):
@@ -96,7 +78,7 @@ def test_step_tesseract_change_input(max_dir):
     args = {'-l': 'deu', 'alto': None}
 
     # act
-    step = StepTesseract(args)
+    step = o3o_pop.StepTesseract(args)
     step.path_in = os.path.join(max_dir, TIF_001)
 
     # assert
@@ -120,7 +102,7 @@ def test_step_tesseract_change_input_with_dir(max_dir):
     args = {'-l': 'deu', 'alto': None}
 
     # act
-    step = StepTesseract(args)
+    step = o3o_pop.StepTesseract(args)
     step.path_in = os.path.join(max_dir, TIF_001)
 
     # assert
@@ -137,16 +119,15 @@ def test_step_tesseract_change_input_with_dir(max_dir):
 
 
 def test_step_tesseract_invalid_params(max_dir):
-    """Tesseract path to write result"""
+    """Check nature of params"""
 
     # act
-    with pytest.raises(StepException) as excinfo:
-        StepTesseract(max_dir)
+    with pytest.raises(o3o_pop.StepException) as excinfo:
+        o3o_pop.StepTesseract(max_dir)
 
     # assert
     actual_exc_text = str(excinfo.value)
-    assert 'Invalid Dictionary for arguments provided' in actual_exc_text
-    assert '"need more than 1 value to unpack" !' in actual_exc_text
+    assert 'Invalid params' in actual_exc_text
 
 
 def test_step_tesseract_full_args(max_dir):
@@ -159,7 +140,7 @@ def test_step_tesseract_full_args(max_dir):
     args = {'--dpi': 470, '-l': 'ulbfrk', 'alto': None}
 
     # act
-    step = StepTesseract(args)
+    step = o3o_pop.StepTesseract(args)
     step.path_in = os.path.join(max_dir, TIF_001)
 
     # assert
@@ -167,7 +148,7 @@ def test_step_tesseract_full_args(max_dir):
     output_xml = os.path.splitext(os.path.join(max_dir, TIF_001))[0]
     cmd = f'tesseract {input_tif} {output_xml} --dpi 470 -l ulbfrk alto'
     assert cmd == step.cmd
-    assert step.path_next.endswith('001.xml')
+    assert step.path_next.name == '001.xml'
 
 
 def test_step_tesseract_different_configurations(max_dir):
@@ -177,7 +158,7 @@ def test_step_tesseract_different_configurations(max_dir):
     args = {'-l': 'frk_ulbzd1', 'alto': None, 'txt': None}
 
     # act
-    step = StepTesseract(args)
+    step = o3o_pop.StepTesseract(args)
     step.path_in = os.path.join(max_dir, TIF_001)
 
     # assert
@@ -187,24 +168,22 @@ def test_step_tesseract_different_configurations(max_dir):
     assert tesseract_cmd == step.cmd
 
 
-def test_step_copy_alto_back(max_dir):
+def test_step_copy_alto_back(max_dir: Path):
     """
     Move ALTO file back to where we started
     Preserve filename, only switch directory
     """
 
     # arrange
-    path_target = '/tmp/500_gray00001_st.tif'
+    path_target = max_dir.parent / 'FULLTEXT'
+    step = o3o_pop.StepPostMoveAlto({'path_target': path_target})
 
     # act
-    step = StepPostMoveAlto({})
-    step.path_in = os.path.join(max_dir, TIF_001)
-    step.path_next = path_target
+    step.path_in = max_dir / TIF_001
     step.execute()
 
     # assert
-    assert os.path.join(max_dir, TIF_001) == step.path_in
-    assert step.path_next == '/tmp/001.xml'
+    assert step.path_next == path_target / TIF_001
     assert os.path.exists(step.path_next)
 
 
@@ -215,7 +194,7 @@ def test_step_replace():
     src = str(TEST_RES / '500_gray00003.xml')
     dict_chars = {'ſ': 's', 'ic)': 'ich'}
     params = {'dict_chars': dict_chars, 'must_backup': True}
-    step = StepPostReplaceChars(params)
+    step = o3o_pop.StepPostReplaceChars(params)
     step.path_in = src
 
     lines = ['<String ID="string_405" WC="0.96" CONTENT="geweſen"/>']
@@ -244,7 +223,7 @@ def fixture_empty_ocr(tmpdir):
 def test_step_replace_with_empty_alto(empty_ocr):
     """Determine behavior for invalid input data"""
 
-    step = StepPostReplaceChars({'dict_chars': {'ſ': 's'}})
+    step = o3o_pop.StepPostReplaceChars({'dict_chars': {'ſ': 's'}})
     step.path_in = empty_ocr
 
     # act
@@ -274,7 +253,7 @@ def test_replaced_file_written(tmp_500_gray):
 
     # arrange
     params = _provide_replace_params()
-    step = StepPostReplaceChars(params)
+    step = o3o_pop.StepPostReplaceChars(params)
 
     # act
     step.path_in = tmp_500_gray
@@ -298,7 +277,7 @@ def test_replaced_file_statistics(tmp_500_gray):
     """test statistics available"""
 
     # arrange
-    step = StepPostReplaceChars(_provide_replace_params())
+    step = o3o_pop.StepPostReplaceChars(_provide_replace_params())
     step.path_in = tmp_500_gray
 
     # act
@@ -316,7 +295,7 @@ def test_regex_replacements(tmp_500_gray):
 
     # arrange
     params = {'pattern': r'([aeioubcglnt]3[:-]*")', 'old': '3', 'new': 's'}
-    step = StepPostReplaceCharsRegex(params)
+    step = o3o_pop.StepPostReplaceCharsRegex(params)
 
     # act
     step.path_in = tmp_500_gray
@@ -347,18 +326,21 @@ def test_remove_failed():
     """Test remove failed since file is missing"""
 
     # arrange
-    step = StepPostRemoveFile({'file_suffix': 'tif'})
+    step = o3o_pop.StepPostRemoveFile({'file_suffix': 'tif'})
 
     # act
-    with pytest.raises(RuntimeError):
+    with pytest.raises(o3o_pop.StepException) as step_err:
         step.path_in = 'qwerrwe.tif'
+
+    # assert
+    assert "qwerrwe.tif' invalid!" in step_err.value.args[0]
 
 
 def test_remove_succeeded(max_dir):
     """Test remove success"""
 
     # arrange
-    step = StepPostRemoveFile({'file_suffix': 'tif'})
+    step = o3o_pop.StepPostRemoveFile({'file_suffix': 'tif'})
 
     # act
     step.path_in = os.path.join(max_dir, TIF_001)
@@ -386,7 +368,7 @@ def test_stepestimateocr_analyze():
     ]
 
     # act
-    actual = analyze(results)
+    actual = o3o_pop.analyze(results)
 
     # assert
     assert actual[0] == 42.723
@@ -412,7 +394,7 @@ def test_estimate_handle_large_wtr():
     ]
 
     # act
-    actual = analyze(results)
+    actual = o3o_pop.analyze(results)
 
     # assert
     assert actual[0] == 49.677
@@ -430,7 +412,7 @@ def test_step_estimateocr_empty_alto(empty_ocr):
     Modified: in this (rare) case, just do nothing, do *not* raise any Exception
     """
 
-    step = StepEstimateOCR({})
+    step = o3o_pop.StepEstimateOCR({})
     step.path_in = empty_ocr
 
     # act
@@ -446,7 +428,7 @@ def test_service_down(mock_requests):
 
     # arrange
     params = {'service_url': 'http://localhost:8010/v2/check'}
-    step = StepEstimateOCR(params)
+    step = o3o_pop.StepEstimateOCR(params)
     mock_requests.side_effect = requests.ConnectionError
 
     # assert
@@ -461,8 +443,8 @@ def test_step_estimateocr_textline_conversions():
 
     # pylint: disable=protected-access
     xml_data = ET.parse(test_data)
-    lines = get_lines(xml_data)
-    (_, n_lines, _, _, n_lines_out) = textlines2data(lines)
+    lines = o3o_pop.get_lines(xml_data)
+    (_, n_lines, _, _, n_lines_out) = o3o_pop.textlines2data(lines)
 
     assert n_lines == 360
     assert n_lines_out == 346
@@ -490,7 +472,7 @@ def test_step_estimateocr_lines_and_tokens_err_ratio(mock_requests):
               'language': 'de-DE',
               'enabled_rules': 'GERMAN_SPELLER_RULE'
               }
-    step = StepEstimateOCR(params)
+    step = o3o_pop.StepEstimateOCR(params)
     step.path_in = test_data
 
     # act
@@ -514,7 +496,7 @@ def test_step_estimateocr_lines_and_tokens_hit_ratio(mock_requests):
               'language': 'de-DE',
               'enabled_rules': 'GERMAN_SPELLER_RULE'
               }
-    step = StepEstimateOCR(params)
+    step = o3o_pop.StepEstimateOCR(params)
     step.path_in = test_data
 
     # act
@@ -546,7 +528,7 @@ def test_stepestimate_invalid_data(mock_request):
               'language': 'de-DE',
               'enabled_rules': 'GERMAN_SPELLER_RULE'
               }
-    step = StepEstimateOCR(params)
+    step = o3o_pop.StepEstimateOCR(params)
     step.path_in = data_path
 
     # act
@@ -561,13 +543,13 @@ def test_stepestimate_invalid_data(mock_request):
 def _fixture_altov4(tmp_path):
     test_data = os.path.join(TEST_RES / '16331011.xml')
     prev_root = ET.parse(test_data).getroot()
-    prev_strings = prev_root.findall('.//alto:String', NAMESPACES)
+    prev_strings = prev_root.findall('.//alto:String', o3o_pop.NAMESPACES)
     assert len(prev_strings) == 275
     dst_path = tmp_path / "16331011.xml"
     shutil.copy(test_data, dst_path)
 
     # act within a fixture
-    step = StepPostprocessALTO()
+    step = o3o_pop.StepPostprocessALTO()
     step.path_in = str(dst_path)
     step.execute()
 
@@ -577,7 +559,7 @@ def _fixture_altov4(tmp_path):
 def test_clear_empty_content(altov4_xml):
     """Ensure no more empty Strings exist"""
 
-    all_strings = altov4_xml.findall('.//alto:String', NAMESPACES)
+    all_strings = altov4_xml.findall('.//alto:String', o3o_pop.NAMESPACES)
     # assert about 20 Strings (from 275, cf. fixture)
     # have been dropped due emptyness
     assert len(all_strings) == 254
@@ -586,13 +568,13 @@ def test_clear_empty_content(altov4_xml):
 def test_process_alto_file_identifier_set(altov4_xml):
     """Ensure expected fileIdentifier present
     """
-    assert altov4_xml.find('.//alto:fileIdentifier', NAMESPACES).text == '16331011'
+    assert altov4_xml.find('.//alto:fileIdentifier', o3o_pop.NAMESPACES).text == '16331011'
 
 
 def test_process_alto_filename_set(altov4_xml):
     """Ensure expected fileName present
     """
-    assert altov4_xml.find('.//alto:fileName', NAMESPACES).text == '16331011.xml'
+    assert altov4_xml.find('.//alto:fileName', o3o_pop.NAMESPACES).text == '16331011.xml'
 
 
 def test_clear_empty_lines_with_spatiums(tmp_path):
@@ -600,12 +582,12 @@ def test_clear_empty_lines_with_spatiums(tmp_path):
 
     test_data = os.path.join(TEST_RES / '16331001.xml')
     prev_root = ET.parse(test_data).getroot()
-    prev_strings = prev_root.findall('.//alto:String', NAMESPACES)
+    prev_strings = prev_root.findall('.//alto:String', o3o_pop.NAMESPACES)
     # original ALTO output
     assert len(prev_strings) == 1854
     dst_path = tmp_path / "16331001.xml"
     shutil.copy(test_data, dst_path)
-    step = StepPostprocessALTO()
+    step = o3o_pop.StepPostprocessALTO()
     step.path_in = dst_path
 
     # act
@@ -613,17 +595,17 @@ def test_clear_empty_lines_with_spatiums(tmp_path):
 
     # assert
     xml_root = ET.parse(dst_path).getroot()
-    all_strings = xml_root.findall('.//alto:String', NAMESPACES)
+    all_strings = xml_root.findall('.//alto:String', o3o_pop.NAMESPACES)
     # line with 2 empty strings and SP in between
     line_with_sps = xml_root.findall(
-        './/alto:TextLine[@ID="line_2"]', NAMESPACES)
+        './/alto:TextLine[@ID="line_2"]', o3o_pop.NAMESPACES)
     assert not line_with_sps
     # assert many Strings have been dropped due emptyness
     assert len(all_strings) == 1673
     assert xml_root.find(
         './/alto:fileIdentifier',
-        NAMESPACES).text == '16331001'
-    assert xml_root.find('.//alto:fileName', NAMESPACES).text == '16331001.xml'
+        o3o_pop.NAMESPACES).text == '16331001'
+    assert xml_root.find('.//alto:fileName', o3o_pop.NAMESPACES).text == '16331001.xml'
 
 
 @pytest.fixture(name="pipeline_odem_xml")
@@ -633,7 +615,7 @@ def _fixture_pipeline_odem_xml(tmp_path):
     shutil.copy(test_data, dst_path)
 
     # act within a fixture
-    step = StepPostprocessALTO({'page_prefix': ''})
+    step = o3o_pop.StepPostprocessALTO({'page_prefix': ''})
     step.path_in = dst_path
     step.execute()
 
@@ -643,7 +625,7 @@ def _fixture_pipeline_odem_xml(tmp_path):
 def test_process_odem_result_identifier_set(pipeline_odem_xml):
     """Ensure expected fileIdentifier present
     """
-    file_ident = pipeline_odem_xml.find('.//alto:fileIdentifier', NAMESPACES)
+    file_ident = pipeline_odem_xml.find('.//alto:fileIdentifier', o3o_pop.NAMESPACES)
     assert file_ident is not None
     assert file_ident.text == 'urn+nbn+de+gbv+3+1-121915-p0159-6_ger'
 
@@ -651,7 +633,7 @@ def test_process_odem_result_identifier_set(pipeline_odem_xml):
 def test_process_odem_filename_set(pipeline_odem_xml):
     """Ensure expected fileName present
     """
-    txt_filename = pipeline_odem_xml.find('.//alto:fileName', NAMESPACES)
+    txt_filename = pipeline_odem_xml.find('.//alto:fileName', o3o_pop.NAMESPACES)
     assert txt_filename is not None
     assert txt_filename.text == 'urn+nbn+de+gbv+3+1-121915-p0159-6_ger.xml'
 
@@ -659,5 +641,34 @@ def test_process_odem_filename_set(pipeline_odem_xml):
 def test_process_odem_page_id(pipeline_odem_xml):
     """Ensure expected fileName present
     """
-    page_id = pipeline_odem_xml.find('.//alto:Page', NAMESPACES).attrib['ID']
+    page_id = pipeline_odem_xml.find('.//alto:Page', o3o_pop.NAMESPACES).attrib['ID']
     assert page_id == 'urn+nbn+de+gbv+3+1-121915-p0159-6_ger'
+
+
+def test_step_replace_regex(tmp_path):
+    """Ensure 'J's have reduced"""
+
+    # arrange
+    alto_in = TEST_RES / '1516514412012_175762_00000003.xml'
+    tmp_file = shutil.copyfile(alto_in, tmp_path / alto_in.name)
+    assert tmp_file.exists()
+    with open(tmp_file, encoding='utf-8') as reader:
+        text_in = reader.readlines()
+    J_in = sum((1 for l in text_in if 'J' in l))
+    assert J_in == 185
+    params = {
+        'pattern': r'(J[cdhmn]\w*)', 'old': 'J', 'new': 'I'
+    }
+
+    step = o3o_pop.StepPostReplaceCharsRegex(params)
+    step.path_in = tmp_file
+    
+    # act
+    step.execute()
+    
+    # assert
+    assert len(step._replacements) == 9
+    with open(step.path_next, encoding='utf-8') as reader:
+        text_out = reader.readlines()
+    J_out = sum((1 for l in text_out if 'J' in l))
+    assert J_out == 172

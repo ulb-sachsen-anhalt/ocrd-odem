@@ -320,7 +320,7 @@ if __name__ == "__main__":
         local_ident,
         CLIENT.host, EXECUTORS
     )
-    PROCESS.cfg = CFG
+    PROCESS.odem_configuration = CFG
 
     try:
         if os.path.exists(req_dst_dir):

@@ -123,7 +123,7 @@ if __name__ == "__main__":
         PROCESS: ODEMProcess = ODEMProcess.create(proc_type, None, req_dst_dir, EXECUTORS)
 
         PROCESS.local_mode = True
-        PROCESS.cfg = CFG
+        PROCESS.odem_configuration = CFG
         PROCESS.the_logger = LOGGER
         local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
         PROCESS._statistics_ocr[STATS_KEY_N_PAGES] = len(local_images)
