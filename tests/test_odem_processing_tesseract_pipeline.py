@@ -25,7 +25,7 @@ RES_00041_XML = str(TEST_RES / '0041.xml')
 PATH_ODEM_CFG = PROD_RES / 'odem.ocr-pipeline.ini'
 ODEM_CFG = o3o.get_configparser()
 ODEM_CFG.read(PATH_ODEM_CFG)
-OCR_PIPELINE_CFG = PROD_RES / 'odem.ocr-pipeline.steps.ini'
+OCR_PIPELINE_CFG_PATH = PROD_RES / 'odem.ocr-pipeline.steps.ini'
 
 
 def test_ocr_pipeline_profile():
@@ -62,6 +62,17 @@ def fixure_a_workspace(tmp_path):
     shutil.copyfile(RES_00041_XML, path_scan_0001)
     shutil.copyfile(RES_00041_XML, path_scan_0002)
     shutil.copyfile(RES_00041_XML, path_scan_0003)
+    # create some stub tesseract config files
+    res_cnt_mapping = ODEM_CFG.get(o3o.CFG_SEC_OCR, o3o.CFG_KEY_RES_VOL)
+    tmp_tokens = res_cnt_mapping.split(':')
+    model_dir = tmp_path / Path(tmp_tokens[0]).name
+    model_dir.mkdir()
+    configs = ['gt4hist_5000k.traineddata', 'lat_ocr.traineddata']
+    for config in configs:
+        modelconf_path = model_dir / config
+        with open(modelconf_path, 'wb') as writer:
+            writer.write(b'\x1234')
+    ODEM_CFG.set(o3o.CFG_SEC_OCR, o3o.CFG_KEY_RES_VOL, f'{model_dir}:{tmp_tokens[1]}')
     return tmp_path
 
 
@@ -79,7 +90,7 @@ def _fixture_default_pipeline(a_workspace: Path):
 def test_ocr_pipeline_default_config(my_pipeline: ODEMTesseract):
     """check default config options"""
 
-    _cfg = my_pipeline.read_pipeline_config(OCR_PIPELINE_CFG)
+    _cfg = my_pipeline.read_pipeline_config(OCR_PIPELINE_CFG_PATH)
     assert 'pipeline' in _cfg.sections()
     assert _cfg.get('pipeline', 'logger_name') == 'ocr_pipeline'
     assert _cfg.get('pipeline', 'file_ext') == 'tif,jpg,png,jpeg'
