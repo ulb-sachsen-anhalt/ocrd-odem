@@ -596,12 +596,12 @@ def run_pipeline(*args):
                 the_logger.debug("[%s] call '%s' (env: '%s')", 
                               file_name, step.cmd, step._env)
             profile_result = profile(step.execute)
-            if hasattr(step, 'statistics') and len(step.statistics) > 0:
+            if hasattr(step, 'statistics'):
                 if profile_result and isinstance(step, StepEstimateOCR):
                     outcome = (file_name,) + step.statistics
                 the_logger.info("[%s] %s, statistics: %s",
                              file_name, profile_result,
-                             str(step.statistics))
+                             step.statistics)
             else:
                 the_logger.debug("[%s] %s", file_name, profile_result)
             if hasattr(step, 'path_next') and step.path_next is not None:
