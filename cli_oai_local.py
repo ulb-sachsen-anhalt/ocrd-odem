@@ -191,13 +191,13 @@ if __name__ == "__main__":
         ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
         if ocr_results is None or len(ocr_results) == 0:
             raise ODEMException(f"process run error: {record.identifier}")
-        ocr_results[odem.STATS_KEY_N_EXECS] = EXECUTORS
         odem_process.calculate_statistics_ocr(ocr_results)
+        odem_process._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
         odem_process.link_ocr_files()
+        odem_process.postprocess_ocr()
         if CREATE_PDF:
             odem_process.create_pdf()
-        odem_process.postprocess_ocr()
         if CREATE_PDF:
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
