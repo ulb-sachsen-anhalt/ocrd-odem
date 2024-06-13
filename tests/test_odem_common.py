@@ -58,7 +58,7 @@ def test_merge_args_from_cli():
 
 
 def test_merge_model_mappings_with_subsequent_calls():
-    """Behavior when CLI arg for a specific is called
+    """Behavior when CLI arg for specific model is called
     more than once => ensure nothing is duplicated
     """
 

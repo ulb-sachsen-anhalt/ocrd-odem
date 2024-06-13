@@ -66,7 +66,7 @@ def fixure_a_workspace(tmp_path):
     shutil.copyfile(RES_00041_XML, path_scan_0002)
     shutil.copyfile(RES_00041_XML, path_scan_0003)
     # create some stub tesseract config files
-    res_cnt_mapping = ODEM_CFG.get(odem.CFG_SEC_OCR, odem.CFG_KEY_RES_VOL)
+    res_cnt_mapping = ODEM_CFG.get(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL)
     tmp_tokens = res_cnt_mapping.split(':')
     model_dir = tmp_path / Path(tmp_tokens[0]).name
     model_dir.mkdir()
@@ -75,7 +75,7 @@ def fixure_a_workspace(tmp_path):
         modelconf_path = model_dir / config
         with open(modelconf_path, 'wb') as writer:
             writer.write(b'\x1234')
-    ODEM_CFG.set(odem.CFG_SEC_OCR, odem.CFG_KEY_RES_VOL, f'{model_dir}:{tmp_tokens[1]}')
+    ODEM_CFG.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL, f'{model_dir}:{tmp_tokens[1]}')
     return tmp_path
 
 
@@ -808,7 +808,7 @@ def test_process_odem_page_id(pipeline_odem_xml):
     assert page_id == 'urn+nbn+de+gbv+3+1-121915-p0159-6_ger'
 
 
-def test_step_replace_regex(tmp_path):
+def test_step_replace_regex_literal(tmp_path):
     """Ensure 'J's have reduced"""
 
     # arrange
@@ -830,6 +830,39 @@ def test_step_replace_regex(tmp_path):
     step.execute()
     
     # assert
+    assert hasattr(step, 'statistics')
+    assert len(step.statistics) == 9
+    assert len(step._replacements) == 9
+    with open(step.path_next, encoding='utf-8') as reader:
+        text_out = reader.readlines()
+    J_out = sum((1 for l in text_out if 'J' in l))
+    assert J_out == 172
+
+
+def test_step_replace_regex_from_configuration(tmp_path):
+    """Ensure 'J's have reduced"""
+
+    # arrange
+    alto_in = TEST_RES / '1516514412012_175762_00000003.xml'
+    tmp_file = shutil.copyfile(alto_in, tmp_path / alto_in.name)
+    assert tmp_file.exists()
+    with open(tmp_file, encoding='utf-8') as reader:
+        text_in = reader.readlines()
+    J_in = sum((1 for l in text_in if 'J' in l))
+    assert J_in == 185
+    cfg_parser = odem.get_configparser()
+    cfg_parser.read(OCR_PIPELINE_CFG_PATH)
+    step_keys = cfg_parser['step_02'].keys()
+    params = {k: cfg_parser['step_02'][k] for k in step_keys}
+    step = o3o_pop.StepPostReplaceCharsRegex(params)
+    step.path_in = tmp_file
+    
+    # act
+    step.execute()
+    
+    # assert
+    assert hasattr(step, 'statistics')
+    assert len(step.statistics) == 9
     assert len(step._replacements) == 9
     with open(step.path_next, encoding='utf-8') as reader:
         text_out = reader.readlines()

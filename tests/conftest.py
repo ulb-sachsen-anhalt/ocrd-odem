@@ -28,12 +28,13 @@ def fixture_configuration():
     config = odem.get_configparser()
     config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     config.set('global', 'data_fields', 'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
-    config.set('mets', 'blacklist_file_groups', 'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')
-    config.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back')
-    config.set('mets', 'blacklist_physical_container_labels',
+    config.set(odem.CFG_SEC_METS, 'blacklist_file_groups', 'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')
+    config.set(odem.CFG_SEC_METS, 'blacklist_logical_containers', 'cover_front,cover_back')
+    config.set(odem.CFG_SEC_METS, 'blacklist_physical_container_labels',
                'Auftragszettel,Colorchecker,Leerseite,Rückdeckel,Deckblatt,Vorderdeckel,Illustration')
-    config.set('ocr', 'strip_tags', 'alto:Shape,alto:Processing,alto:Illustration,alto:GraphicalElement')
-    config.set('ocr', 'ocrd_baseimage', 'ocrd/all:2022-08-15')
+    config.set(odem.CFG_SEC_METS, 'agents', 'DFG-OCRD3-ODEM_ocrd/all:2022-08-15')
+    config.set(odem.CFG_SEC_OCR, 'strip_tags', 'alto:Shape,alto:Processing,alto:Illustration,alto:GraphicalElement')
+    config.set(odem.CFG_SEC_OCR, 'ocrd_baseimage', 'ocrd/all:2022-08-15')
     return config
 
 
@@ -73,7 +74,7 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     record = df.OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
     _oproc = odem.ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     _oproc.odem_configuration = fixture_configuration()
-    _oproc.odem_configuration.set('ocr', odem.CFG_KEY_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    _oproc.odem_configuration.set('ocr', odem.CFG_SEC_OCR_OPT_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     _oproc.ocr_files = [os.path.join(trgt_alto, a)
                         for a in os.listdir(trgt_alto)]
     _oproc.mets_file = str(trgt_mets)

@@ -26,7 +26,7 @@ import digiflow.digiflow_metadata as dfm
 
 from .odem_commons import (
     CFG_SEC_OCR,
-    CFG_KEY_RES_VOL,
+    CFG_SEC_OCR_OPT_RES_VOL,
     DEFAULT_RTL_MODELS,
     FILEGROUP_OCR,
     KEY_LANGUAGES,
@@ -303,7 +303,7 @@ class ODEMProcess:
     def _is_model_available(self, model) -> bool:
         """Determine whether model is available"""
 
-        resource_dir_mappings = self.odem_configuration.getdict(CFG_SEC_OCR, CFG_KEY_RES_VOL, fallback={})
+        resource_dir_mappings = self.odem_configuration.getdict(CFG_SEC_OCR, CFG_SEC_OCR_OPT_RES_VOL, fallback={})
         for host_dir, _ in resource_dir_mappings.items():
             training_file = host_dir + '/' + model
             if os.path.exists(training_file):
@@ -455,7 +455,7 @@ class ODEMProcess:
     def postprocess_mets(self):
         """wrap work related to processing METS/MODS"""
 
-        postprocess_mets(self.mets_file, self.odem_configuration.get('ocr', 'ocrd_baseimage'))
+        postprocess_mets(self.mets_file, self.odem_configuration)
 
     def validate_metadata(self):
         """Forward (optional) validation concerning
@@ -703,7 +703,7 @@ class OCRDPageParallel(ODEMOCRPipeline):
         base_image = self.cfg.get('ocr', 'ocrd_baseimage')
         ocrd_process_list = self.cfg.getlist('ocr', 'ocrd_process_list')
         tesseract_model_rtl: typing.List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
-        ocrd_resources_volumes: typing.Dict[str, str] = self.cfg.getdict('ocr', CFG_KEY_RES_VOL, fallback={})
+        ocrd_resources_volumes: typing.Dict[str, str] = self.cfg.getdict('ocr', CFG_SEC_OCR_OPT_RES_VOL, fallback={})
 
         if self.odem.local_mode:
             container_name = os.path.basename(page_workdir)

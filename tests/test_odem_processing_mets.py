@@ -57,9 +57,8 @@ def _fixture_postprocessing_mets(tmp_path_factory):
     orig_file = TEST_RES / '198114125_part_mets.xml'
     trgt_mets = _workdir / 'test.xml'
     shutil.copyfile(orig_file, trgt_mets)
-    _cfg = fixture_configuration()
-    _cnt_base_image = _cfg.get('ocr', 'ocrd_baseimage')
-    odem.postprocess_mets(trgt_mets, _cnt_base_image)
+    odem_cfg = fixture_configuration()
+    odem.postprocess_mets(trgt_mets, odem_cfg)
     _root = ET.parse(trgt_mets).getroot()
     yield _root
 
@@ -71,8 +70,7 @@ def test_postprocess_mets_agent_entries_number_fits(post_mets):
 
 
 def test_postprocess_mets_agent_odem_fits(post_mets):
-    """Ensure METS agent odem has used OCR-D 
-    baseimage annotated"""
+    """Ensure METS agent odem wrote OCR-D baseimage note"""
 
     _agent_odem = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[3]
     _xp_agent_note = 'mets:note/text()'

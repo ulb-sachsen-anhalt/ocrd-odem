@@ -1,5 +1,6 @@
 """Encapsulate Implementations concerning METS/MODS handling"""
 
+import configparser
 import os
 import typing
 
@@ -7,18 +8,15 @@ import lxml.etree as ET
 import digiflow as df
 import digiflow.validate as dfv
 
-from lib.odem.odem_commons import (
-    FILEGROUP_IMG,
-    FILEGROUP_OCR,
-    ODEMException,
-)
+import lib.odem.odem_commons as odem_c
+
 
 TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
 TYPE_PRINTS_LOGICAL = ['monograph', 'volume', 'issue', 'additional']
-CATALOG_ULB  = 'gvk-ppn'
-CATALOG_ULB2 = 'kxp-ppn' # ULB ZD related
-CATALOG_OTH  = 'gbv-ppn'
-CATALOG_SWB  = 'swb-ppn' # SLUB OAI related
+CATALOG_ULB = 'gvk-ppn'
+CATALOG_ULB2 = 'kxp-ppn'  # ULB ZD related
+CATALOG_OTH = 'gbv-ppn'
+CATALOG_SWB = 'swb-ppn'  # SLUB OAI related
 CATALOGUE_IDENTIFIERS = [CATALOG_ULB, CATALOG_ULB2, CATALOG_OTH, CATALOG_SWB]
 RECORD_IDENTIFIER = 'recordIdentifier'
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
@@ -85,7 +83,7 @@ class ODEMMetadataInspecteur:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} found no type")
         _type = report.type
         # PICA types *might* contain trailing 'u' or 'v' = 'Afu'
-        if len(_type) in range (2,4) and _type[1] not in TYPE_PRINTS_PICA:
+        if len(_type) in range(2, 4) and _type[1] not in TYPE_PRINTS_PICA:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} no PICA type for OCR: {report.type}")
         elif len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
@@ -100,7 +98,7 @@ class ODEMMetadataInspecteur:
     def identifiers(self):
         """Get *all* identifiers"""
         return self._get_report().identifiers
-    
+
     @property
     def mods_record_identifier(self):
         """Get main MODS recordIdentifier if present
@@ -169,7 +167,7 @@ def fname_ident_pairs_from_metadata(mets_root, image_res, blacklist_structs, bla
     """Generate pairs of image label and URN
     that respect defined blacklisted physical
     and logical structures.
-    
+
     * first, get all required linking groups
     * second, start with file image final part and gather
       from this group all required informations on the way
@@ -256,7 +254,7 @@ def clear_filegroups(xml_file, removals):
 
 def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
     """Enrich given OCR-Files into XML tree
-    
+
     Returns number of linked files
     """
 
@@ -266,10 +264,10 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
     tag_file = f'{{{df.XMLNS["mets"]}}}file'
     tag_flocat = f'{{{df.XMLNS["mets"]}}}FLocat'
 
-    file_grp_fulltext = ET.Element(tag_file_group, USE=FILEGROUP_OCR)
+    file_grp_fulltext = ET.Element(tag_file_group, USE=odem_c.FILEGROUP_OCR)
     for _ocr_file in ocr_files:
         _file_name = os.path.basename(_ocr_file).split('.')[0]
-        new_id = FILEGROUP_OCR + '_' + _file_name
+        new_id = odem_c.FILEGROUP_OCR + '_' + _file_name
         file_ocr = ET.Element(
             tag_file, MIMETYPE="application/alto+xml", ID=new_id)
         flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
@@ -303,7 +301,7 @@ def _sanitize_namespaces(tree):
 
 def _link_fulltext(file_ident, xml_tree):
     file_name = file_ident.split('_')[-1]
-    xp_files = f'.//mets:fileGrp[@USE="{FILEGROUP_IMG}"]/mets:file'
+    xp_files = f'.//mets:fileGrp[@USE="{odem_c.FILEGROUP_IMG}"]/mets:file'
     file_grp_max_files = xml_tree.findall(xp_files, df.XMLNS)
     for file_grp_max_file in file_grp_max_files:
         _file_link = file_grp_max_file[0].attrib['{http://www.w3.org/1999/xlink}href']
@@ -327,26 +325,30 @@ def is_in(tokens: typing.List[str], label):
     return any(t in label for t in tokens)
 
 
-def postprocess_mets(mets_file, label_base_image):
-    """wrap work related to processing METS/MODS"""
+def postprocess_mets(mets_file, odem_config: configparser.ConfigParser):
+    """wrap work related to processing METS/MODS
+    Must be called *after* new PDF is enriched because
+    it clears all DErivans agents but the most recent
+    """
 
     mproc = df.MetsProcessor(mets_file)
-    _process_agents(mproc, label_base_image)
+    if odem_config.has_option(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_AGENTS):
+        agent_entries = odem_config.get(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_AGENTS).split(',')
+        for agent_entry in agent_entries:
+            if '##' in agent_entry:
+                agent_parts = agent_entry.split('##')
+                agent_name = agent_parts[0]
+                agent_note = agent_parts[1]
+                mproc.enrich_agent(agent_name, agent_note)
+            else:
+                mproc.enrich_agent(agent_entry)
+    _process_derivans_agents(mproc)
     _clear_provenance_links(mproc)
     mproc.write()
 
-def _process_agents(mproc, label_base_image):
-    # drop existing ODEM marks
-    # enrich *only* latest run
-    xp_txt_odem = f'//mets:agent[contains(mets:name,"{METS_AGENT_ODEM}")]'
-    agents_odem = mproc.tree.xpath(xp_txt_odem, namespaces=df.XMLNS)
-    for old_odem in agents_odem:
-        parent = old_odem.getparent()
-        parent.remove(old_odem)
-    mproc.enrich_agent(f"{METS_AGENT_ODEM}_{label_base_image}")
 
+def _process_derivans_agents(mproc):
     # ensure only very recent derivans agent entry exists
-
     xp_txt_derivans = '//mets:agent[contains(mets:name,"DigitalDerivans")]'
     derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=df.XMLNS)
     if len(derivanses) < 1:
@@ -372,7 +374,7 @@ def _clear_provenance_links(mproc):
         parent.remove(old_dv)
 
 
-def validate(mets_file:str, ddb_ignores, 
+def validate(mets_file: str, ddb_ignores,
              validate_ddb=False, digi_type='Aa'):
     """Forward METS-schema validation"""
 
@@ -383,11 +385,11 @@ def validate(mets_file:str, ddb_ignores,
             df.ddb_validation(path_mets=mets_file, digi_type=digi_type,
                               ignore_rules=ddb_ignores)
     except dfv.InvalidXMLException as err:
-            if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
-                raise ODEMException(str(err.args[0])) from err
-            raise err
+        if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
+            raise odem_c.ODEMException(str(err.args[0])) from err
+        raise err
     except df.DigiflowDDBException as ddb_err:
-        raise ODEMException(ddb_err.args[0]) from ddb_err
+        raise odem_c.ODEMException(ddb_err.args[0]) from ddb_err
     return True
 
 

@@ -11,7 +11,7 @@ import lxml.etree as ET
 import digiflow as df
 import ocrd_page_to_alto.convert as opta_c
 
-from lib.odem.processing.mets import FILEGROUP_OCR
+import lib.odem.odem_commons as odem_c
 
 
 # define propably difficult characters
@@ -107,7 +107,7 @@ def convert_to_output_format(work_dir_root):
     """
 
     _converted = []
-    _fulltext_dir = os.path.join(work_dir_root, FILEGROUP_OCR)
+    _fulltext_dir = os.path.join(work_dir_root, odem_c.FILEGROUP_OCR)
     if not os.path.isdir(_fulltext_dir):
         os.makedirs(_fulltext_dir, exist_ok=True)
     _results = list_files(work_dir_root, LOCAL_DIR_RESULT)
