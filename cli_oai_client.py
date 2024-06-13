@@ -4,56 +4,18 @@
 
 import argparse
 import ast
+import logging
 import os
 import shutil
 import sys
 import time
+import typing
 
-from logging import (
-    Logger
-)
-from typing import (
-    Optional,
-)
 import requests
+import digiflow as df
 
-from digiflow import (
-    OAIRecord,
-    LocalStore,
-    smtp_note,
-)
-
-import lib.ocrd3_odem as o3o
-
-from lib.resources_monitoring import ProcessResourceMonitorConfig
-from lib.resources_monitoring.ProcessResourceMonitor import ProcessResourceMonitor
-from lib.resources_monitoring.exceptions import (
-    NotEnoughDiskSpaceException,
-    VirtualMemoryExceededException,
-)
-from lib.ocrd3_odem.odem_commons import (
-    RECORD_IDENTIFIER,
-    RECORD_INFO,
-    RECORD_STATE,
-    RECORD_TIME,
-)
-from lib.ocrd3_odem import (
-    MARK_OCR_DONE,
-    MARK_OCR_OPEN,
-    MARK_OCR_FAIL,
-    ODEMProcess,
-    ODEMException,
-    get_configparser,
-    get_logger,
-)
-
-from cli_oai_server import (
-    MARK_DATA_EXHAUSTED_PREFIX
-)
-
-# number of OCR-D executors
-# when running parallel
-DEFAULT_EXECUTORS = 2
+import lib.odem as odem
+import lib.odem.monitoring as odem_rm
 
 # internal lock file
 # when running lock mode
@@ -67,14 +29,10 @@ LOGGER = None
 CFG = None
 
 
-class OAIRecordExhaustedException(Exception):
-    """Mark that given file contains no open records"""
-
-
 def trnfrm(row):
     """callback function"""
     oai_id = row['IDENTIFIER']
-    oai_record = OAIRecord(oai_id)
+    oai_record = df.OAIRecord(oai_id)
     return oai_record
 
 
@@ -84,7 +42,7 @@ def _notify(subject, message):
             conn = CFG.get('mail', 'connection')
             sender = CFG.get('mail', 'sender')
             recipiens = CFG.get('mail', 'recipients')
-            smtp_note(conn, subject, message, sender, recipiens)
+            df.smtp_note(conn, subject, message, sender, recipiens)
         except Exception as _exc:
             LOGGER.error(_exc)
     else:
@@ -104,7 +62,7 @@ class OAIServiceClient:
         self.record_data = {}
         self.oai_server_url = \
             f'http://{self.host}:{self.port}/{oai_record_list_label}'
-        self.logger: Optional[Logger] = None
+        self.logger: typing.Optional[logging.Logger] = None
 
     def _request_record(self):
         """Request next open OAI record from service
@@ -120,10 +78,10 @@ class OAIServiceClient:
         result = response.content
         if status == 404:
             # probably nothing more to do?
-            if MARK_DATA_EXHAUSTED_PREFIX in str(result):
+            if odem.MARK_DATA_EXHAUSTED_PREFIX in str(result):
                 if self.logger is not None:
                     self.logger.info(result)
-                raise OAIRecordExhaustedException(result.decode(encoding='utf-8'))
+                raise odem.OAIRecordExhaustedException(result.decode(encoding='utf-8'))
             # otherwise exit anyway
             sys.exit(1)
 
@@ -134,13 +92,13 @@ class OAIServiceClient:
             sys.exit(1)
         return response.json()
 
-    def get_record(self) -> OAIRecord:
+    def get_record(self) -> df.OAIRecord:
         """Return requested data
         as temporary OAI Record but
         store internally as plain dictionary"""
 
         self.record_data = self._request_record()
-        _oai_record = OAIRecord(self.record_data[RECORD_IDENTIFIER])
+        _oai_record = df.OAIRecord(self.record_data[odem.RECORD_IDENTIFIER])
         return _oai_record
 
     def update(self, status, urn, **kwargs):
@@ -148,24 +106,24 @@ class OAIServiceClient:
         if self.logger is not None:
             self.logger.debug("update record  status: %s urn: %s", status, urn)
         right_now = time.strftime(STATETIME_FORMAT)
-        self.record_data[RECORD_IDENTIFIER] = urn
-        self.record_data[RECORD_STATE] = status
-        self.record_data[RECORD_TIME] = right_now
+        self.record_data[odem.RECORD_IDENTIFIER] = urn
+        self.record_data[odem.RECORD_STATE] = status
+        self.record_data[odem.RECORD_TIME] = right_now
         # if we have to report somethin' new, then append it
         if kwargs is not None and len(kwargs) > 0:
             try:
-                prev_info = ast.literal_eval(self.record_data[RECORD_INFO])
+                prev_info = ast.literal_eval(self.record_data[odem.RECORD_INFO])
                 prev_info.update(kwargs)
-                self.record_data[RECORD_INFO] = f'{prev_info}'
+                self.record_data[odem.RECORD_INFO] = f'{prev_info}'
             except:
                 self.logger.error("failed to update info data for %s",
-                                  self.record_data[RECORD_IDENTIFIER])
+                                  self.record_data[odem.RECORD_IDENTIFIER])
         if self.logger is not None:
             self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
         return requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=60)
 
 
-CLIENT: Optional[OAIServiceClient] = None
+CLIENT: typing.Optional[OAIServiceClient] = None
 
 
 def oai_arg_parser(value):
@@ -233,7 +191,7 @@ if __name__ == "__main__":
     if not os.path.exists(CONF_FILE):
         print(f"[ERROR] no config at '{CONF_FILE}'! Halt execution!")
         sys.exit(1)
-    CFG = get_configparser()
+    CFG = odem.get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"[ERROR] unable to read config from '{CONF_FILE}! exit!")
@@ -254,7 +212,7 @@ if __name__ == "__main__":
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
-    LOGGER = get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
+    LOGGER = odem.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # respect possible lock
     if MUST_LOCK:
@@ -276,10 +234,9 @@ if __name__ == "__main__":
     EXECUTOR_ARGS = ARGS.executors
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
         CFG.set('ocr', 'n_executors', str(EXECUTOR_ARGS))
-    EXECUTORS = CFG.getint('ocr', 'n_executors', fallback=DEFAULT_EXECUTORS)
+    EXECUTORS = CFG.getint('ocr', 'n_executors', fallback=odem.DEFAULT_EXECUTORS)
     LOGGER.debug("local work_root: '%s', executors:%s, keep_res:%s, lock:%s",
                  LOCAL_WORK_ROOT, EXECUTORS, MUST_KEEP_RESOURCES, MUST_LOCK)
-
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
     HOST = CFG.get('oai-server', 'oai_server_url')
     PORT = CFG.getint('oai-server', 'oai_server_port')
@@ -295,7 +252,7 @@ if __name__ == "__main__":
             # if no open data records, lock worker and exit
             LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE_NAME)
             sys.exit(1)
-    except OAIRecordExhaustedException as _rec_ex:
+    except odem.OAIRecordExhaustedException as _rec_ex:
         err_dict = _rec_ex.args[0]
         LOGGER.warning("no data for '%s' from '%s':'%s': %s",
                        OAI_RECORD_FILE_NAME, HOST, PORT, err_dict)
@@ -303,24 +260,17 @@ if __name__ == "__main__":
         # don't remove lock file, human interaction required
         sys.exit(1)
 
-    STATE = MARK_OCR_OPEN
-
     rec_ident = record.identifier
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
-
-    proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
-    if proc_type is None:
-        LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
-    PROCESS: ODEMProcess = ODEMProcess.create(proc_type, record, req_dst_dir, EXECUTORS)
-
-    PROCESS.the_logger = LOGGER
-    PROCESS.the_logger.debug(
+    odem_process: odem.ODEMProcess = odem.ODEMProcess(record, req_dst_dir)
+    odem_process.the_logger = LOGGER
+    odem_process.the_logger.debug(
         "request %s from %s, %s part slots)",
         local_ident,
         CLIENT.host, EXECUTORS
     )
-    PROCESS.odem_configuration = CFG
+    odem_process.odem_configuration = CFG
 
     try:
         if os.path.exists(req_dst_dir):
@@ -329,79 +279,75 @@ if __name__ == "__main__":
         LOCAL_STORE_ROOT = CFG.get('global', 'local_store_root', fallback=None)
         if LOCAL_STORE_ROOT is not None:
             STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
-            STORE = LocalStore(STORE_DIR, req_dst_dir)
-            PROCESS.store = STORE
+            STORE = df.LocalStore(STORE_DIR, req_dst_dir)
+            odem_process.store = STORE
 
-        process_resource_monitor: ProcessResourceMonitor = ProcessResourceMonitor(
-            ProcessResourceMonitorConfig(
-                enable_resource_monitoring=CFG.getboolean('resource-monitoring', 'enable', fallback=False),
-                polling_interval=CFG.getfloat('resource-monitoring', 'polling_interval', fallback=1),
-                path_disk_usage=CFG.get('resource-monitoring', 'path_disk_usage', fallback='/home/ocr'),
-                factor_free_disk_space_needed=CFG.getfloat(
-                    'resource-monitoring',
-                    'factor_free_disk_space_needed',
-                    fallback=3.0
-                ),
-                max_vmem_percentage=CFG.getfloat('resource-monitoring', 'max_vmem_percentage', fallback=None),
-                max_vmem_bytes=CFG.getint('resource-monitoring', 'max_vmem_bytes', fallback=None),
-            ),
+        process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
+            odem_rm.from_configuration(CFG),
             LOGGER.error,
             CLIENT.update,
             _notify,
-            PROCESS.process_identifier,
+            odem_process.process_identifier,
             rec_ident
         )
 
         process_resource_monitor.check_vmem()
-        process_resource_monitor.monit_disk_space(PROCESS.load)
-        PROCESS.inspect_metadata()
+        process_resource_monitor.monit_disk_space(odem_process.load)
+        odem_process.inspect_metadata()
         if CFG.getboolean('mets', 'prevalidate', fallback=True):
-            PROCESS.validate_metadata()
-        PROCESS.clear_existing_entries()
-        PROCESS.language_modelconfig()
-        PROCESS.set_local_images()
+            odem_process.validate_metadata()
+        odem_process.clear_existing_entries()
+        odem_process.language_modelconfig()
+        odem_process.set_local_images()
 
-        outcomes = process_resource_monitor.monit_vmem(PROCESS.run)
-        PROCESS.calculate_statistics_ocr(outcomes)
-        _stats_ocr = PROCESS.statistics
-        PROCESS.the_logger.info("[%s] %s", local_ident, _stats_ocr)
+        # NEW NEW NEW
+        proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
+        odem_pipeline = odem.ODEMOCRPipeline.create(proc_type, odem_process)
+        odem_runner = odem.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
+        ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        if ocr_results is None or len(ocr_results) == 0:
+            raise odem.ODEMException(f"process run error: {record.identifier}")
+        ocr_results[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        odem_process.calculate_statistics_ocr(ocr_results)
+        _stats_ocr = odem_process.statistics
+        odem_process.the_logger.info("[%s] %s", local_ident, _stats_ocr)
         if ENRICH_METS_FULLTEXT:
-            PROCESS.link_ocr()
+            odem_process.link_ocr_files()
         if CREATE_PDF:
-            PROCESS.create_pdf()
-        PROCESS.postprocess_ocr()
+            odem_process.create_pdf()
+        odem_process.postprocess_ocr()
         if CREATE_PDF:
-            PROCESS.create_text_bundle_data()
-        PROCESS.postprocess_mets()
+            odem_process.create_text_bundle_data()
+        odem_process.postprocess_mets()
         if CFG.getboolean('mets', 'postvalidate', fallback=True):
-            PROCESS.validate_metadata()
+            odem_process.validate_metadata()
         if not MUST_KEEP_RESOURCES:
-            PROCESS.delete_before_export(LOCAL_DELETE_BEFORE_EXPORT)
-        PROCESS.export_data()
+            odem_process.delete_before_export(LOCAL_DELETE_BEFORE_EXPORT)
+        odem_process.export_data()
         # report outcome
-        _response = CLIENT.update(MARK_OCR_DONE, rec_ident, **_stats_ocr)
+        _response = CLIENT.update(odem.MARK_OCR_DONE, rec_ident, **_stats_ocr)
         status_code = _response.status_code
         if status_code == 200:
-            LOGGER.info("[%s] state %s set", PROCESS.process_identifier, status_code)
+            LOGGER.info("[%s] state %s set", odem_process.process_identifier, status_code)
         else:
-            LOGGER.error("[%s] update request failed: %s", PROCESS.process_identifier, status_code)
+            LOGGER.error("[%s] update request failed: %s", odem_process.process_identifier, status_code)
         # finale
-        PROCESS.clear_resources(remove_all=True)
+        odem_process.clear_resources(remove_all=True)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
-                    PROCESS.process_identifier, PROCESS.duration, EXECUTORS)
-    except o3o.ODEMNoTypeForOCRException as type_unknown:
+                    odem_process.process_identifier, odem_process.duration, EXECUTORS)
+    except odem.ODEMNoTypeForOCRException as type_unknown:
         LOGGER.warning("[%s] odem skips '%s'", 
-                       PROCESS.process_identifier,  type_unknown.args)
+                       odem_process.process_identifier,  type_unknown.args)
         err_dict = {'NoTypeForOCR': type_unknown.args[0]}
-        CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
-        PROCESS.clear_resources(remove_all=True)
-    except o3o.ODEMNoImagesForOCRException as not_ocrable:
+        CLIENT.update(status=odem.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
+        odem_process.clear_resources(remove_all=True)
+    except odem.ODEMNoImagesForOCRException as not_ocrable:
         LOGGER.warning("[%s] odem no ocrables '%s'", 
-                       PROCESS.process_identifier,  not_ocrable.args)
+                       odem_process.process_identifier,  not_ocrable.args)
         err_dict = {'NoImagesForOCR': not_ocrable.args[0]}
-        CLIENT.update(status=o3o.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
-        PROCESS.clear_resources(remove_all=True)
-    except ODEMException as _odem_exc:
+        CLIENT.update(status=odem.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
+        odem_process.clear_resources(remove_all=True)
+    except odem.ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
         # * contains no language mapping for mods:language
@@ -410,38 +356,39 @@ if __name__ == "__main__":
         # * contains no OCR results but should have at least one page
         err_dict = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
-                     "'%s'", PROCESS.process_identifier, err_dict)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, **err_dict)
+                     "'%s'", odem_process.process_identifier, err_dict)
+        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, **err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
-        PROCESS.clear_resources()
-    except NotEnoughDiskSpaceException as _space_exc:
+        odem_process.clear_resources()
+    except odem_rm.NotEnoughDiskSpaceException as _space_exc:
         err_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
-                     "'%s'", PROCESS.process_identifier, err_dict)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+                     "'%s'", odem_process.process_identifier, err_dict)
+        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
-                       PROCESS.process_identifier, LOCAL_WORK_ROOT)
-        PROCESS.clear_resources(remove_all=True)
-    except VirtualMemoryExceededException as _vmem_exc:
+                       odem_process.process_identifier, LOCAL_WORK_ROOT)
+        odem_process.clear_resources(remove_all=True)
+    except odem_rm.VirtualMemoryExceededException as _vmem_exc:
         err_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
-                     "'%s'", PROCESS.process_identifier, err_dict)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+                     "'%s'", odem_process.process_identifier, err_dict)
+        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
-                       PROCESS.process_identifier, LOCAL_WORK_ROOT)
-        PROCESS.clear_resources(remove_all=True)
+                       odem_process.process_identifier, LOCAL_WORK_ROOT)
+        odem_process.clear_resources(remove_all=True)
     except Exception as exc:
         # pick whole error context, since some exception's args are
         # rather mysterious, i.e. "13" for PermissionError
         err_dict = {str(exc): str(exc.args[0])}
         _name = type(exc).__name__
         LOGGER.error("[%s] odem fails with %s:"
-                     "'%s'", PROCESS.process_identifier, _name, err_dict)
-        CLIENT.update(status=MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+                     "'%s'", odem_process.process_identifier, _name, err_dict)
+# when running parallel
+        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
-        PROCESS.clear_resources()
+        odem_process.clear_resources()
         # don't remove lock file, human interaction required
         sys.exit(1)
 
@@ -452,4 +399,4 @@ if __name__ == "__main__":
     if MUST_LOCK and os.path.isfile(LOCK_FILE_PATH):
         os.remove(LOCK_FILE_PATH)
         LOGGER.info("[%s] finally removed %s, ready for next onslaught",
-                    PROCESS.process_identifier, LOCK_FILE_PATH)
+                    odem_process.process_identifier, LOCK_FILE_PATH)

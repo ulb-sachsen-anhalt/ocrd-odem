@@ -8,19 +8,19 @@ from typing import Iterator, List
 
 import psutil
 
-from lib.resources_monitoring import (RmConfig, RmDiskUsage, RmMemory, RmProcess, RmProcessFilter, RmProcessMemory,
-                                      RmResourceData)
+import lib.odem.monitoring as odem_m
+# from lib.ocrd3_odem.monitoring import (RmConfig, RmDiskUsage, RmMemory, RmProcess, RmProcessFilter, RmProcessMemory,
+                                    #   RmResourceData)
 
 
 class ResourceMonitor:
     __POLL_INTERVAL: Final[float] = 0.001  # 1 ms
 
-    def __init__(self, config: RmConfig):
-        self.__config: RmConfig = config
+    def __init__(self, config: odem_m.RmConfig):
+        self.__config: odem_m.RmConfig = config
         self.__is_running = False
         self.__enable_thread = False
         self.__thread: Optional[Thread] = None
-        self.__pid: Final[int] = os.getpid()
 
     @property
     def is_running(self):
@@ -50,7 +50,7 @@ class ResourceMonitor:
                 time_now: float = time.time()
                 time_diff: float = time_now - last_time
                 if time_diff >= self.__config.interval:
-                    data: RmResourceData = ResourceMonitor.get_resource_data(
+                    data: odem_m.RmResourceData = ResourceMonitor.get_resource_data(
                         self.__config.process_filter,
                         self.__config.disk_usage_path
                     )
@@ -71,7 +71,6 @@ class ResourceMonitor:
                         if process.pid == pid:
                             pid_matches = True
                             break
-
             name_matches: bool = False
             if cmd_patterns is not None:
                 with process.oneshot():
@@ -86,17 +85,17 @@ class ResourceMonitor:
         return list(filter(filter_processes, processes_all))
 
     @staticmethod
-    def get_processes(cmd_patterns: List[str] = None, pids: List[int] = None) -> List[RmProcess]:
+    def get_processes(cmd_patterns: List[str] = None, pids: List[int] = None) -> List[odem_m.RmProcess]:
 
-        def map_processes(process: psutil.Process) -> Optional[RmProcess]:
+        def map_processes(process: psutil.Process) -> Optional[odem_m.RmProcess]:
             try:
                 with process.oneshot():
                     memory_info = process.memory_full_info()
-                    memory = RmProcessMemory(
+                    memory = odem_m.RmProcessMemory(
                         vms=memory_info.vms,
                         percent=process.memory_percent()
                     )
-                    return RmProcess(
+                    return odem_m.RmProcess(
                         process=process,
                         memory=memory,
                         pid=process.pid,
@@ -112,14 +111,14 @@ class ResourceMonitor:
             return None
 
         processes_filtered: List[psutil.Process] = ResourceMonitor.get_processes_raw(cmd_patterns, pids)
-        processes_mapped: List[RmProcess] = list(map(map_processes, processes_filtered))
-        processes_not_none: List[RmProcess] = list(filter(lambda p: p is not None, processes_mapped))
+        processes_mapped: List[odem_m.RmProcess] = list(map(map_processes, processes_filtered))
+        processes_not_none: List[odem_m.RmProcess] = list(filter(lambda p: p is not None, processes_mapped))
         return processes_not_none
 
     @staticmethod
-    def get_virtual_memory() -> RmMemory:
+    def get_virtual_memory() -> odem_m.RmMemory:
         svmem = psutil.virtual_memory()
-        return RmMemory(
+        return odem_m.RmMemory(
             total=svmem.total,
             used=svmem.used,
             free=svmem.free,
@@ -127,9 +126,9 @@ class ResourceMonitor:
         )
 
     @staticmethod
-    def get_swap_memory() -> RmMemory:
+    def get_swap_memory() -> odem_m.RmMemory:
         smem = psutil.swap_memory()
-        return RmMemory(
+        return odem_m.RmMemory(
             total=smem.total,
             used=smem.used,
             free=smem.free,
@@ -137,13 +136,13 @@ class ResourceMonitor:
         )
 
     @staticmethod
-    def get_disk_usage(path: str) -> RmDiskUsage:
+    def get_disk_usage(path: str) -> odem_m.RmDiskUsage:
         abs_path = path if isabs(path) else abspath(path)
         du = psutil.disk_usage(abs_path)
-        return RmDiskUsage(
+        return odem_m.RmDiskUsage(
             absolute_path=abs_path,
             path=path,
-            memory=RmMemory(
+            memory=odem_m.RmMemory(
                 total=du.total,
                 used=du.used,
                 free=du.free,
@@ -152,17 +151,14 @@ class ResourceMonitor:
         )
 
     @staticmethod
-    def get_resource_data(process_filter: RmProcessFilter = None, disk_usage_path: str = '/') -> RmResourceData:
-        virtual_memory: RmMemory = ResourceMonitor.get_virtual_memory()
-        swap_memory: RmMemory = ResourceMonitor.get_swap_memory()
-
-        disk_usage: RmDiskUsage = ResourceMonitor.get_disk_usage(disk_usage_path)
-
+    def get_resource_data(process_filter: odem_m.RmProcessFilter = None, disk_usage_path: str = '/') -> odem_m.RmResourceData:
+        virtual_memory: odem_m.RmMemory = ResourceMonitor.get_virtual_memory()
+        swap_memory: odem_m.RmMemory = ResourceMonitor.get_swap_memory()
+        disk_usage: odem_m.RmDiskUsage = ResourceMonitor.get_disk_usage(disk_usage_path)
         if process_filter is None:
-            process_filter = RmProcessFilter()
-
-        processes: List[RmProcess] = ResourceMonitor.get_processes(process_filter.name_patterns, process_filter.pids)
-        data: RmResourceData = RmResourceData(
+            process_filter = odem_m.RmProcessFilter()
+        processes: List[odem_m.RmProcess] = ResourceMonitor.get_processes(process_filter.name_patterns, process_filter.pids)
+        data: odem_m.RmResourceData = odem_m.RmResourceData(
             pid=os.getpid(),
             disk_usage=disk_usage,
             processes=processes,

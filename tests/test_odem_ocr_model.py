@@ -6,9 +6,7 @@ import pytest
 
 import lxml.etree as ET
 
-from lib.ocrd3_odem.ocr_model import (
-    get_lines,
-)
+import lib.odem.ocr.ocr_model as odem_model
 
 from .conftest import (
     TEST_RES,
@@ -35,7 +33,7 @@ def test_get_lines_defaults(ocr_res, expected_lines):
     xml_data = ET.parse(res_alto)
 
     # act
-    lines = get_lines(xml_data)
+    lines = odem_model.get_lines(xml_data)
 
     # assert
     assert len(lines) == expected_lines
@@ -50,7 +48,7 @@ def test_get_lines_from_newspaper_alto_minlen():
     xml_data = ET.parse(res_alto)
 
     # act
-    lines = get_lines(xml_data, min_len=32)
+    lines = odem_model.get_lines(xml_data, min_len=32)
 
     # assert
     assert len(lines) == 225
@@ -66,7 +64,7 @@ def test_get_lines_page_empty_lines_but_word_exception():
 
     # act
     with pytest.raises(RuntimeError) as exc:
-        get_lines(xml_data)
+        odem_model.get_lines(xml_data)
 
     # assert
     assert "just words for line 'line_1617688885509_1198'" in str(

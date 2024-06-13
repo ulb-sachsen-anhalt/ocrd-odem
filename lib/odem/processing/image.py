@@ -2,13 +2,9 @@
 
 import os
 
-from pathlib import (
-    Path,
-)
+from pathlib import Path
 
-from PIL import (
-    Image
-)
+from PIL import Image
 
 # local file extension concerning image data
 EXT_JPG = '.jpg'

@@ -35,6 +35,9 @@ MARK_OCR_FAIL = 'ocr_fail'
 MARK_OCR_DONE = 'ocr_done'
 MARK_OCR_SKIP = 'ocr_skip'
 
+MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
+MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
+
 # how many parallel procs
 DEFAULT_EXECUTORS = 2
 
@@ -109,6 +112,10 @@ DEFAULT_LOG_CONFIG = os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
 
 class ODEMException(Exception):
     """Mark custom ODEM Workflow Exceptions"""
+
+
+class OAIRecordExhaustedException(Exception):
+    """Mark that given file contains no open records"""
 
 
 def get_configparser():

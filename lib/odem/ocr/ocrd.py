@@ -12,7 +12,7 @@ from digiflow import (
     run_profiled,
 )
 
-from .odem_commons import (
+from lib.odem.odem_commons import (
     FILEGROUP_IMG,
 )
 

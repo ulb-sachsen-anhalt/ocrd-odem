@@ -9,13 +9,14 @@ import sys
 
 import digiflow as df
 
-import lib.ocrd3_odem as o3o
+import lib.odem as odem
+import lib.odem.monitoring as odem_rm
 
-from lib.ocrd3_odem.odem_commons import (
+from lib.odem.odem_commons import (
     RECORD_IDENTIFIER,
     RECORD_INFO,
 )
-from lib.ocrd3_odem import (
+from lib.odem import (
     MARK_OCR_BUSY,
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
@@ -25,7 +26,6 @@ from lib.ocrd3_odem import (
     get_configparser,
     get_logger, 
 )
-from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
 
 DEFAULT_EXECUTORS = 2
 
@@ -168,19 +168,8 @@ if __name__ == "__main__":
             STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
             STORE = df.LocalStore(STORE_DIR, req_dst_dir)
             odem_process.store = STORE
-        process_resource_monitor: ProcessResourceMonitor = ProcessResourceMonitor(
-            ProcessResourceMonitorConfig(
-                enable_resource_monitoring=CFG.getboolean('resource-monitoring', 'enable', fallback=False),
-                polling_interval=CFG.getfloat('resource-monitoring', 'polling_interval', fallback=1),
-                path_disk_usage=CFG.get('resource-monitoring', 'path_disk_usage', fallback='/home/ocr'),
-                factor_free_disk_space_needed=CFG.getfloat(
-                    'resource-monitoring',
-                    'factor_free_disk_space_needed',
-                    fallback=3.0
-                ),
-                max_vmem_percentage=CFG.getfloat('resource-monitoring', 'max_vmem_percentage', fallback=None),
-                max_vmem_bytes=CFG.getint('resource-monitoring', 'max_vmem_bytes', fallback=None),
-            ),
+        process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
+            odem_rm.from_configuration(CFG),
             LOGGER.error,
             wrap_save_record_state,
             None,
@@ -197,15 +186,15 @@ if __name__ == "__main__":
         odem_process.set_local_images()
 
         # NEW NEW NEW
-        odem_pipeline = o3o.ODEMOCRPipeline.create(proc_type, odem_process)
-        odem_runner = o3o.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
-        OUTCOMES = process_resource_monitor.monit_vmem(odem_runner.run)
-        if OUTCOMES is None or len(OUTCOMES) == 0:
+        odem_pipeline = odem.ODEMOCRPipeline.create(proc_type, odem_process)
+        odem_runner = odem.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
+        ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        if ocr_results is None or len(ocr_results) == 0:
             raise ODEMException(f"process run error: {record.identifier}")
-        
-        odem_process.calculate_statistics_ocr(OUTCOMES)
+        ocr_results[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
-        odem_process.link_ocr()
+        odem_process.link_ocr_files()
         if CREATE_PDF:
             odem_process.create_pdf()
         odem_process.postprocess_ocr()
@@ -237,15 +226,15 @@ if __name__ == "__main__":
         # finale
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier, odem_process.duration, EXECUTORS)
-    except o3o.ODEMNoTypeForOCRException as type_unknown:
+    except odem.ODEMNoTypeForOCRException as type_unknown:
         # we don't ocr this one
         LOGGER.warning("[%s] odem skips '%s'", 
                        odem_process.process_identifier, type_unknown.args[0])
-        handler.save_record_state(record.identifier, o3o.MARK_OCR_SKIP)
-    except o3o.ODEMNoImagesForOCRException as not_ocrable:
+        handler.save_record_state(record.identifier, odem.MARK_OCR_SKIP)
+    except odem.ODEMNoImagesForOCRException as not_ocrable:
         LOGGER.warning("[%s] odem no ocrables '%s'", 
                        odem_process.process_identifier,  not_ocrable.args)
-        handler.save_record_state(record.identifier, o3o.MARK_OCR_SKIP)
+        handler.save_record_state(record.identifier, odem.MARK_OCR_SKIP)
     except ODEMException as _odem_exc:
         _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with: '%s'", odem_process.process_identifier, _err_args)

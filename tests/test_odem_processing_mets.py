@@ -9,8 +9,8 @@ import pytest
 import lxml.etree as ET
 import digiflow as df
 
-import lib.ocrd3_odem as o3o
-import lib.ocrd3_odem.processing_mets as o3o_pm
+import lib.odem as odem
+import lib.odem.processing.mets as o3o_pm
 
 from .conftest import (
     TEST_RES,
@@ -25,20 +25,20 @@ def _fixture_1981185920_44046():
     # arrange
     _ident = '1981185920_44046'
     file = TEST_RES / '1981185920_44046.xml'
-    inspc = o3o.ODEMMetadataInspecteur(file,
+    inspc = odem.ODEMMetadataInspecteur(file,
                                    process_identifier=_ident,
                                    cfg=fixture_configuration())
     yield inspc
 
 
-def test_odem_process_internal_identifier(inspecteur_44046: o3o.ODEMMetadataInspecteur):
+def test_odem_process_internal_identifier(inspecteur_44046: odem.ODEMMetadataInspecteur):
     """Ensure proper internal identifier calculated
     for say, logging"""
 
     assert inspecteur_44046.process_identifier == '1981185920_44046'
 
 
-def test_odem_process_catalog_identifier(inspecteur_44046: o3o.ODEMMetadataInspecteur):
+def test_odem_process_catalog_identifier(inspecteur_44046: odem.ODEMMetadataInspecteur):
     """Ensure proper external identifier present
     which will be used finally to name the export SAF
     """
@@ -59,7 +59,7 @@ def _fixture_postprocessing_mets(tmp_path_factory):
     shutil.copyfile(orig_file, trgt_mets)
     _cfg = fixture_configuration()
     _cnt_base_image = _cfg.get('ocr', 'ocrd_baseimage')
-    o3o.postprocess_mets(trgt_mets, _cnt_base_image)
+    odem.postprocess_mets(trgt_mets, _cnt_base_image)
     _root = ET.parse(trgt_mets).getroot()
     yield _root
 
@@ -111,10 +111,10 @@ def test_opendata_record_no_images_for_ocr():
     orig_file = TEST_RES / '1981185920_74357.xml'
     _oai_urn = 'oai:opendata.uni-halle.de:1981185920/74357'
     cfg = fixture_configuration()
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
-    with pytest.raises(o3o.ODEMNoImagesForOCRException) as odem_exc:
+    with pytest.raises(odem.ODEMNoImagesForOCRException) as odem_exc:
         inspc.metadata_report()
 
     # assert
@@ -130,10 +130,10 @@ def test_opendata_record_no_printwork():
     _oai_urn = 'oai:opendata.uni-halle.de:1981185920/79080'
     orig_file = TEST_RES / '1981185920_79080.xml'
     cfg = fixture_configuration()
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
-    with pytest.raises(o3o.ODEMNoTypeForOCRException) as odem_exc:
+    with pytest.raises(odem.ODEMNoTypeForOCRException) as odem_exc:
         inspc.metadata_report()
 
     # assert
@@ -150,7 +150,7 @@ def test_opendata_record_no_granular_urn_present():
     _oai_urn = 'oai:opendata.uni-halle.de:1981185920/88132'
     orig_file = TEST_RES / '1981185920_88132.xml'
     cfg = fixture_configuration()
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
     inspc.metadata_report()
@@ -170,10 +170,10 @@ def test_opendata_record_type_error():
     _oai_urn = 'oai:opendata.uni-halle.de:1981185920/105290'
     orig_file = TEST_RES / '1981185920_105290.xml'
     cfg = fixture_configuration()
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
-    with pytest.raises(o3o.ODEMMetadataMetsException) as odem_exc:
+    with pytest.raises(odem.ODEMMetadataMetsException) as odem_exc:
         inspc.metadata_report()
 
     # assert
@@ -189,7 +189,7 @@ def test_mets_mods_sbb_vol01_with_ulb_defaults():
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
     inspc.metadata_report()
@@ -212,7 +212,7 @@ def test_mets_filter_logical_structs_by_type():
     orig_file = TEST_RES / '1981185920_33908.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
     inspc.metadata_report()
@@ -239,7 +239,7 @@ def test_mets_mods_sbb_vol01_filtering():
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
     inspc.metadata_report()
@@ -260,7 +260,7 @@ def test_mets_mods_sbb_vol01_filtering_custom():
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
     cfg.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back,binding')
-    inspc = o3o.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
 
     # act
     inspc.metadata_report()
@@ -281,9 +281,9 @@ def test_validate_mets_105054_schema_fails(tmp_path):
     _work_dir.mkdir()
     _orig_mets = TEST_RES / '1981185920_105054.xml'
     shutil.copyfile(_orig_mets, _work_dir / '1981185920_105054.xml')
-    odem_processor = o3o.ODEMProcess(_record, work_dir=_work_dir)
+    odem_processor = odem.ODEMProcess(_record, work_dir=_work_dir)
     odem_processor.odem_configuration = fixture_configuration()
-    with pytest.raises(o3o.ODEMException) as exec:
+    with pytest.raises(odem.ODEMException) as exec:
         odem_processor.validate_metadata()
 
     assert "'order': '1.1979' is not a valid value of the atomic type 'xs:integer'" in exec.value.args[0]
@@ -298,9 +298,9 @@ def test_validate_mets_37167_schema_fails(tmp_path):
     work_dir.mkdir()
     original_mets = TEST_RES / '1981185920_37167_01.xml'
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
-    odem_processor = o3o.ODEMProcess(rec, work_dir=work_dir)
+    odem_processor = odem.ODEMProcess(rec, work_dir=work_dir)
     odem_processor.odem_configuration = fixture_configuration()
-    with pytest.raises(o3o.ODEMException) as exec:
+    with pytest.raises(odem.ODEMException) as exec:
         odem_processor.validate_metadata()
 
     assert "recordIdentifier': This element is not expected" in exec.value.args[0]
@@ -322,10 +322,10 @@ def test_validate_mets_37167_ddb_fails(tmp_path):
     work_dir.mkdir()
     original_mets = TEST_RES / '1981185920_37167_02.xml'
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
-    odem_processor = o3o.ODEMProcess(rec, work_dir=work_dir)
+    odem_processor = odem.ODEMProcess(rec, work_dir=work_dir)
     odem_processor.odem_configuration = fixture_configuration()
     odem_processor.odem_configuration.set('mets', 'ddb_validation', 'True')
-    with pytest.raises(o3o.ODEMException) as exec:
+    with pytest.raises(odem.ODEMException) as exec:
         odem_processor.validate_metadata()
 
     ddb_complains = exec.value.args[0]
@@ -347,7 +347,7 @@ def test_validate_mets_37167_finally_succeeds(tmp_path):
     work_dir.mkdir()
     original_mets = TEST_RES / '1981185920_37167_03.xml'
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
-    odem_processor = o3o.ODEMProcess(rec, work_dir=work_dir)
+    odem_processor = odem.ODEMProcess(rec, work_dir=work_dir)
     odem_processor.odem_configuration = fixture_configuration()
     odem_processor.odem_configuration.set('mets', 'ddb_validation', 'True')
     

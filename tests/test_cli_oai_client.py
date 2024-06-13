@@ -1,20 +1,13 @@
 """Specification for OAI Client module"""
 
-from unittest import (
-    mock
-)
+import unittest
+import unittest.mock
 
 import pytest
 
-from cli_oai_client import (
-    OAIServiceClient,
-    OAIRecordExhaustedException,
-    oai_arg_parser,
-)
+import lib.odem as odem
 
-from cli_oai_server import (
-    MARK_DATA_EXHAUSTED,
-)
+from cli_oai_client import OAIServiceClient, oai_arg_parser
 
 
 @pytest.mark.parametrize("file_path,result",
@@ -27,10 +20,10 @@ def test_mark_exhausted_matching(file_path, result):
     """Check formatting behavior"""
 
     # assert
-    assert MARK_DATA_EXHAUSTED.format(file_path) == result
+    assert odem.MARK_DATA_EXHAUSTED.format(file_path) == result
 
 
-@mock.patch('digiflow.requests.get')
+@unittest.mock.patch('digiflow.requests.get')
 def test_exit_on_data_exhausted(mock_request):
     """Ensure dedicated state is communicated 
     to OAIClient when no more records present
@@ -41,16 +34,16 @@ def test_exit_on_data_exhausted(mock_request):
 
     # arrange
     _the_list_label = 'oai-record-test'
-    _rsp = f'{MARK_DATA_EXHAUSTED.format(_the_list_label)}'.encode()
+    _rsp = f'{odem.MARK_DATA_EXHAUSTED.format(_the_list_label)}'.encode()
     client = OAIServiceClient(_the_list_label, '1.2.3.4', '9999')
-    mock_resp = mock.Mock()
+    mock_resp = unittest.mock.Mock()
     mock_resp.status_code = 404
     mock_resp.headers = {'Content-Type': 'text/xml'}
     mock_resp.content = _rsp
     mock_request.return_value = mock_resp
 
     # act
-    with pytest.raises(OAIRecordExhaustedException) as exhausted:
+    with pytest.raises(odem.OAIRecordExhaustedException) as exhausted:
         client.get_record()
 
     # assert

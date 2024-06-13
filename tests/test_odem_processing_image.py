@@ -3,7 +3,7 @@
 import pytest
 
 
-from lib.ocrd3_odem.processing_image import (
+from lib.odem.processing.image import (
     has_image_ext,
 )
 

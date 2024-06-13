@@ -14,7 +14,7 @@ from PIL import Image
 from ocrd.resolver import Resolver
 from ocrd_utils import initLogging
 
-from lib.ocrd3_odem import get_configparser
+from lib.odem import get_configparser
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 EXT_JPG = '.jpg'

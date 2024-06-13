@@ -19,7 +19,7 @@ import requests
 import digiflow as df
 import lxml.etree as ET
 
-from .odem_commons import ODEMException
+from lib.odem.odem_commons import ODEMException
 from .ocr_model import TextLine, get_lines
 
 NAMESPACES = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}

@@ -10,10 +10,10 @@ from .ocrd3_odem import (
     OCRDPageParallel,
     ODEMTesseract,
 )
-from .processing_ocrd import (
+from .ocr.ocrd import (
     get_recognition_level,
 )
-from .processing_mets import (
+from .processing.mets import (
     CATALOG_ULB,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
@@ -22,8 +22,8 @@ from .processing_mets import (
     integrate_ocr_file,
     postprocess_mets
 )
-from .processing_ocr_results import (
+from .processing.ocr_files import (
     PUNCTUATIONS,
     ODEMMetadataOcrException,
-    postprocess_ocrd_file,
+    postprocess_ocr_file,
 )

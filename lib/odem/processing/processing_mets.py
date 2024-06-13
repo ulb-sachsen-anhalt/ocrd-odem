@@ -7,11 +7,7 @@ import lxml.etree as ET
 import digiflow as df
 import digiflow.validate as dfv
 
-from .odem_commons import (
-    FILEGROUP_IMG,
-    FILEGROUP_OCR,
-    ODEMException,
-)
+import lib.odem as odem
 
 TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
 TYPE_PRINTS_LOGICAL = ['monograph', 'volume', 'issue', 'additional']
@@ -266,10 +262,10 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
     tag_file = f'{{{df.XMLNS["mets"]}}}file'
     tag_flocat = f'{{{df.XMLNS["mets"]}}}FLocat'
 
-    file_grp_fulltext = ET.Element(tag_file_group, USE=FILEGROUP_OCR)
+    file_grp_fulltext = ET.Element(tag_file_group, USE=odem.FILEGROUP_OCR)
     for _ocr_file in ocr_files:
         _file_name = os.path.basename(_ocr_file).split('.')[0]
-        new_id = FILEGROUP_OCR + '_' + _file_name
+        new_id = odem.FILEGROUP_OCR + '_' + _file_name
         file_ocr = ET.Element(
             tag_file, MIMETYPE="application/alto+xml", ID=new_id)
         flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
@@ -303,7 +299,7 @@ def _sanitize_namespaces(tree):
 
 def _link_fulltext(file_ident, xml_tree):
     file_name = file_ident.split('_')[-1]
-    xp_files = f'.//mets:fileGrp[@USE="{FILEGROUP_IMG}"]/mets:file'
+    xp_files = f'.//mets:fileGrp[@USE="{odem.FILEGROUP_IMG}"]/mets:file'
     file_grp_max_files = xml_tree.findall(xp_files, df.XMLNS)
     for file_grp_max_file in file_grp_max_files:
         _file_link = file_grp_max_file[0].attrib['{http://www.w3.org/1999/xlink}href']
@@ -384,10 +380,10 @@ def validate(mets_file:str, ddb_ignores,
                               ignore_rules=ddb_ignores)
     except dfv.InvalidXMLException as err:
             if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
-                raise ODEMException(str(err.args[0])) from err
+                raise odem.ODEMException(str(err.args[0])) from err
             raise err
     except df.DigiflowDDBException as ddb_err:
-        raise ODEMException(ddb_err.args[0]) from ddb_err
+        raise odem.ODEMException(ddb_err.args[0]) from ddb_err
     return True
 
 

@@ -2,39 +2,15 @@
 """MAIN CLI ODEM"""
 
 import argparse
+import configparser
 import os
 import pathlib
 import shutil
 import sys
 
-from configparser import (
-    ConfigParser,
-)
+import ocrd_utils
 
-from ocrd_utils import (
-    initLogging
-)
-
-from lib.ocrd3_odem import (
-    ARG_S_EXECS,
-    ARG_S_LANGUAGES,
-    ARG_S_MODEL_MAP,
-    ARG_S_SEQUENTIAL_MODE,
-    ARG_L_EXECS,
-    ARG_L_LANGUAGES,
-    ARG_L_MODEL_MAP,
-    ARG_L_SEQUENTIAL_MODE,
-    STATS_KEY_N_PAGES,
-    STATS_KEY_N_OCRABLE,
-    CFG_SEC_OCR,
-    DEFAULT_EXECUTORS,
-    KEY_EXECS,
-    ODEMProcess,
-    OCRDPageParallel,
-    get_configparser,
-    get_logger,
-    merge_args, OdemWorkflowProcessType,
-)
+import lib.odem as odem
 
 
 ########
@@ -53,27 +29,27 @@ if __name__ == "__main__":
         default="resources/odem.ini",
         help="path to configuration file")
     PARSER.add_argument(
-        f"-{ARG_S_EXECS}",
-        f"--{ARG_L_EXECS}",
+        f"-{odem.ARG_S_EXECS}",
+        f"--{odem.ARG_L_EXECS}",
         required=False,
-        default=DEFAULT_EXECUTORS,
+        default=odem.DEFAULT_EXECUTORS,
         type=int,
         help="Number of parallel OCR-D Executors")
     PARSER.add_argument(
-        f"-{ARG_S_SEQUENTIAL_MODE}",
-        f"--{ARG_L_SEQUENTIAL_MODE}",
+        f"-{odem.ARG_S_SEQUENTIAL_MODE}",
+        f"--{odem.ARG_L_SEQUENTIAL_MODE}",
         required=False,
         default=False,
         action="store_true",
         help="Disable parallel workflow and run each image sequential")
     PARSER.add_argument(
-        f"-{ARG_S_LANGUAGES}",
-        f"--{ARG_L_LANGUAGES}",
+        f"-{odem.ARG_S_LANGUAGES}",
+        f"--{odem.ARG_L_LANGUAGES}",
         required=False,
         help="ISO 639-3 language code (default:unset)")
     PARSER.add_argument(
-        f"-{ARG_S_MODEL_MAP}",
-        f"--{ARG_L_MODEL_MAP}",
+        f"-{odem.ARG_S_MODEL_MAP}",
+        f"--{odem.ARG_L_MODEL_MAP}",
         help="List of comma-separated pairs <ISO 639-3 language code>: <ocr-model> (default:unset)")
     ARGS = PARSER.parse_args()
 
@@ -84,7 +60,7 @@ if __name__ == "__main__":
         print(f"[ERROR] no config at '{CONF_FILE}'! Halt execution!")
         sys.exit(1)
 
-    CFG: ConfigParser = get_configparser()
+    CFG: configparser.ConfigParser = odem.get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"unable to read config from '{CONF_FILE}! exit!")
@@ -92,19 +68,18 @@ if __name__ == "__main__":
 
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
-    initLogging()
+    ocrd_utils.initLogging()
     log_dir = CFG.get('global', 'local_log_dir')
-    if not os.path.exists(log_dir) or not os.access(
-            log_dir, os.W_OK):
+    if not os.path.exists(log_dir) or not os.access(log_dir, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {log_dir}")
-    LOGGER = get_logger(log_dir)
+    LOGGER = odem.get_logger(log_dir)
 
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set
     ROOT_PATH = ARGS.path
-    MERGED = merge_args(CFG, ARGS)
+    MERGED = odem.merge_args(CFG, ARGS)
     LOGGER.info("merged '%s' config entries with args", MERGED)
-    EXECUTORS = CFG.getint(CFG_SEC_OCR, KEY_EXECS)
+    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem.KEY_EXECS)
     RUN_SEQUENTIAL = ARGS.sequential_mode
     LOGGER.info("process data in '%s' with %s executors in mode %s",
                 LOCAL_WORK_ROOT, EXECUTORS, RUN_SEQUENTIAL)
@@ -120,14 +95,14 @@ if __name__ == "__main__":
         proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
-        PROCESS: ODEMProcess = ODEMProcess.create(proc_type, None, req_dst_dir, EXECUTORS)
-
+        PROCESS: odem.ODEMProcess = odem.ODEMProcess.create(proc_type, None, req_dst_dir, EXECUTORS)
         PROCESS.local_mode = True
         PROCESS.odem_configuration = CFG
         PROCESS.the_logger = LOGGER
         local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
-        PROCESS._statistics_ocr[STATS_KEY_N_PAGES] = len(local_images)
-        PROCESS._statistics_ocr[STATS_KEY_N_OCRABLE] = 0
+        PROCESS._statistics_ocr[odem.STATS_KEY_N_PAGES] = len(local_images)
+        PROCESS._statistics_ocr[odem.STATS_KEY_N_OCRABLE] = 0
+        PROCESS._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS
         PROCESS.images_4_ocr = local_images
         # Type and Value change!!!
         # ODEMProcess.single_ocr() needs Tuple[str,str], in non-local

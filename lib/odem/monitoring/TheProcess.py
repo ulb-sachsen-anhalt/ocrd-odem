@@ -4,7 +4,7 @@ import multiprocessing
 from multiprocessing import Queue
 from typing import Callable, Final
 
-from lib.resources_monitoring import Result
+from lib.odem.monitoring import Result
 
 
 class TheProcess(multiprocessing.Process):

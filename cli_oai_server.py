@@ -32,7 +32,9 @@ from digiflow import (
     OAIRecordHandler,
 )
 
-from lib.ocrd3_odem.odem_commons import (
+import lib.odem as odem
+
+from lib.odem.odem_commons import (
     MARK_OCR_BUSY,
     RECORD_IDENTIFIER,
     RECORD_INFO,
@@ -51,8 +53,8 @@ UPDATE_COMMAND = 'update'
 MIME_TXT = 'text/plain'
 MIME_HTML = 'text/html'
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
-MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
-MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
+# MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
+# MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
 LOGGER = None
 
 
@@ -170,7 +172,7 @@ class OAIService(SimpleHTTPRequestHandler):
         next_record: OAIRecord = handler.next_record()
         # if no record in resource available, alert no resource after all, too
         if not next_record:
-            _msg = f'{MARK_DATA_EXHAUSTED_PREFIX}{MARK_DATA_EXHAUSTED.format(data_file_path)}'
+            _msg = f'{odem.MARK_DATA_EXHAUSTED.format(data_file_path)}'
             return (404, _msg)
 
         # store information which client got the package delivered

@@ -5,20 +5,13 @@ import os
 import pathlib
 import shutil
 
-from pathlib import (
-    Path
-)
+from pathlib import Path
 
 import pytest
 
-from digiflow import (
-    OAIRecord,
-)
+import digiflow as df
 
-from lib.ocrd3_odem import (
-    ODEMProcess,
-    get_configparser, CFG_KEY_RES_VOL,
-)
+import lib.odem as odem
 
 
 PROJECT_ROOT_DIR = pathlib.Path(__file__).resolve().parents[1]
@@ -32,7 +25,7 @@ def fixture_configuration():
          => dc (say: 'default configuration')
     """
 
-    config = get_configparser()
+    config = odem.get_configparser()
     config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     config.set('global', 'data_fields', 'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
     config.set('mets', 'blacklist_file_groups', 'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')
@@ -77,15 +70,15 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     shutil.copytree(orig_alto, trgt_alto)
     (path_workdir / 'log').mkdir()
     _model_dir = prepare_tessdata_dir(path_workdir)
-    record = OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
-    _oproc = ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    record = df.OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
+    _oproc = odem.ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     _oproc.odem_configuration = fixture_configuration()
-    _oproc.odem_configuration.set('ocr', CFG_KEY_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    _oproc.odem_configuration.set('ocr', odem.CFG_KEY_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     _oproc.ocr_files = [os.path.join(trgt_alto, a)
                         for a in os.listdir(trgt_alto)]
     _oproc.mets_file = str(trgt_mets)
     _oproc.inspect_metadata()
     _oproc.clear_existing_entries()
-    n_integrated = _oproc.link_ocr()
+    n_integrated = _oproc.link_ocr_files()
     assert n_integrated == 4
     yield _oproc

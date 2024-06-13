@@ -1,30 +1,18 @@
 """Implementation related to OCR data handling"""
 
+import math
 import os
 import string
+import typing
 import unicodedata
-
-from math import (
-    ceil
-)
-from typing import (
-    List,
-)
 
 import lxml.etree as ET
 
-from ocrd_page_to_alto.convert import (
-    OcrdPageAltoConverter
-)
+import digiflow as df
+import ocrd_page_to_alto.convert as opta_c
 
-from digiflow import (
-    XMLNS,
-	MetsProcessor,
-)
+from lib.odem.processing.mets import FILEGROUP_OCR
 
-from .processing_mets import (
-    FILEGROUP_OCR
-)
 
 # define propably difficult characters
 # very common separator '⸗'
@@ -62,7 +50,7 @@ class ODEMMetadataOcrException(Exception):
     """
 
 
-def postprocess_ocrd_file(ocr_file, strip_tags):
+def postprocess_ocr_file(ocr_file, strip_tags):
     """
     Correct data in actual ocr_file
     * sourceImage file_name (ensure ends with '.jpg')
@@ -73,19 +61,19 @@ def postprocess_ocrd_file(ocr_file, strip_tags):
     """
 
     # the xml cleanup
-    mproc = MetsProcessor(str(ocr_file))
+    mproc = df.MetsProcessor(str(ocr_file))
     if strip_tags:
         mproc.remove(strip_tags)
 
     # inspect transformation artifacts
-    _all_text_blocks = mproc.tree.xpath('//alto:TextBlock', namespaces=XMLNS)
+    _all_text_blocks = mproc.tree.xpath('//alto:TextBlock', namespaces=df.XMLNS)
     for _block in _all_text_blocks:
         if 'IDNEXT' in _block.attrib:
             del _block.attrib['IDNEXT']
 
     # inspect textual content
     # _all_strings = mproc.tree.xpath('//alto:String', namespaces=XMLNS)
-    _all_strings = mproc.tree.findall('.//alto:String', XMLNS)
+    _all_strings = mproc.tree.findall('.//alto:String', df.XMLNS)
     for _string_el in _all_strings:
         _content = _string_el.attrib['CONTENT'].strip()
         if _is_completely_punctuated(_content):
@@ -104,7 +92,7 @@ def postprocess_ocrd_file(ocr_file, strip_tags):
     mproc.write()
 
 
-def list_files(dir_root, sub_dir) -> List:
+def list_files(dir_root, sub_dir) -> typing.List:
     _curr_dir = os.path.join(dir_root, sub_dir)
     return [
         os.path.join(_curr_dir, _file)
@@ -126,7 +114,7 @@ def convert_to_output_format(work_dir_root):
     for _file in _results:
         the_id = os.path.basename(_file)
         output_file = os.path.join(_fulltext_dir, the_id)
-        converter = OcrdPageAltoConverter(page_filename=_file).convert()
+        converter = opta_c.OcrdPageAltoConverter(page_filename=_file).convert()
         with open(output_file, 'w', encoding='utf-8') as output:
             output.write(str(converter))
         _converted.append(output_file)
@@ -153,7 +141,7 @@ def _handle_trailing_puncts(string_element):
         _top = int(string_element.attrib['VPOS'])
         _width = int(string_element.attrib['WIDTH'])
         _height = int(string_element.attrib['HEIGHT'])
-        _w_per_char = ceil(_width / len(_content))
+        _w_per_char = math.ceil(_width / len(_content))
 
         # cut off last punctuation char
         # shrink by calculated char width

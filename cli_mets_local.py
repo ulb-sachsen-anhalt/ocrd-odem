@@ -9,9 +9,9 @@ from pathlib import Path
 
 import digiflow as df
 
-import lib.ocrd3_odem as o3o
+import lib.odem as odem
+import lib.odem.monitoring as odem_rm
 
-from lib.resources_monitoring import ProcessResourceMonitor, ProcessResourceMonitorConfig
 
 DEFAULT_EXECUTORS = 2
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     MUST_LOCK = ARGS.lock_mode
     EXECUTOR_ARGS = ARGS.executors
 
-    CFG = o3o.get_configparser()
+    CFG = odem.get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"unable to read config from '{CONF_FILE}! exit!")
@@ -82,9 +82,9 @@ if __name__ == "__main__":
     ENRICH_METS_FULLTEXT: bool = CFG.getboolean('export', 'enrich_mets_fulltext', fallback=True)
 
     # set work_dirs and logger
-    LOCAL_DELETE_BEVOR_EXPORT = []
+    DELETE_BEVOR_EXPORT = []
     if CFG.has_option('export', 'delete_before_export'):
-        LOCAL_DELETE_BEVOR_EXPORT = CFG.getlist('export', 'delete_before_export')
+        DELETE_BEVOR_EXPORT = CFG.getlist('export', 'delete_before_export')
     LOCAL_LOG_DIR = CFG.get('global', 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     LOG_FILE_NAME = None
     if CFG.has_option('global', 'logfile_name'):
         LOG_FILE_NAME = CFG.get('global', 'logfile_name')
-    LOGGER = o3o.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
+    LOGGER = odem.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     mets_file: Path = Path(ARGS.mets_file).absolute()
     if not mets_file.is_file():
@@ -116,23 +116,12 @@ if __name__ == "__main__":
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
         record = df.OAIRecord(local_ident)
-        odem_process: o3o.ODEMProcess = o3o.ODEMProcess(record, mets_file_dir)
+        odem_process: odem.ODEMProcess = odem.ODEMProcess(record, mets_file_dir)
         odem_process.the_logger = LOGGER
         odem_process.the_logger.info("[%s] odem from %s, %d executors", local_ident, mets_file, EXECUTORS)
         odem_process.odem_configuration = CFG
-        process_resource_monitor: ProcessResourceMonitor = ProcessResourceMonitor(
-            ProcessResourceMonitorConfig(
-                enable_resource_monitoring=CFG.getboolean('resource-monitoring', 'enable', fallback=False),
-                polling_interval=CFG.getfloat('resource-monitoring', 'polling_interval', fallback=1),
-                path_disk_usage=CFG.get('resource-monitoring', 'path_disk_usage', fallback='/home/ocr'),
-                factor_free_disk_space_needed=CFG.getfloat(
-                    'resource-monitoring',
-                    'factor_free_disk_space_needed',
-                    fallback=3.0
-                ),
-                max_vmem_percentage=CFG.getfloat('resource-monitoring', 'max_vmem_percentage', fallback=None),
-                max_vmem_bytes=CFG.getint('resource-monitoring', 'max_vmem_bytes', fallback=None),
-            ),
+        process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
+            odem_rm.from_configuration(CFG),
             LOGGER.error,
             None,
             odem_process.process_identifier,
@@ -148,15 +137,15 @@ if __name__ == "__main__":
         odem_process.set_local_images()
 
         # NEW NEW NEW
-        odem_pipeline = o3o.ODEMOCRPipeline.create(proc_type, odem_process)
-        odem_runner = o3o.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
-        OUTCOMES = process_resource_monitor.monit_vmem(odem_runner.run)
-        if OUTCOMES is None or len(OUTCOMES) == 0:
-            raise o3o.ODEMException(f"process run error: {record.identifier}")
-        
-        odem_process.calculate_statistics_ocr(OUTCOMES)
+        odem_pipeline = odem.ODEMOCRPipeline.create(proc_type, odem_process)
+        odem_runner = odem.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
+        ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        if ocr_results is None or len(ocr_results) == 0:
+            raise odem.ODEMException(f"OCR Process Runner error for {record.identifier}")
+        ocr_results[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
-        odem_process.link_ocr()
+        odem_process.link_ocr_files()
         if CREATE_PDF:
             odem_process.create_pdf()
         odem_process.postprocess_ocr()
@@ -168,23 +157,21 @@ if __name__ == "__main__":
         if odem_process.odem_configuration.has_option('export', 'local_export_dir'):
             odem_process.the_logger.info("[%s] start to export data", 
                                          odem_process.process_identifier)
-            if not MUST_KEEP_RESOURCES:
-                odem_process.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)
+            if not MUST_KEEP_RESOURCES and len(DELETE_BEVOR_EXPORT) > 0:
+                odem_process.delete_before_export(DELETE_BEVOR_EXPORT)
             odem_process.export_data()
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         odem_process.the_logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
                                 odem_process.duration, _mode, odem_process.statistics)
-        # finale
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier, odem_process.duration, EXECUTORS)
-    except o3o.ODEMNoTypeForOCRException as type_unknown:
-        # we don't ocr this one
+    except odem.ODEMNoTypeForOCRException as type_unknown:
         LOGGER.warning("[%s] odem skips '%s'", 
                        odem_process.process_identifier, type_unknown.args[0])
-    except o3o.ODEMNoImagesForOCRException as not_ocrable:
+    except odem.ODEMNoImagesForOCRException as not_ocrable:
         LOGGER.warning("[%s] odem no ocrables '%s'", 
                        odem_process.process_identifier,  not_ocrable.args)
-    except o3o.ODEMException as _odem_exc:
+    except odem.ODEMException as _odem_exc:
         _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with: '%s'", odem_process.process_identifier, _err_args)
     except RuntimeError as exc:

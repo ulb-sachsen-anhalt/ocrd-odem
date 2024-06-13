@@ -2,20 +2,17 @@
 
 import os
 
+import pytest
+
 import lxml.etree as ET
 import digiflow as df
 
-from lib.ocrd3_odem import (
-    PUNCTUATIONS,
-    ODEMProcess,
-    postprocess_ocrd_file,
-)
-from .conftest import (
-    fixture_configuration,
-)
+import lib.odem as odem
+
+from .conftest import fixture_configuration
 
 
-def test_module_fixture_one_integrated_ocr_files_fit_identifier(fixture_27949: ODEMProcess):
+def test_module_fixture_one_integrated_ocr_files_fit_identifier(fixture_27949: odem.ODEMProcess):
     """Ensure ocr-file elements fit syntactically
     * proper fileName
     * proper PageId set
@@ -35,7 +32,7 @@ def test_module_fixture_one_integrated_ocr_files_fit_identifier(fixture_27949: O
     assert not os.path.exists(tmp_path / 'FULLTEXT' / '00000007.xml')
 
 
-def test_fixture_one_postprocessed_ocr_files_elements(fixture_27949: ODEMProcess):
+def test_fixture_one_postprocessed_ocr_files_elements(fixture_27949: odem.ODEMProcess):
     """Ensure ocr-file unwanted elements dropped as expected
     """
 
@@ -51,7 +48,7 @@ def test_fixture_one_postprocessed_ocr_files_elements(fixture_27949: ODEMProcess
     assert not ocr_file_03.xpath('//alto:Shape', namespaces=df.XMLNS)
 
 
-def test_fixture_one_postprocess_ocr_files(fixture_27949: ODEMProcess):
+def test_fixture_one_postprocess_ocr_files(fixture_27949: odem.ODEMProcess):
     """Ensure expected replacements done *even* when
     diacritics occour more several times in single word"""
 
@@ -61,7 +58,7 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: ODEMProcess):
     strip_tags = fixture_configuration().getlist('ocr', 'strip_tags') # pylint: disable=no-member
 
     # act
-    postprocess_ocrd_file(path_file, strip_tags)
+    odem.postprocess_ocr_file(path_file, strip_tags)
 
     # assert
     _raw_lines = [l.strip() for l in open(path_file, encoding='utf-8').readlines()]
@@ -77,7 +74,7 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: ODEMProcess):
                  for l in _raw_lines
                  if 'CONTENT' in l]
     for _content in _contents:
-        for _punc in PUNCTUATIONS:
+        for _punc in odem.PUNCTUATIONS:
             # adapted like semantics did
             # each trailing punctuation
             # is now in it's own STRING element

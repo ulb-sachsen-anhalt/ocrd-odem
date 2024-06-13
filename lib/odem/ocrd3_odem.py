@@ -28,6 +28,7 @@ from .odem_commons import (
     CFG_SEC_OCR,
     CFG_KEY_RES_VOL,
     DEFAULT_RTL_MODELS,
+    FILEGROUP_OCR,
     KEY_LANGUAGES,
     STATS_KEY_LANGS,
     STATS_KEY_MODELS,
@@ -38,32 +39,31 @@ from .odem_commons import (
     ExportFormat,
     ODEMException,
 )
-from .processing_mets import (
+from .processing.mets import (
     ODEMMetadataInspecteur,
     extract_text_content,
     integrate_ocr_file,
     postprocess_mets,
     validate,
 )
-from .processing_ocrd import (
+from lib.odem.ocr.ocrd import (
     run_ocr_page,
 )
-from .processing_ocr_pipeline import (
+from .ocr.ocr_pipeline import (
     STEP_MOVE_PATH_TARGET,
     run_pipeline,
 )
-from .processing_ocr_results import (
-    FILEGROUP_OCR,
+from .processing.ocr_files import (
     convert_to_output_format,
     list_files,
-    postprocess_ocrd_file,
+    postprocess_ocr_file,
 )
-from .processing_image import (
+from .processing.image import (
     has_image_ext,
     sanitize_image,
     get_imageinfo,
 )
-from .processing_ocrd import (
+from .ocr.ocrd import (
     ocrd_workspace_setup,
 )
 
@@ -367,7 +367,7 @@ class ODEMProcess:
         self._statistics_ocr[STATS_KEY_MB] = round(total_mb, 2)
         self._statistics_ocr[STATS_KEY_MPS] = mps
 
-    def link_ocr(self) -> int:
+    def link_ocr_files(self) -> int:
         """Prepare and link OCR-data"""
 
         self.ocr_files = list_files(self.work_dir_main, FILEGROUP_OCR)
@@ -386,7 +386,7 @@ class ODEMProcess:
         # clear punctual regions
         strip_tags = self.odem_configuration.getlist('ocr', 'strip_tags')
         for _ocr_file in self.ocr_files:
-            postprocess_ocrd_file(_ocr_file, strip_tags)
+            postprocess_ocr_file(_ocr_file, strip_tags)
 
     def create_text_bundle_data(self):
         """create additional dspace bundle for indexing ocr text
