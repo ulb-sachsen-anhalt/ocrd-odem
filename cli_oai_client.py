@@ -101,12 +101,12 @@ class OAIServiceClient:
         _oai_record = df.OAIRecord(self.record_data[odem.RECORD_IDENTIFIER])
         return _oai_record
 
-    def update(self, status, urn, **kwargs):
+    def update(self, status, oai_urn, **kwargs):
         """Store status update && send message to OAI Service"""
         if self.logger is not None:
-            self.logger.debug("update record  status: %s urn: %s", status, urn)
+            self.logger.debug("update record status: %s urn: %s", status, oai_urn)
         right_now = time.strftime(STATETIME_FORMAT)
-        self.record_data[odem.RECORD_IDENTIFIER] = urn
+        self.record_data[odem.RECORD_IDENTIFIER] = oai_urn
         self.record_data[odem.RECORD_STATE] = status
         self.record_data[odem.RECORD_TIME] = right_now
         # if we have to report somethin' new, then append it
@@ -339,13 +339,13 @@ if __name__ == "__main__":
         LOGGER.warning("[%s] odem skips '%s'", 
                        odem_process.process_identifier,  type_unknown.args)
         err_dict = {'NoTypeForOCR': type_unknown.args[0]}
-        CLIENT.update(status=odem.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
+        CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **err_dict)
         odem_process.clear_resources(remove_all=True)
     except odem.ODEMNoImagesForOCRException as not_ocrable:
         LOGGER.warning("[%s] odem no ocrables '%s'", 
                        odem_process.process_identifier,  not_ocrable.args)
         err_dict = {'NoImagesForOCR': not_ocrable.args[0]}
-        CLIENT.update(status=odem.MARK_OCR_SKIP, urn=rec_ident, **err_dict)
+        CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **err_dict)
         odem_process.clear_resources(remove_all=True)
     except odem.ODEMException as _odem_exc:
         # raised if record
@@ -357,14 +357,14 @@ if __name__ == "__main__":
         err_dict = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", odem_process.process_identifier, err_dict)
-        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, **err_dict)
+        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, **err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         odem_process.clear_resources()
     except odem_rm.NotEnoughDiskSpaceException as _space_exc:
         err_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", odem_process.process_identifier, err_dict)
-        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
@@ -373,7 +373,7 @@ if __name__ == "__main__":
         err_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", odem_process.process_identifier, err_dict)
-        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
@@ -385,8 +385,8 @@ if __name__ == "__main__":
         _name = type(exc).__name__
         LOGGER.error("[%s] odem fails with %s:"
                      "'%s'", odem_process.process_identifier, _name, err_dict)
-# when running parallel
-        CLIENT.update(status=odem.MARK_OCR_FAIL, urn=rec_ident, info=err_dict)
+        # when running parallel
+        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         odem_process.clear_resources()
         # don't remove lock file, human interaction required
