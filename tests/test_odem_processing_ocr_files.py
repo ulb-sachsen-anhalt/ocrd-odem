@@ -55,7 +55,7 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: odem.ODEMProcess):
     # arrange
     tmp_path = fixture_27949.work_dir_main
     path_file = tmp_path / 'FULLTEXT' / '00000003.xml'
-    strip_tags = fixture_configuration().getlist('ocr', 'strip_tags') # pylint: disable=no-member
+    strip_tags = fixture_configuration().getlist(odem.CFG_SEC_OCR, 'strip_tags')  # pylint: disable=no-member
 
     # act
     odem.postprocess_ocr_file(path_file, strip_tags)

@@ -197,9 +197,6 @@ if __name__ == "__main__":
         print(f"[ERROR] unable to read config from '{CONF_FILE}! exit!")
         sys.exit(1)
 
-    CREATE_PDF: bool = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
-    ENRICH_METS_FULLTEXT: bool = CFG.getboolean('export', 'enrich_mets_fulltext', fallback=True)
-
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
     LOCAL_DELETE_BEFORE_EXPORT = []
@@ -233,8 +230,8 @@ if __name__ == "__main__":
     # parallel OCR-D instances shall be used
     EXECUTOR_ARGS = ARGS.executors
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
-        CFG.set('ocr', 'n_executors', str(EXECUTOR_ARGS))
-    EXECUTORS = CFG.getint('ocr', 'n_executors', fallback=odem.DEFAULT_EXECUTORS)
+        CFG.set(odem.CFG_SEC_OCR, 'n_executors', str(EXECUTOR_ARGS))
+    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, 'n_executors', fallback=odem.DEFAULT_EXECUTORS)
     LOGGER.debug("local work_root: '%s', executors:%s, keep_res:%s, lock:%s",
                  LOCAL_WORK_ROOT, EXECUTORS, MUST_KEEP_RESOURCES, MUST_LOCK)
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
@@ -266,7 +263,7 @@ if __name__ == "__main__":
     odem_process: odem.ODEMProcess = odem.ODEMProcess(record, req_dst_dir)
     odem_process.the_logger = LOGGER
     odem_process.the_logger.debug(
-        "request %s from %s, %s part slots)",
+        "request %s from %s (%s part slots)",
         local_ident,
         CLIENT.host, EXECUTORS
     )
@@ -301,7 +298,7 @@ if __name__ == "__main__":
         odem_process.set_local_images()
 
         # NEW NEW NEW
-        proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
+        proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         odem_pipeline = odem.ODEMOCRPipeline.create(proc_type, odem_process)
         odem_runner = odem.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
         ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
@@ -312,11 +309,12 @@ if __name__ == "__main__":
         _stats_ocr = odem_process.statistics
         odem_process.the_logger.info("[%s] %s", local_ident, _stats_ocr)
         odem_process.postprocess_ocr()
-        if ENRICH_METS_FULLTEXT:
+        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
+        if wf_enrich_ocr:
             odem_process.link_ocr_files()
-        if CREATE_PDF:
+        wf_create_pdf = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
+        if wf_create_pdf:
             odem_process.create_pdf()
-        if CREATE_PDF:
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
         if CFG.getboolean('mets', 'postvalidate', fallback=True):

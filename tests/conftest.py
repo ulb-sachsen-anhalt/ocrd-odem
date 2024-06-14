@@ -74,7 +74,7 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     record = df.OAIRecord('oai:dev.opendata.uni-halle.de:123456789/27949')
     _oproc = odem.ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     _oproc.odem_configuration = fixture_configuration()
-    _oproc.odem_configuration.set('ocr', odem.CFG_SEC_OCR_OPT_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    _oproc.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     _oproc.ocr_files = [os.path.join(trgt_alto, a)
                         for a in os.listdir(trgt_alto)]
     _oproc.mets_file = str(trgt_mets)

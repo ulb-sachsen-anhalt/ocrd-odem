@@ -248,7 +248,7 @@ class ODEMProcess:
 
         _models = []
         model_mappings: dict = self.odem_configuration.getdict(  # pylint: disable=no-member
-            'ocr', 'model_mapping')
+            CFG_SEC_OCR, 'model_mapping')
         self.the_logger.info("[%s] inspect languages '%s'",
                              self.process_identifier, languages)
         if languages is None:
@@ -262,7 +262,7 @@ class ODEMProcess:
                     _models.append(model)
                 else:
                     raise ODEMException(f"'{model}' model config not found !")
-        _model_conf = '+'.join(_models) if self.odem_configuration.getboolean('ocr', "model_combinable", fallback=True) else _models[0]
+        _model_conf = '+'.join(_models) if self.odem_configuration.getboolean(CFG_SEC_OCR, "model_combinable", fallback=True) else _models[0]
         self._statistics_ocr[STATS_KEY_MODELS] = _model_conf
         self.the_logger.info("[%s] map languages '%s' => '%s'",
                              self.process_identifier, languages, _model_conf)
@@ -386,7 +386,7 @@ class ODEMProcess:
         # inspect each single created ocr file
         # drop unwanted elements
         # clear punctual regions
-        strip_tags = self.odem_configuration.getlist('ocr', 'strip_tags')
+        strip_tags = self.odem_configuration.getlist(CFG_SEC_OCR, 'strip_tags')
         for _ocr_file in self.ocr_files:
             postprocess_ocr_file(_ocr_file, strip_tags)
 
@@ -652,7 +652,7 @@ class OCRDPageParallel(ODEMOCRPipeline):
         """Create OCR Data"""
 
         ocr_log_conf = os.path.join(
-            PROJECT_ROOT, self.cfg.get('ocr', 'ocrd_logging'))
+            PROJECT_ROOT, self.cfg.get(CFG_SEC_OCR, 'ocrd_logging'))
 
         # Preprare workspace with makefile
         (image_path, ident) = input_data
@@ -695,17 +695,17 @@ class OCRDPageParallel(ODEMOCRPipeline):
         profiling = ('n.a.', 0)
 
         container_name: str = f'{self.odem.process_identifier}_{os.path.basename(page_workdir)}'
-        container_memory_limit: str = self.cfg.get('ocr', 'docker_container_memory_limit', fallback=None)
-        container_user = self.cfg.get('ocr', 'docker_container_user', fallback=os.getuid())
+        container_memory_limit: str = self.cfg.get(CFG_SEC_OCR, 'docker_container_memory_limit', fallback=None)
+        container_user = self.cfg.get(CFG_SEC_OCR, 'docker_container_user', fallback=os.getuid())
         container_timeout: int = self.cfg.getint(
-            'ocr',
+            CFG_SEC_OCR,
             'docker_container_timeout',
             fallback=DEFAULT_DOCKER_CONTAINER_TIMEOUT
         )
-        base_image = self.cfg.get('ocr', 'ocrd_baseimage')
-        ocrd_process_list = self.cfg.getlist('ocr', 'ocrd_process_list')
-        tesseract_model_rtl: typing.List[str] = self.cfg.getlist('ocr', 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
-        ocrd_resources_volumes: typing.Dict[str, str] = self.cfg.getdict('ocr', CFG_SEC_OCR_OPT_RES_VOL, fallback={})
+        base_image = self.cfg.get(CFG_SEC_OCR, 'ocrd_baseimage')
+        ocrd_process_list = self.cfg.getlist(CFG_SEC_OCR, 'ocrd_process_list')
+        tesseract_model_rtl: typing.List[str] = self.cfg.getlist(CFG_SEC_OCR, 'tesseract_model_rtl', fallback=DEFAULT_RTL_MODELS)
+        ocrd_resources_volumes: typing.Dict[str, str] = self.cfg.getdict(CFG_SEC_OCR, CFG_SEC_OCR_OPT_RES_VOL, fallback={})
 
         if self.odem.local_mode:
             container_name = os.path.basename(page_workdir)
@@ -739,7 +739,7 @@ class OCRDPageParallel(ODEMOCRPipeline):
                                   _ident, plain_exc, base_image)
 
         os.chdir(self.odem.work_dir_main)
-        if self.cfg.getboolean('ocr', 'keep_temp_orcd_data', fallback=False) is False:
+        if self.cfg.getboolean(CFG_SEC_OCR, 'keep_temp_orcd_data', fallback=False) is False:
             shutil.rmtree(page_workdir, ignore_errors=True)
         return stored, 1, mps, filesize_mb
 
@@ -850,8 +850,8 @@ class ODEMTesseract(ODEMOCRPipeline):
         
         if self.pipeline_configuration is None:
             if path_config is None:
-                if self.odem_configuration.has_option('ocr', 'ocr_pipeline_config'):
-                    path_config = os.path.abspath(self.odem_configuration.get('ocr', 'ocr_pipeline_config'))
+                if self.odem_configuration.has_option(CFG_SEC_OCR, 'ocr_pipeline_config'):
+                    path_config = os.path.abspath(self.odem_configuration.get(CFG_SEC_OCR, 'ocr_pipeline_config'))
             if not os.path.isfile(path_config):
                 raise ODEMException(f"no ocr-pipeline conf {path_config} !")
             pipe_cfg = configparser.ConfigParser()

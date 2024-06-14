@@ -75,7 +75,7 @@ def test_postprocess_mets_agent_odem_fits(post_mets):
     _agent_odem = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[3]
     _xp_agent_note = 'mets:note/text()'
     _xp_agent_name = 'mets:name/text()'
-    _curr_image = fixture_configuration().get('ocr', 'ocrd_baseimage')
+    _curr_image = fixture_configuration().get(odem.CFG_SEC_OCR, 'ocrd_baseimage')
     assert _agent_odem.xpath(_xp_agent_name, namespaces=df.XMLNS)[0] == f'DFG-OCRD3-ODEM_{_curr_image}'
     _today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
     assert _today in _agent_odem.xpath(_xp_agent_note, namespaces=df.XMLNS)[0]

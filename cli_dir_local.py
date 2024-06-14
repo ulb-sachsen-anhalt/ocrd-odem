@@ -92,9 +92,9 @@ if __name__ == "__main__":
             shutil.rmtree(req_dst_dir)
         os.makedirs(req_dst_dir, exist_ok=True)
 
-        proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
+        proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
-            LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
+            LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         PROCESS: odem.ODEMProcess = odem.ODEMProcess.create(proc_type, None, req_dst_dir, EXECUTORS)
         PROCESS.local_mode = True
         PROCESS.odem_configuration = CFG

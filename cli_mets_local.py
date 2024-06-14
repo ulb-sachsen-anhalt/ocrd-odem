@@ -78,8 +78,8 @@ if __name__ == "__main__":
         print(f"unable to read config from '{CONF_FILE}! exit!")
         sys.exit(1)
 
-    CREATE_PDF: bool = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
-    ENRICH_METS_FULLTEXT: bool = CFG.getboolean('export', 'enrich_mets_fulltext', fallback=True)
+    CREATE_PDF = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
+
 
     # set work_dirs and logger
     DELETE_BEVOR_EXPORT = []
@@ -103,8 +103,8 @@ if __name__ == "__main__":
 
     # if valid n_executors via cli, use it's value
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
-        CFG.set('ocr', 'n_executors', str(EXECUTOR_ARGS))
-    EXECUTORS = CFG.getint('ocr', 'n_executors', fallback=DEFAULT_EXECUTORS)
+        CFG.set(odem.CFG_SEC_OCR, 'n_executors', str(EXECUTOR_ARGS))
+    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, 'n_executors', fallback=DEFAULT_EXECUTORS)
     if SEQUENTIAL:
         EXECUTORS = 1
     LOGGER.debug("local work_root: '%s', executors:%s, keep_res:%s, lock:%s",
@@ -112,9 +112,9 @@ if __name__ == "__main__":
 
     try:
         local_ident = mets_file.stem
-        proc_type: str = CFG.get('ocr', 'workflow_type', fallback=None)
+        proc_type: str = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
-            LOGGER.warning("no 'workflow_type' config option in section 'ocr' defined. defaults to 'OCRD_PAGE_PARALLEL'")
+            LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         record = df.OAIRecord(local_ident)
         odem_process: odem.ODEMProcess = odem.ODEMProcess(record, mets_file_dir)
         odem_process.the_logger = LOGGER
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         process_resource_monitor.check_vmem()
         # process_resource_monitor.monit_disk_space(odem_process.load)
         odem_process.inspect_metadata()
-        if CFG.getboolean('mets','prevalidate', fallback=True):
+        if CFG.getboolean('mets', 'prevalidate', fallback=True):
             odem_process.validate_metadata()
         odem_process.clear_existing_entries()
         odem_process.language_modelconfig()
@@ -147,30 +147,33 @@ if __name__ == "__main__":
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
         odem_process.link_ocr_files()
         odem_process.postprocess_ocr()
+        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
+        if wf_enrich_ocr:
+            odem_process.link_ocr_files()
         if CREATE_PDF:
             odem_process.create_pdf()
         if CREATE_PDF:
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
-        if CFG.getboolean('mets','postvalidate', fallback=True):
+        if CFG.getboolean('mets', 'postvalidate', fallback=True):
             odem_process.validate_metadata()
         if odem_process.odem_configuration.has_option('export', 'local_export_dir'):
-            odem_process.the_logger.info("[%s] start to export data", 
+            odem_process.the_logger.info("[%s] start to export data",
                                          odem_process.process_identifier)
             if not MUST_KEEP_RESOURCES and len(DELETE_BEVOR_EXPORT) > 0:
                 odem_process.delete_before_export(DELETE_BEVOR_EXPORT)
             odem_process.export_data()
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         odem_process.the_logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
-                                odem_process.duration, _mode, odem_process.statistics)
+                                     odem_process.duration, _mode, odem_process.statistics)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier, odem_process.duration, EXECUTORS)
     except odem.ODEMNoTypeForOCRException as type_unknown:
-        LOGGER.warning("[%s] odem skips '%s'", 
+        LOGGER.warning("[%s] odem skips '%s'",
                        odem_process.process_identifier, type_unknown.args[0])
     except odem.ODEMNoImagesForOCRException as not_ocrable:
-        LOGGER.warning("[%s] odem no ocrables '%s'", 
-                       odem_process.process_identifier,  not_ocrable.args)
+        LOGGER.warning("[%s] odem no ocrables '%s'",
+                       odem_process.process_identifier, not_ocrable.args)
     except odem.ODEMException as _odem_exc:
         _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with: '%s'", odem_process.process_identifier, _err_args)

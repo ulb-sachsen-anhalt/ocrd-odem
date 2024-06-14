@@ -54,6 +54,7 @@ CFG_SEC_OCR_OPT_RES_VOL = "ocrd_resources_volumes"
 CFG_SEC_OCR_OPT_MODEL_COMBINABLE = "model_combinable"
 CFG_SEC_METS = 'mets'
 CFG_SEC_METS_OPT_AGENTS = 'agents'
+CFG_SEC_METS_OPT_ENRICH = 'enrich_fulltext'
 KEY_EXECS = 'n_executors'
 KEY_LANGUAGES = 'language_model'
 KEY_MODEL_MAP = 'model_mapping'
