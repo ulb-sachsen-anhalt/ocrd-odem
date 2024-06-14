@@ -95,7 +95,7 @@ if __name__ == "__main__":
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
-        PROCESS: odem.ODEMProcess = odem.ODEMProcess.create(proc_type, None, req_dst_dir, EXECUTORS)
+        PROCESS: odem.ODEMProcessImpl = odem.ODEMProcessImpl.create(proc_type, None, req_dst_dir, EXECUTORS)
         PROCESS.local_mode = True
         PROCESS.odem_configuration = CFG
         PROCESS.the_logger = LOGGER

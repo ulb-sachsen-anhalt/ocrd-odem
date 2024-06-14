@@ -39,7 +39,7 @@ def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     work_2.mkdir()
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
-    odem_processor = odem.ODEMProcess(None, work_dir=str(work_2))
+    odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     odem_processor.odem_configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
@@ -69,7 +69,7 @@ def test_exchange_language(img_path, langs, models, tmp_path):
     work_2.mkdir()
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
-    odem_processor = odem.ODEMProcess(None, work_dir=str(work_2))
+    odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     odem_processor.odem_configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.odem_configuration.set(
@@ -101,7 +101,7 @@ def test_enforce_language_and_model_mapping(tmp_path):
     work_2.mkdir()
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
-    odem_processor = odem.ODEMProcess(None, work_dir=str(work_2))
+    odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     odem_processor.odem_configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
     _kraken_dir = prepare_kraken_dir(tmp_path)
@@ -149,7 +149,7 @@ def test_load_mock_called(tmp_path_factory):
     _log_dir = _root_workdir / 'log'
     _log_dir.mkdir()
     _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
-    odem_proc = odem.ODEMProcess(_record, _workdir)
+    odem_proc = odem.ODEMProcessImpl(_record, _workdir)
     odem_proc.odem_configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(_workdir)
     odem_proc.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
@@ -179,7 +179,7 @@ def test_odem_process_identifier_local_workdir(tmp_path):
     _workdir.mkdir(parents=True, exist_ok=True)
 
     # act
-    odem_proc = odem.ODEMProcess(None, _workdir)
+    odem_proc = odem.ODEMProcessImpl(None, _workdir)
 
     # assert
     assert odem_proc.process_identifier == 'foo_bar'
@@ -193,7 +193,7 @@ def _fixture_odem_setup(tmp_path):
     work_2.mkdir()
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
-    odem_processor = odem.ODEMProcess(None, work_dir=str(work_2))
+    odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     cfg = odem.get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     odem_processor.odem_configuration = cfg
@@ -205,7 +205,7 @@ def _fixture_odem_setup(tmp_path):
     return odem_processor
 
 
-def test_lang_mapping_missing_conf_error(odem_processor: odem.ODEMProcess):
+def test_lang_mapping_missing_conf_error(odem_processor: odem.ODEMProcessImpl):
     """Ensure unknown language mapping caught properly"""
 
     # arrange
@@ -219,7 +219,7 @@ def test_lang_mapping_missing_conf_error(odem_processor: odem.ODEMProcess):
     assert "'gop' mapping not found (languages: ['gop'])!" in err.value.args[0]
 
 
-def test_lang_mapping_missing_lang_error(odem_processor: odem.ODEMProcess):
+def test_lang_mapping_missing_lang_error(odem_processor: odem.ODEMProcessImpl):
     """Ensure cannot map dummy language 'yyy.traineddata'"""
 
     # arrange
@@ -233,7 +233,7 @@ def test_lang_mapping_missing_lang_error(odem_processor: odem.ODEMProcess):
     assert "'yyy.traineddata' model config not found !" in err.value.args[0]
 
 
-def test_module_fixture_one_integrated_ocr_in_mets(fixture_27949: odem.ODEMProcess):
+def test_module_fixture_one_integrated_ocr_in_mets(fixture_27949: odem.ODEMProcessImpl):
     """Ensure, that generated final OCR files
     * are properly linked into original METS
     * contain required link data to images
@@ -253,7 +253,7 @@ def test_module_fixture_one_integrated_ocr_in_mets(fixture_27949: odem.ODEMProce
     assert len(_phys_links[6].getchildren()) == 1
 
 
-def test_module_fixture_one_images_4_ocr_by_metadata(fixture_27949: odem.ODEMProcess):
+def test_module_fixture_one_images_4_ocr_by_metadata(fixture_27949: odem.ODEMProcessImpl):
     """Ensure setting and filtering of images behavior.
 
     Record oai:dev.opendata.uni-halle.de:123456789/27949
@@ -264,7 +264,7 @@ def test_module_fixture_one_images_4_ocr_by_metadata(fixture_27949: odem.ODEMPro
     assert len(fixture_27949.images_4_ocr) == 4
 
 
-def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEMProcess):
+def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEMProcessImpl):
     """Ensure text bundle data created
     and present with expected number of text rows
     Please note:
@@ -310,7 +310,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
             _writer.write(b'0x00')
     _orig_mets = TEST_RES / '1981185920_44046.xml'
     shutil.copyfile(_orig_mets, _work_dir / '1981185920_44046.xml')
-    odem_processor = odem.ODEMProcess(_record, work_dir=_work_dir)
+    odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
     cfg = odem.get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     odem_processor.odem_configuration = cfg
@@ -336,7 +336,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
     _work_dir = tmp_path / '1981185920_44046'
     _work_dir.mkdir()
-    odem_processor = odem.ODEMProcess(_record, work_dir=_work_dir)
+    odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
     cfg = odem.get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
     odem_processor.odem_configuration = cfg
@@ -366,7 +366,7 @@ def test_record_with_unknown_language(tmp_path):
     shutil.copyfile(orig_file, trgt_mets)
     (path_workdir / 'log').mkdir()
     record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/72977')
-    oproc = odem.ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.odem_configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
     oproc.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
@@ -407,7 +407,7 @@ def test_export_flat_zip(tmp_path):
 
     (path_workdir / 'log').mkdir()
     record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
-    oproc = odem.ODEMProcess(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
+    oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.odem_configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
 

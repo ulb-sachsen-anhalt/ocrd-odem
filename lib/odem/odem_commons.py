@@ -108,6 +108,34 @@ class OAIRecordExhaustedException(Exception):
     """Mark that given file contains no open records"""
 
 
+class OdemWorkflowProcessType(str, Enum):
+    OCRD_PAGE_PARALLEL = "OCRD_PAGE_PARALLEL"
+    ODEM_TESSERACT = "ODEM_TESSERACT"
+
+
+class OdemProcess:
+    """Basic Interface for ODEM"""
+
+    def load(self):
+        """Load Data via OAI-PMH-API very LAZY
+        i.e. if not metadata file exists already in
+        configured workspace directory"""
+
+    def inspect_metadata(self):
+        """Inspected record data and try to make sense (or go nuts if invalid)
+        Invalid means:
+        * no print work type (i.e. C-stage, newspaper year)
+        * no language
+        * missing links between physical and logical structs
+          (otherwise viewer navigation and PDF outline
+           will be corrupt at this segment)
+        * no page images for OCR
+        """
+    
+    def export_data(self):
+        """re-do metadata and transform into output format"""
+
+
 def get_configparser():
     """init plain configparser"""
 

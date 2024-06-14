@@ -260,7 +260,7 @@ if __name__ == "__main__":
     rec_ident = record.identifier
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
-    odem_process: odem.ODEMProcess = odem.ODEMProcess(record, req_dst_dir)
+    odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record, req_dst_dir)
     odem_process.the_logger = LOGGER
     odem_process.the_logger.debug(
         "request %s from %s (%s part slots)",

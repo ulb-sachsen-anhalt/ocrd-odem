@@ -82,7 +82,7 @@ def fixure_a_workspace(tmp_path):
 @pytest.fixture(name="my_pipeline")
 def _fixture_default_pipeline(a_workspace: Path):
     _record = df.OAIRecord('oai:urn:mwe')
-    odem_process = odem.ODEMProcess(_record, a_workspace)
+    odem_process = odem.ODEMProcessImpl(_record, a_workspace)
     odem_process.odem_configuration = ODEM_CFG
     odem_process._statistics_ocr['languages'] = ['ger']
     odem_process.the_logger = odem.get_logger(a_workspace / 'log')
@@ -119,7 +119,7 @@ def _fixture_custom_config_pipeline(a_workspace):
         conf_dir.mkdir()
     conf_file = TEST_RES / 'ocr_config_full.ini'
     assert os.path.isfile(conf_file)
-    odem_process = odem.ODEMProcess(df.OAIRecord('oai:urn_custom'), a_workspace)
+    odem_process = odem.ODEMProcessImpl(df.OAIRecord('oai:urn_custom'), a_workspace)
     odem_process.odem_configuration = ODEM_CFG
     odem_process._statistics_ocr['languages'] = ['ger', 'lat']
     odem_process.the_logger = odem.get_logger(a_workspace / 'log')

@@ -21,7 +21,7 @@ from lib.odem import (
     MARK_OCR_DONE,
     MARK_OCR_OPEN,
     MARK_OCR_FAIL,
-    ODEMProcess,
+    ODEMProcessImpl,
     ODEMException,
     get_configparser,
     get_logger, 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
-        odem_process: ODEMProcess = ODEMProcess(record, req_dst_dir)
+        odem_process: ODEMProcessImpl = ODEMProcessImpl(record, req_dst_dir)
         odem_process.the_logger = LOGGER
         odem_process.the_logger.info("[%s] odem from %s, %d executors", local_ident, OAI_RECORD_FILE, EXECUTORS)
         odem_process.odem_configuration = CFG
