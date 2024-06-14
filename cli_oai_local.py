@@ -103,9 +103,6 @@ if __name__ == "__main__":
         print(f"unable to read config from '{CONF_FILE}! exit!")
         sys.exit(1)
 
-    CREATE_PDF: bool = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
-    ENRICH_METS_FULLTEXT: bool = CFG.getboolean(odem.CFG_SEC_METS, 'enrich_mets_fulltext', fallback=True)
-
     # set work_dirs and logger
     LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
     LOCAL_DELETE_BEVOR_EXPORT = []
@@ -196,11 +193,12 @@ if __name__ == "__main__":
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
         odem_process.link_ocr_files()
         odem_process.postprocess_ocr()
-        if ENRICH_METS_FULLTEXT:
+        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
+        if wf_enrich_ocr:
             odem_process.link_ocr_files()
-        if CREATE_PDF:
+        wf_create_pdf = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
+        if wf_create_pdf:
             odem_process.create_pdf()
-        if CREATE_PDF:
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
         if CFG.getboolean('mets','postvalidate', fallback=True):
