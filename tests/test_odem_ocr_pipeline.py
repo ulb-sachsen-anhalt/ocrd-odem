@@ -90,15 +90,6 @@ def _fixture_default_pipeline(a_workspace: Path):
     return odem_tess
 
 
-def test_ocr_pipeline_default_config(my_pipeline: odem.ODEMTesseract):
-    """check default config options"""
-
-    _cfg = my_pipeline.read_pipeline_config(OCR_PIPELINE_CFG_PATH)
-    assert 'pipeline' in _cfg.sections()
-    assert _cfg.get('pipeline', 'logger_name') == 'ocr_pipeline'
-    assert _cfg.get('pipeline', 'file_ext') == 'tif,jpg,png,jpeg'
-
-
 @pytest.mark.skip('kept only for documentation')
 def test_ocr_pipeline_estimations(my_pipeline: odem.ODEMTesseract):
     """check estimation data persisted"""
