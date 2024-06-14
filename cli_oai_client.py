@@ -299,8 +299,8 @@ if __name__ == "__main__":
 
         # NEW NEW NEW
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
-        odem_pipeline = odem.ODEMOCRPipeline.create(proc_type, odem_process)
-        odem_runner = odem.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
+        odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
+        odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
         ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
         if ocr_results is None or len(ocr_results) == 0:
             raise odem.ODEMException(f"process run error: {record.identifier}")

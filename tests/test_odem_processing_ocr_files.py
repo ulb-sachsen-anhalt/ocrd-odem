@@ -2,8 +2,6 @@
 
 import os
 
-import pytest
-
 import lxml.etree as ET
 import digiflow as df
 
@@ -30,22 +28,6 @@ def test_module_fixture_one_integrated_ocr_files_fit_identifier(fixture_27949: o
     ocr_file_06 = ET.parse(str(tmp_path / 'FULLTEXT' / '00000006.xml')).getroot()
     assert len(ocr_file_06.xpath('//alto:Page[@ID="p00000006"]', namespaces=df.XMLNS)) == 1
     assert not os.path.exists(tmp_path / 'FULLTEXT' / '00000007.xml')
-
-
-def test_fixture_one_postprocessed_ocr_files_elements(fixture_27949: odem.ODEMProcess):
-    """Ensure ocr-file unwanted elements dropped as expected
-    """
-
-    # arrange
-    tmp_path = fixture_27949.work_dir_main
-
-    # act
-    # fixture_27949.link_ocr()
-    fixture_27949.postprocess_ocr()
-
-    # assert
-    ocr_file_03 = ET.parse(str(tmp_path / 'FULLTEXT' / '00000003.xml')).getroot()
-    assert not ocr_file_03.xpath('//alto:Shape', namespaces=df.XMLNS)
 
 
 def test_fixture_one_postprocess_ocr_files(fixture_27949: odem.ODEMProcess):

@@ -41,7 +41,7 @@ DROP_ALTO_ELEMENTS = [
     'alto:Illustration',
     'alto:GraphicalElement']
 
-LOCAL_DIR_RESULT = 'PAGE'
+# LOCAL_OCRD_RESULT_DIR = 'PAGE'
 
 
 class ODEMMetadataOcrException(Exception):
@@ -92,33 +92,20 @@ def postprocess_ocr_file(ocr_file, strip_tags):
     mproc.write()
 
 
-def list_files(dir_root, sub_dir) -> typing.List:
-    _curr_dir = os.path.join(dir_root, sub_dir)
-    return [
-        os.path.join(_curr_dir, _file)
-        for _file in os.listdir(_curr_dir)
-        if str(_file).endswith('.xml')
-    ]
-
-
-def convert_to_output_format(work_dir_root):
+def convert_to_output_format(ocrd_results: typing.List, dst_dir):
     """Convert created OCR-Files to required presentation
     format (i.e. ALTO)
     """
 
-    _converted = []
-    _fulltext_dir = os.path.join(work_dir_root, odem_c.FILEGROUP_OCR)
-    if not os.path.isdir(_fulltext_dir):
-        os.makedirs(_fulltext_dir, exist_ok=True)
-    _results = list_files(work_dir_root, LOCAL_DIR_RESULT)
-    for _file in _results:
+    converted_files = []
+    for _file in ocrd_results:
         the_id = os.path.basename(_file)
-        output_file = os.path.join(_fulltext_dir, the_id)
-        converter = opta_c.OcrdPageAltoConverter(page_filename=_file).convert()
+        output_file = os.path.join(dst_dir, the_id)
+        converted = opta_c.OcrdPageAltoConverter(page_filename=_file).convert()
         with open(output_file, 'w', encoding='utf-8') as output:
-            output.write(str(converter))
-        _converted.append(output_file)
-    return _converted
+            output.write(str(converted))
+        converted_files.append(output_file)
+    return converted_files
 
 
 def _is_completely_punctuated(a_string):

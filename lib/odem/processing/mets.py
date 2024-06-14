@@ -264,10 +264,10 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
     tag_file = f'{{{df.XMLNS["mets"]}}}file'
     tag_flocat = f'{{{df.XMLNS["mets"]}}}FLocat'
 
-    file_grp_fulltext = ET.Element(tag_file_group, USE=odem_c.FILEGROUP_OCR)
+    file_grp_fulltext = ET.Element(tag_file_group, USE=odem_c.FILEGROUP_FULLTEXT)
     for _ocr_file in ocr_files:
         _file_name = os.path.basename(_ocr_file).split('.')[0]
-        new_id = odem_c.FILEGROUP_OCR + '_' + _file_name
+        new_id = odem_c.FILEGROUP_FULLTEXT + '_' + _file_name
         file_ocr = ET.Element(
             tag_file, MIMETYPE="application/alto+xml", ID=new_id)
         flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")

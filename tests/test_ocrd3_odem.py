@@ -4,6 +4,7 @@
 import os
 import shutil
 import unittest
+import unittest.mock
 
 import lxml.etree as ET
 import pytest
@@ -266,6 +267,11 @@ def test_module_fixture_one_images_4_ocr_by_metadata(fixture_27949: odem.ODEMPro
 def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEMProcess):
     """Ensure text bundle data created
     and present with expected number of text rows
+    Please note:
+    according to workflow modifications the ocr-output
+    is no longer postprocessed, and lots of to short
+    non-alphabetical lines will remain
+    therefore line number increased from 77 => 111
     """
 
     # arrange
@@ -273,15 +279,14 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEM
 
     # act
     fixture_27949.link_ocr_files()
-    fixture_27949.postprocess_ocr()
     fixture_27949.create_text_bundle_data()
 
     # assert
     _txt_bundle_file = tmp_path / '198114125.pdf.txt'
     assert os.path.exists(_txt_bundle_file)
-    assert 77 == fixture_27949.statistics['n_text_lines']
+    assert 111 == fixture_27949.statistics['n_text_lines']
     with open(_txt_bundle_file, encoding='utf-8') as bundle_handle:
-        assert 77 == len(bundle_handle.readlines())
+        assert 111 == len(bundle_handle.readlines())
 
 
 def test_images_4_ocr_properly_filtered(tmp_path):
@@ -417,7 +422,7 @@ def test_export_flat_zip(tmp_path):
 
     oproc.mets_file = str(trgt_mets)
     oproc.inspect_metadata()
-    _langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
+    # _langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
 
     # act
     zipfilepath, _ = oproc.export_data()

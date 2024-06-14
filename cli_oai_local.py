@@ -183,16 +183,16 @@ if __name__ == "__main__":
         odem_process.set_local_images()
 
         # NEW NEW NEW
-        odem_pipeline = odem.ODEMOCRPipeline.create(proc_type, odem_process)
-        odem_runner = odem.ODEMPipelineRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
+        odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
+        odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
         ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
         if ocr_results is None or len(ocr_results) == 0:
             raise ODEMException(f"process run error: {record.identifier}")
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
-        odem_process.link_ocr_files()
-        odem_process.postprocess_ocr()
+        # odem_process.link_ocr_files()
+        # odem_process.postprocess_ocr()
         wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
         if wf_enrich_ocr:
             odem_process.link_ocr_files()
@@ -214,7 +214,7 @@ if __name__ == "__main__":
                 odem_process.record.info.update(_kwargs)
                 _info = f"{odem_process.record.info}"
             except:
-                odem_process.the_logger.error("Can't parse '%s', store info literally",
+                odem_process.the_logger.warning("Can't parse '%s', store info literally",
                                          odem_process.record.info)
                 _info = f"{_kwargs}"
         else:

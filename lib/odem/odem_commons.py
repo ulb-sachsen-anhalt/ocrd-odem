@@ -5,26 +5,13 @@ import logging
 import os
 import socket
 import time
+import typing
 
-from configparser import (
-    ConfigParser,
-)
 from enum import Enum
-from pathlib import (
-    Path
-)
-from typing import (
-    Dict,
-    List,
-)
+from pathlib import Path
 
-from ocrd_utils import (
-    initLogging
-)
-
-from digiflow import (
-    OAIRecord,
-)
+import ocrd_utils
+import digiflow as df
 
 #
 # ODEM States
@@ -87,7 +74,7 @@ RECORD_TIME = 'STATE_TIME'
 # ODEM metadata
 #
 # file groups
-FILEGROUP_OCR = 'FULLTEXT'
+FILEGROUP_FULLTEXT = 'FULLTEXT'
 FILEGROUP_IMG = 'MAX'
 # statistic keys
 STATS_KEY_LANGS = 'languages'
@@ -161,7 +148,7 @@ def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
     ...
     """
 
-    initLogging()
+    ocrd_utils.initLogging()
     logging.getLogger('page-to-alto').setLevel('CRITICAL')
     _today = time.strftime('%Y-%m-%d', time.localtime())
     _host = socket.gethostname()
@@ -176,7 +163,7 @@ def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
     return logging.getLogger('odem')
 
 
-def merge_args(the_configuration: ConfigParser, the_args) -> List:
+def merge_args(the_configuration: configparser.ConfigParser, the_args) -> typing.List:
     """Merge additionally provided arguements into
     existing configurations, overwrite these and
     communication the replaced options
@@ -200,7 +187,7 @@ def merge_args(the_configuration: ConfigParser, the_args) -> List:
     return _repls
 
 
-def to_dict(record: OAIRecord) -> Dict:
+def to_dict(record: df.OAIRecord) -> typing.Dict:
     """Serialize OAIRecord into dictionary
     as input for JSON format"""
 
@@ -212,9 +199,18 @@ def to_dict(record: OAIRecord) -> Dict:
         RECORD_TIME: record.state_datetime,
     }
 
-def from_dict(data) -> OAIRecord:
+def from_dict(data) -> df.OAIRecord:
     """deserialize into OAIRecord"""
 
-    _record = OAIRecord(data[RECORD_IDENTIFIER])
+    _record = df.OAIRecord(data[RECORD_IDENTIFIER])
     _record.info = data[RECORD_INFO]
     return _record
+
+
+def list_files(dir_root, sub_dir, format='.xml') -> typing.List:
+    actual_dir = os.path.join(dir_root, sub_dir)
+    return [
+        os.path.join(actual_dir, dir_file)
+        for dir_file in os.listdir(actual_dir)
+        if Path(dir_file).suffix == format
+    ]

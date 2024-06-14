@@ -5,8 +5,8 @@ from .odem_commons import *
 from .ocrd3_odem import (
     OdemWorkflowProcessType,
     ODEMProcess,
-    ODEMOCRPipeline,
-    ODEMPipelineRunner,
+    ODEMWorkflow,
+    ODEMWorkflowRunner,
     OCRDPageParallel,
     ODEMTesseract,
 )
