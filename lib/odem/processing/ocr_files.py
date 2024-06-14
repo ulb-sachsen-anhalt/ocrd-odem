@@ -11,14 +11,12 @@ import lxml.etree as ET
 import digiflow as df
 import ocrd_page_to_alto.convert as opta_c
 
-import lib.odem.odem_commons as odem_c
 
-
-# define propably difficult characters
 # very common separator '⸗'
 DOUBLE_OBLIQUE_HYPHEN = '\u2E17'
-# rare Geviertstrich '—'
+# "Geviertstrich": '—'
 EM_DASH = '\u2014'
+
 ODEM_PUNCTUATIONS = string.punctuation + EM_DASH + DOUBLE_OBLIQUE_HYPHEN
 # create module-wide translator
 PUNCT_TRANSLATOR = str.maketrans('', '', ODEM_PUNCTUATIONS)
@@ -41,8 +39,6 @@ DROP_ALTO_ELEMENTS = [
     'alto:Illustration',
     'alto:GraphicalElement']
 
-# LOCAL_OCRD_RESULT_DIR = 'PAGE'
-
 
 class ODEMMetadataOcrException(Exception):
     """Mark any problems related to OCR
@@ -61,19 +57,19 @@ def postprocess_ocr_file(ocr_file, strip_tags):
     """
 
     # the xml cleanup
-    mproc = df.MetsProcessor(str(ocr_file))
+    xml_proc: df.XMLProcessor = df.XMLProcessor(ocr_file)
     if strip_tags:
-        mproc.remove(strip_tags)
+        xml_proc.remove(strip_tags)
 
     # inspect transformation artifacts
-    _all_text_blocks = mproc.tree.xpath('//alto:TextBlock', namespaces=df.XMLNS)
+    _all_text_blocks = xml_proc.tree.xpath('//alto:TextBlock', namespaces=df.XMLNS)
     for _block in _all_text_blocks:
         if 'IDNEXT' in _block.attrib:
             del _block.attrib['IDNEXT']
 
     # inspect textual content
     # _all_strings = mproc.tree.xpath('//alto:String', namespaces=XMLNS)
-    _all_strings = mproc.tree.findall('.//alto:String', df.XMLNS)
+    _all_strings = xml_proc.tree.findall('.//alto:String', df.XMLNS)
     for _string_el in _all_strings:
         _content = _string_el.attrib['CONTENT'].strip()
         if _is_completely_punctuated(_content):
@@ -89,7 +85,7 @@ def postprocess_ocr_file(ocr_file, strip_tags):
         if len(_content) < MINIMUM_WORD_LEN:
             # too few content, remove element bottom-up
             _uplete(_string_el, _string_el.getparent())
-    mproc.write()
+    xml_proc.write()
 
 
 def convert_to_output_format(ocrd_results: typing.List, dst_dir):
