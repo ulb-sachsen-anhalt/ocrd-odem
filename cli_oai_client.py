@@ -308,7 +308,6 @@ if __name__ == "__main__":
         odem_process._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS        
         _stats_ocr = odem_process.statistics
         odem_process.the_logger.info("[%s] %s", local_ident, _stats_ocr)
-        odem_process.postprocess_ocr()
         wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
         if wf_enrich_ocr:
             odem_process.link_ocr_files()
