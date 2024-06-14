@@ -172,6 +172,8 @@ class ODEMProcess:
             loader = df.OAILoader(req_dst_dir, base_url=base_url, post_oai=dfm.extract_mets)
             loader.store = self.store
             loader.load(request_identifier, local_dst=req_dst)
+        except df.OAILoadClientError as load_err:
+            raise ODEMException(load_err.args[0]) from load_err
         except RuntimeError as _err:
             raise ODEMException(_err.args[0]) from _err
 
