@@ -151,7 +151,6 @@ if __name__ == "__main__":
         req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
-
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
@@ -159,11 +158,10 @@ if __name__ == "__main__":
         odem_process.logger = LOGGER
         odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, OAI_RECORD_FILE, EXECUTORS)
         odem_process.configuration = CFG
-        LOCAL_STORE_ROOT = CFG.get('global', 'local_store_root', fallback=None)
-        if LOCAL_STORE_ROOT is not None:
-            STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
-            STORE = df.LocalStore(STORE_DIR, req_dst_dir)
-            odem_process.store = STORE
+        local_store_root = CFG.get('global', 'local_store_root', fallback=None)
+        if local_store_root is not None:
+            store_root_dir = os.path.join(local_store_root, local_ident)
+            odem_process.store = df.LocalStore(store_root_dir, req_dst_dir)
         process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),
             LOGGER.error,

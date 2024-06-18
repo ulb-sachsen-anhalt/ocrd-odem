@@ -31,7 +31,6 @@ LOGGER = None
 CFG = None
 
 
-
 def _notify(subject, message):
     if CFG.has_section('mail') and CFG.has_option('mail', 'connection'):
         try:
@@ -45,7 +44,7 @@ def _notify(subject, message):
         LOGGER.warning("No [mail] section in config, no mail sent!")
 
 
-class OAIServiceClient:
+class Client:
     """Implementation of OAI Service client with
     capabilities to get next OAI Record data
     and communicate results (done|fail)
@@ -119,7 +118,7 @@ class OAIServiceClient:
         return requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=60)
 
 
-CLIENT: typing.Optional[OAIServiceClient] = None
+CLIENT: typing.Optional[Client] = None
 
 
 def oai_arg_parser(value):
@@ -235,7 +234,7 @@ if __name__ == "__main__":
     PORT = CFG.getint('record-server', 'record_server_port')
     LOGGER.info("Client instance listens %s:%s for '%s' (format:%s)",
                 HOST, PORT, OAI_RECORD_FILE_NAME, DATA_FIELDS)
-    CLIENT = OAIServiceClient(OAI_RECORD_FILE_NAME, HOST, PORT)
+    CLIENT = Client(OAI_RECORD_FILE_NAME, HOST, PORT)
     CLIENT.logger = LOGGER
 
     # try to get next data record
@@ -269,11 +268,10 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
 
-        LOCAL_STORE_ROOT = CFG.get('global', 'local_store_root', fallback=None)
-        if LOCAL_STORE_ROOT is not None:
-            STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
-            STORE = df.LocalStore(STORE_DIR, req_dst_dir)
-            odem_process.store = STORE
+        local_store_root = CFG.get('global', 'local_store_root', fallback=None)
+        if local_store_root is not None:
+            store_root_dir = os.path.join(local_store_root, local_ident)
+            odem_process.store = df.LocalStore(store_root_dir, req_dst_dir)
 
         process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),

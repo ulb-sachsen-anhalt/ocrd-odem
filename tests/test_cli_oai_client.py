@@ -37,7 +37,7 @@ def test_exit_on_data_exhausted(mock_request):
     # arrange
     _the_list_label = 'oai-record-test'
     _rsp = f'{odem.MARK_DATA_EXHAUSTED.format(_the_list_label)}'.encode()
-    client = rsc.OAIServiceClient(_the_list_label, '1.2.3.4', '9999')
+    client = rsc.Client(_the_list_label, '1.2.3.4', '9999')
     mock_resp = unittest.mock.Mock()
     mock_resp.status_code = 404
     mock_resp.headers = {'Content-Type': 'text/xml'}

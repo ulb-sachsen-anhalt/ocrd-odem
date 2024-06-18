@@ -231,7 +231,7 @@ class OCRDPageParallel(ODEMWorkflow):
         _org_log = os.path.join(work_subdir, 'ocrd.log')
         if os.path.exists(_org_log):
             _ts = time.strftime(ODEM_PAGE_TIME_FORMAT, time.localtime())
-            _log_label = f'ocrd_odem_{self.odem.process_identifier}_{image_ident}_{_ts}.log'
+            _log_label = f'ocrd_odem_{self.odem_process.process_identifier}_{image_ident}_{_ts}.log'
             _rebranded = os.path.join(work_subdir, _log_label)
             os.rename(_org_log, _rebranded)
             shutil.copy(_rebranded, _local_ocr_log)
