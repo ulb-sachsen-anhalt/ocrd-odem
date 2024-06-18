@@ -100,8 +100,8 @@ class ODEMWorkflow:
 
     def __init__(self, odem_process: odem_c.ODEMProcess):
         self.odem_process = odem_process
-        self.config = odem_process.odem_configuration
-        self.logger = odem_process.the_logger
+        self.config = odem_process.configuration
+        self.logger = odem_process.logger
         self.ocr_files = []
 
     def get_inputs(self) -> typing.List:

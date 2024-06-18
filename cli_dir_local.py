@@ -10,7 +10,7 @@ import sys
 
 import ocrd_utils
 
-import lib.odem as odem
+from lib import odem
 
 
 ########
@@ -97,8 +97,8 @@ if __name__ == "__main__":
             LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         PROCESS: odem.ODEMProcessImpl = odem.ODEMProcessImpl.create(proc_type, None, req_dst_dir, EXECUTORS)
         PROCESS.local_mode = True
-        PROCESS.odem_configuration = CFG
-        PROCESS.the_logger = LOGGER
+        PROCESS.configuration = CFG
+        PROCESS.logger = LOGGER
         local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
         PROCESS.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
         PROCESS.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         PROCESS.ocr_candidates = list(zip(PROCESS.ocr_candidates, 
                                           [pathlib.Path(i).stem for i in PROCESS.ocr_candidates]))
         PROCESS.run()
-        PROCESS.the_logger.info("[%s] duration: %s (%s)", req_idn,
+        PROCESS.logger.info("[%s] duration: %s (%s)", req_idn,
                                 PROCESS.statistics['timedelta'], PROCESS.statistics)
     except Exception as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",

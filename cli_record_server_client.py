@@ -31,12 +31,6 @@ LOGGER = None
 CFG = None
 
 
-def trnfrm(row):
-    """callback function"""
-    oai_id = row['IDENTIFIER']
-    oai_record = df_r.Record(oai_id)
-    return oai_record
-
 
 def _notify(subject, message):
     if CFG.has_section('mail') and CFG.has_option('mail', 'connection'):
@@ -150,11 +144,11 @@ def oai_arg_parser(value):
 ########
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
-        description="generate ocr-data for OAI-Record")
+        description="generate ocr-data for records")
     PARSER.add_argument(
         "data_file",
         type=oai_arg_parser,
-        help="Name of file with OAI-Record information")
+        help="Name of file with record data")
     PARSER.add_argument(
         "-c",
         "--config",
@@ -237,9 +231,9 @@ if __name__ == "__main__":
     LOGGER.debug("local work_root: '%s', executors:%s, keep_res:%s, lock:%s",
                  LOCAL_WORK_ROOT, EXECUTORS, MUST_KEEP_RESOURCES, MUST_LOCK)
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
-    HOST = CFG.get('oai-server', 'oai_server_url')
-    PORT = CFG.getint('oai-server', 'oai_server_port')
-    LOGGER.info("OAIServiceClient instance listens %s:%s for '%s' (format:%s)",
+    HOST = CFG.get('record-server', 'record_server_url')
+    PORT = CFG.getint('record-server', 'record_server_port')
+    LOGGER.info("Client instance listens %s:%s for '%s' (format:%s)",
                 HOST, PORT, OAI_RECORD_FILE_NAME, DATA_FIELDS)
     CLIENT = OAIServiceClient(OAI_RECORD_FILE_NAME, HOST, PORT)
     CLIENT.logger = LOGGER
@@ -263,13 +257,13 @@ if __name__ == "__main__":
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
     odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record, req_dst_dir)
-    odem_process.the_logger = LOGGER
-    odem_process.the_logger.debug(
+    odem_process.logger = LOGGER
+    odem_process.logger.debug(
         "request %s from %s (%s part slots)",
         local_ident,
         CLIENT.host, EXECUTORS
     )
-    odem_process.odem_configuration = CFG
+    odem_process.configuration = CFG
 
     try:
         if os.path.exists(req_dst_dir):
@@ -309,7 +303,7 @@ if __name__ == "__main__":
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         _stats_ocr = odem_process.statistics
-        odem_process.the_logger.info("[%s] %s", local_ident, _stats_ocr)
+        odem_process.logger.info("[%s] %s", local_ident, _stats_ocr)
         wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
         if wf_enrich_ocr:
             odem_process.link_ocr_files()

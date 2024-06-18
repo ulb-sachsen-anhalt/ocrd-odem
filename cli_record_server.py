@@ -5,83 +5,64 @@
 """
 
 import configparser
+import contextlib
+import functools
+import http.server
 import json
 import logging.config
 import os
 import sys
 import time
-from contextlib import (
-    contextmanager
-)
-from functools import (
-    partial
-)
-from http.server import (
-    SimpleHTTPRequestHandler,
-    HTTPServer,
-)
-from pathlib import (
-    Path
-)
-from threading import (
-    Thread
-)
+import threading
 
-from digiflow import (
-    OAIRecord,
-    OAIRecordHandler,
-)
+from pathlib import Path
 
-import lib.odem as odem
+import digiflow.record as df_r
+
+from lib import odem
 
 from lib.odem.odem_commons import (
     MARK_OCR_BUSY,
     RECORD_IDENTIFIER,
     RECORD_INFO,
-    RECORD_SPEC,
-    RECORD_RELEASED,
     RECORD_STATE,
     to_dict,
 )
 
+_PROJECT_ROOT = Path(__file__).resolve().parent
+ODEM_LOG_CONFIG_FILE = _PROJECT_ROOT / 'resources' / 'odem_logging.ini'
 LOCKFILE = 'SERVER_RUNNING'
-PROJECT_ROOT = Path(__file__).resolve().parent
-ODEM_LOG_CONFIG_FILE = PROJECT_ROOT / 'resources' / 'odem_logging.ini'
 ODEM_LOG_NAME = 'odem'
 NEXT_COMMAND = 'next'
 UPDATE_COMMAND = 'update'
-MIME_TXT = 'text/plain'
-MIME_HTML = 'text/html'
-STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
-# MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
-# MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
+_MIME_TXT = 'text/plain'
 LOGGER = None
 
 
-def to_full_record(row):
-    """Serialize CSV row into OAIRecord
-    with all attributes being evaluated"""
+# def _to_full_record(row):
+#     """Serialize CSV row into OAIRecord
+#     with all attributes being evaluated"""
 
-    oai_id = row[RECORD_IDENTIFIER]
-    record = OAIRecord(oai_id)
-    # legacy field for backward compatibility
-    if RECORD_SPEC in row:
-        record.set = row[RECORD_SPEC]
-    # legacy field for backward compatibility
-    if RECORD_RELEASED in row:
-        record.date_stamp = row[RECORD_RELEASED]
-    record.info = row[RECORD_INFO]
-    return record
+#     oai_id = row[RECORD_IDENTIFIER]
+#     record = df_r.Record(oai_id)
+#     # legacy field for backward compatibility
+#     if RECORD_SPEC in row:
+#         record.set = row[RECORD_SPEC]
+#     # legacy field for backward compatibility
+#     if RECORD_RELEASED in row:
+#         record.date_stamp = row[RECORD_RELEASED]
+#     record.info = row[RECORD_INFO]
+#     return record
 
 
-class OAIService(SimpleHTTPRequestHandler):
+class RecordRequestHandler(http.server.SimpleHTTPRequestHandler):
     """Http Request handler for POST and GET requests"""
 
-    def __init__(self, data_path, *args, **kwargs):
+    def __init__(self, data_path:Path, *args, **kwargs):
         """Overrides __init__ from regular SimpleHTTPRequestHandler
-        data_path: folder where we expect oai record files"""
+        data_path: folder where we expect record files"""
 
-        self.record_list_directory = data_path
+        self.record_list_directory: Path = data_path
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
@@ -102,7 +83,7 @@ class OAIService(SimpleHTTPRequestHandler):
             state, data = self.get_next_record(file_name, client_name)
             LOGGER.debug("deliver next record: '%s'", data)
             if isinstance(data, str):
-                self._set_headers(state, MIME_TXT)
+                self._set_headers(state, _MIME_TXT)
                 self.wfile.write(data.encode('utf-8'))
             else:
                 self._set_headers(state)
@@ -118,7 +99,7 @@ class OAIService(SimpleHTTPRequestHandler):
         except ValueError:
             self.wfile.write(
                 b'please provide record file name and command '
-                b' e.g.: /oai-records-vd18/next')
+                b' e.g.: /records-vd18/next')
             LOGGER.error('request next record with umbiguous data')
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
@@ -130,13 +111,13 @@ class OAIService(SimpleHTTPRequestHandler):
             if ident:
                 state, data = self.update_record(file_name, data_dict)
                 if isinstance(data, str):
-                    self._set_headers(state, MIME_TXT)
+                    self._set_headers(state, _MIME_TXT)
                     self.wfile.write(data.encode('utf-8'))
                 else:
                     self._set_headers(state)
                     self.wfile.write(json.dumps(data, default=to_dict).encode('utf-8'))
             else:
-                self._set_headers(400, MIME_TXT)
+                self._set_headers(400, _MIME_TXT)
                 self.wfile.write(f"no entry for {ident} in {file_name}!".encode('utf-8'))
 
     def _set_headers(self, state=200, mime_type='application/json') -> None:
@@ -168,8 +149,8 @@ class OAIService(SimpleHTTPRequestHandler):
             LOGGER.warning("no '%s' found in '%s'", data_file_path, self.record_list_directory)
             return (404, f"no file '{file_name}' in {self.record_list_directory}")
 
-        handler = OAIRecordHandler(data_file_path, transform_func=to_full_record)
-        next_record: OAIRecord = handler.next_record()
+        handler = df_r.RecordHandler(data_file_path, transform_func=df_r.row_to_record)
+        next_record: df_r.Record = handler.next_record()
         # if no record in resource available, alert no resource after all, too
         if not next_record:
             _msg = f'{odem.MARK_DATA_EXHAUSTED.format(data_file_path)}'
@@ -193,9 +174,9 @@ class OAIService(SimpleHTTPRequestHandler):
             LOGGER.error('do_POST: %s not found', data_file_path)
             return (404, f"data file not found: {data_file_path}")
         try:
-            handler = OAIRecordHandler(data_file_path)
+            handler = df_r.RecordHandler(data_file_path)
             _ident = data[RECORD_IDENTIFIER]
-            _record: OAIRecord = handler.get(_ident)
+            _record: df_r.Record = handler.get(_ident)
             _prev_info = _record.info
             _info = f'{data[RECORD_INFO]}'
             if _prev_info != 'n.a.':
@@ -211,17 +192,17 @@ class OAIService(SimpleHTTPRequestHandler):
             return (500, _msg)
 
 
-class OAIRequestHandler():
+class RecordServer():
     """helper class to start server"""
 
-    @contextmanager
+    @contextlib.contextmanager
     def http_server(self, host: str, port: int, directory: str):
         """init server"""
-        server = HTTPServer(
+        server = http.server.HTTPServer(
             (host, port),
-            partial(OAIService, directory)
+            functools.partial(RecordRequestHandler, directory)
         )
-        server_thread = Thread(target=server.serve_forever, name="http_server")
+        server_thread = threading.Thread(target=server.serve_forever, name="http_server")
         server_thread.start()
 
         try:
@@ -243,8 +224,8 @@ class OAIRequestHandler():
 
         LOGGER.info("server starts listen at: %s:%s", host, port)
         LOGGER.info("serve record files from: %s", pth)
-        LOGGER.info("call for next record with: %s:%s/<oai-record-file>/next", host, port)
-        LOGGER.info("post a record update with: %s:%s/<oai-record-file>/update", host, port)
+        LOGGER.info("call for next record with: %s:%s/<record-file>/next", host, port)
+        LOGGER.info("post a record update with: %s:%s/<record-file>/update", host, port)
         with self.http_server(host, port, pth):
             with open(LOCKFILE, 'w', encoding='UTF-8') as lock:
                 lock.write(f'delete me to stop server @{host}:{port}')
@@ -294,9 +275,9 @@ if __name__ == "__main__":
     LOGGER.info("logging initialized - store log entry in %s", _logfile_name)
 
     # evaluate configured server data
-    _port = SCRIPT_CONFIGURATION.getint('oai-server', 'oai_server_port')
-    _host = SCRIPT_CONFIGURATION.get('oai-server', 'oai_server_url')
-    _oai_res_dir = SCRIPT_CONFIGURATION.get('oai-server', 'oai_server_resource_dir')
+    _port = SCRIPT_CONFIGURATION.getint('record-server', 'record_server_port')
+    _host = SCRIPT_CONFIGURATION.get('record-server', 'record_server_url')
+    _oai_res_dir = SCRIPT_CONFIGURATION.get('record-server', 'record_server_resource_dir')
 
     # foster the record dir path, propably shortened
     if '~' in _oai_res_dir:
@@ -304,4 +285,4 @@ if __name__ == "__main__":
     _oai_res_dir = Path(_oai_res_dir).absolute().resolve()
 
     # forward to request handler
-    OAIRequestHandler().serve(_host, _port, _oai_res_dir)
+    RecordServer().serve(_host, _port, _oai_res_dir)

@@ -21,7 +21,7 @@ DEFAULT_EXECUTORS = 2
 ########
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
-        description="generate ocr-data for OAI-Record")
+        description="generate ocr-data for Record")
     PARSER.add_argument(
         "mets_file",
         help="path to digital object's METS/MODS file")
@@ -117,9 +117,9 @@ if __name__ == "__main__":
             LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         record = df.OAIRecord(local_ident)
         odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record, mets_file_dir)
-        odem_process.the_logger = LOGGER
-        odem_process.the_logger.info("[%s] odem from %s, %d executors", local_ident, mets_file, EXECUTORS)
-        odem_process.odem_configuration = CFG
+        odem_process.logger = LOGGER
+        odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, mets_file, EXECUTORS)
+        odem_process.configuration = CFG
         process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),
             LOGGER.error,
@@ -144,7 +144,7 @@ if __name__ == "__main__":
             raise odem.ODEMException(f"OCR Process Runner error for {record.identifier}")
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
+        odem_process.logger.info("[%s] %s", local_ident, odem_process.statistics)
         odem_process.link_ocr_files()
         odem_process.postprocess_ocr()
         wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
@@ -157,14 +157,14 @@ if __name__ == "__main__":
         odem_process.postprocess_mets()
         if CFG.getboolean('mets', 'postvalidate', fallback=True):
             odem_process.validate_metadata()
-        if odem_process.odem_configuration.has_option('export', 'local_export_dir'):
-            odem_process.the_logger.info("[%s] start to export data",
+        if odem_process.configuration.has_option('export', 'local_export_dir'):
+            odem_process.logger.info("[%s] start to export data",
                                          odem_process.process_identifier)
             if not MUST_KEEP_RESOURCES and len(DELETE_BEVOR_EXPORT) > 0:
                 odem_process.delete_before_export(DELETE_BEVOR_EXPORT)
             odem_process.export_data()
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
-        odem_process.the_logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
+        odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
                                      odem_process.statistics['timedelta'], _mode, odem_process.statistics)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)

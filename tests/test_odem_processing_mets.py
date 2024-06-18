@@ -281,7 +281,7 @@ def test_validate_mets_105054_schema_fails(tmp_path):
     _orig_mets = TEST_RES / '1981185920_105054.xml'
     shutil.copyfile(_orig_mets, _work_dir / '1981185920_105054.xml')
     odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
-    odem_processor.odem_configuration = fixture_configuration()
+    odem_processor.configuration = fixture_configuration()
     with pytest.raises(odem.ODEMException) as odem_exec:
         odem_processor.validate_metadata()
 
@@ -298,7 +298,7 @@ def test_validate_mets_37167_schema_fails(tmp_path):
     original_mets = TEST_RES / '1981185920_37167_01.xml'
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
-    odem_processor.odem_configuration = fixture_configuration()
+    odem_processor.configuration = fixture_configuration()
     with pytest.raises(odem.ODEMException) as odem_exc:
         odem_processor.validate_metadata()
 
@@ -322,8 +322,8 @@ def test_validate_mets_37167_ddb_fails(tmp_path):
     original_mets = TEST_RES / '1981185920_37167_02.xml'
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
-    odem_processor.odem_configuration = fixture_configuration()
-    odem_processor.odem_configuration.set('mets', 'ddb_validation', 'True')
+    odem_processor.configuration = fixture_configuration()
+    odem_processor.configuration.set('mets', 'ddb_validation', 'True')
     with pytest.raises(odem.ODEMException) as odem_exec:
         odem_processor.validate_metadata()
 
@@ -347,8 +347,8 @@ def test_validate_mets_37167_finally_succeeds(tmp_path):
     original_mets = TEST_RES / '1981185920_37167_03.xml'
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
-    odem_processor.odem_configuration = fixture_configuration()
-    odem_processor.odem_configuration.set('mets', 'ddb_validation', 'True')
+    odem_processor.configuration = fixture_configuration()
+    odem_processor.configuration.set('mets', 'ddb_validation', 'True')
 
     assert odem_processor.validate_metadata()
 

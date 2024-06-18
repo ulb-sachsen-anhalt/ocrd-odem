@@ -125,15 +125,15 @@ class ODEMProcess:
                  the_logger: logging.Logger,
                  log_dir=None,
                  record: df_r.Record = None):
-        self.odem_configuration = configuration
+        self.configuration = configuration
         self.work_dir_root = work_dir_root
         self.record = record
         self.process_identifier = None
-        self.the_logger = the_logger
         self.process_statistics = {}
         self.ocr_candidates = []
+        self.logger = the_logger
         if the_logger is not None:
-            self.the_logger = the_logger
+            self.logger = the_logger
         if log_dir is not None and os.path.exists(log_dir):
             self._init_logger(log_dir)
 
@@ -150,7 +150,7 @@ class ODEMProcess:
         conf_logname = {'logname': logfile_name}
         conf_file_location = os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
         logging.config.fileConfig(conf_file_location, defaults=conf_logname)
-        self.the_logger = logging.getLogger('odem')
+        self.logger = logging.getLogger('odem')
 
     def load(self):
         """Load Data via OAI-PMH-API very LAZY

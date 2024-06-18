@@ -7,7 +7,9 @@ import pytest
 
 import lib.odem as odem
 
-from cli_oai_client import OAIServiceClient, oai_arg_parser
+import cli_record_server_client as rsc
+
+# from cli_record_server_client import ServiceClient, oai_arg_parser
 
 
 @pytest.mark.parametrize("file_path,result",
@@ -35,7 +37,7 @@ def test_exit_on_data_exhausted(mock_request):
     # arrange
     _the_list_label = 'oai-record-test'
     _rsp = f'{odem.MARK_DATA_EXHAUSTED.format(_the_list_label)}'.encode()
-    client = OAIServiceClient(_the_list_label, '1.2.3.4', '9999')
+    client = rsc.OAIServiceClient(_the_list_label, '1.2.3.4', '9999')
     mock_resp = unittest.mock.Mock()
     mock_resp.status_code = 404
     mock_resp.headers = {'Content-Type': 'text/xml'}
@@ -63,5 +65,5 @@ def test_oai_arg_parser(value):
 
     # actsert
     with pytest.raises(SystemExit) as _exit:
-        oai_arg_parser(value)
+        rsc.oai_arg_parser(value)
     assert 1 == _exit.value.args[0]

@@ -47,11 +47,11 @@ def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
-    odem_processor.odem_configuration = fixture_configuration()
+    odem_processor.configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
                                           f'{_tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
-    odem_processor.the_logger = odem.get_logger(str(log_dir))
+    odem_processor.logger = odem.get_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act
@@ -77,15 +77,15 @@ def test_exchange_language(img_path, langs, models, tmp_path):
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
-    odem_processor.odem_configuration = fixture_configuration()
+    odem_processor.configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
-    odem_processor.odem_configuration.set(
+    odem_processor.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,
         f"{_tess_dir}:/dummy"
     )
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, langs)
-    odem_processor.the_logger = odem.get_logger(str(log_dir))
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, langs)
+    odem_processor.logger = odem.get_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act
@@ -109,32 +109,32 @@ def test_enforce_language_and_model_mapping(tmp_path):
     log_dir = tmp_path / 'log'
     log_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
-    odem_processor.odem_configuration = fixture_configuration()
+    odem_processor.configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
     _kraken_dir = prepare_kraken_dir(tmp_path)
-    odem_processor.odem_configuration.set(
+    odem_processor.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,
         f'{_tess_dir}:/dummy,{_kraken_dir}:/dummy'
     )
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, 'ara+fas')
-    odem_processor.odem_configuration.set(
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, 'ara+fas')
+    odem_processor.configuration.set(
         odem.CFG_SEC_OCR,
         odem.KEY_MODEL_MAP,
         'fas: fas.traineddata, ara:arabic_best.mlmodel'
     )
-    odem_processor.the_logger = odem.get_logger(str(log_dir))
+    odem_processor.logger = odem.get_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act 1st
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_MODEL_COMBINABLE, 'False')
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_MODEL_COMBINABLE, 'False')
     assert odem_processor.map_language_to_modelconfig('/data/img/0001.tif') == 'arabic_best.mlmodel'
     # act 2nd
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_MODEL_COMBINABLE, 'True')
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_MODEL_COMBINABLE, 'True')
     assert odem_processor.map_language_to_modelconfig('/data/img/0002.tif') == 'arabic_best.mlmodel+fas.traineddata'
     # act 3rd call. still only fas:fas
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_MODEL_COMBINABLE, 'False')
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, 'fas')
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_MODEL_COMBINABLE, 'False')
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, 'fas')
     assert odem_processor.map_language_to_modelconfig('/data/img/0003.tif') == 'fas.traineddata'
 
 
@@ -157,10 +157,10 @@ def test_load_mock_called(tmp_path_factory):
     _log_dir.mkdir()
     _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
     odem_proc = odem.ODEMProcessImpl(_record, _workdir)
-    odem_proc.odem_configuration = fixture_configuration()
+    odem_proc.configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(_workdir)
-    odem_proc.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
-    odem_proc.the_logger = odem.get_logger(str(_log_dir))
+    odem_proc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    odem_proc.logger = odem.get_logger(str(_log_dir))
 
     # mock loading of OAI Record
     # actual load attempt *must* be done
@@ -203,12 +203,12 @@ def _fixture_odem_setup(tmp_path):
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     cfg = odem.get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
-    odem_processor.odem_configuration = cfg
+    odem_processor.configuration = cfg
     _model_dir = prepare_tessdata_dir(work_dir)
-    odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
+    odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
                                           f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     odem_processor.local_mode = True
-    odem_processor.the_logger = odem.get_logger(log_dir)
+    odem_processor.logger = odem.get_logger(log_dir)
     return odem_processor
 
 
@@ -320,10 +320,10 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
     cfg = odem.get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
-    odem_processor.odem_configuration = cfg
+    odem_processor.configuration = cfg
     _log_dir = tmp_path / 'log'
     _log_dir.mkdir()
-    odem_processor.the_logger = odem.get_logger(str(_log_dir))
+    odem_processor.logger = odem.get_logger(str(_log_dir))
 
     # act
     odem_processor.inspect_metadata()
@@ -346,10 +346,10 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
     cfg = odem.get_configparser()
     cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
-    odem_processor.odem_configuration = cfg
+    odem_processor.configuration = cfg
     _log_dir = tmp_path / 'log'
     _log_dir.mkdir()
-    odem_processor.the_logger = odem.get_logger(str(_log_dir))
+    odem_processor.logger = odem.get_logger(str(_log_dir))
 
     # act
     with pytest.raises(df.LoadException) as err:
@@ -375,9 +375,9 @@ def test_record_with_unknown_language(tmp_path):
     (path_workdir / 'log').mkdir()
     record = df_r.Record('oai:opendata.uni-halle.de:1981185920/72977')
     oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.odem_configuration = fixture_configuration()
+    oproc.configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
-    oproc.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
+    oproc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
                                  f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     oproc.mets_file_path = str(trgt_mets)
     oproc.inspect_metadata()
@@ -417,13 +417,13 @@ def test_export_flat_zip(tmp_path):
     (path_workdir / 'log').mkdir()
     record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
     oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.odem_configuration = fixture_configuration()
+    oproc.configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
 
-    oproc.odem_configuration.set('export', 'export_format', odem.ExportFormat.FLAT_ZIP)
-    oproc.odem_configuration.set('export', 'local_export_tmp', str(path_tmp_export_dir))
-    oproc.odem_configuration.set('export', 'local_export_dir', str(path_export_dir))
-    oproc.odem_configuration.set(
+    oproc.configuration.set('export', 'export_format', odem.ExportFormat.FLAT_ZIP)
+    oproc.configuration.set('export', 'local_export_tmp', str(path_tmp_export_dir))
+    oproc.configuration.set('export', 'local_export_dir', str(path_export_dir))
+    oproc.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,
         f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize'

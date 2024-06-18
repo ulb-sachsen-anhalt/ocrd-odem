@@ -78,8 +78,8 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     _model_dir = prepare_tessdata_dir(path_work_dir)
     record = df_r.Record('oai:dev.opendata.uni-halle.de:123456789/27949')
     odem_proc = odem.ODEMProcessImpl(record, work_dir=path_work_dir, log_dir=work_dir_root / 'log')
-    odem_proc.odem_configuration = fixture_configuration()
-    odem_proc.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
+    odem_proc.configuration = fixture_configuration()
+    odem_proc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
                                   f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     odem_proc.ocr_files = [os.path.join(trgt_alto, a)
                         for a in os.listdir(trgt_alto)]

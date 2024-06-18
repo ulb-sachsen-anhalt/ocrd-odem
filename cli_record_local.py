@@ -7,6 +7,7 @@ import os
 import shutil
 import sys
 
+import digiflow as df
 import digiflow.record as df_r
 
 import lib.odem as odem
@@ -30,7 +31,7 @@ from lib.odem import (
 DEFAULT_EXECUTORS = 2
 
 
-def trnfrm(row):
+def _trnfrm(row):
     oai_id = row[RECORD_IDENTIFIER]
     try:
         _info = ast.literal_eval(row[RECORD_INFO])
@@ -135,16 +136,14 @@ if __name__ == "__main__":
     LOGGER.info("data fields: '%s'", DATA_FIELDS)
     LOGGER.info("use records from '%s'", OAI_RECORD_FILE)
     handler = df_r.RecordHandler(
-        OAI_RECORD_FILE, data_fields=DATA_FIELDS, transform_func=trnfrm)
+        OAI_RECORD_FILE, data_fields=DATA_FIELDS, transform_func=_trnfrm)
     record: df_r.Record = handler.next_record(state=MARK_OCR_OPEN)
     if not record:
         LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE)
         sys.exit(1)
 
-
     def wrap_save_record_state(status: str, urn, **kwargs):
         handler.save_record_state(urn, status, **kwargs)
-
 
     try:
         handler.save_record_state(record.identifier, MARK_OCR_BUSY)
@@ -157,13 +156,13 @@ if __name__ == "__main__":
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         odem_process: ODEMProcessImpl = ODEMProcessImpl(record, req_dst_dir)
-        odem_process.the_logger = LOGGER
-        odem_process.the_logger.info("[%s] odem from %s, %d executors", local_ident, OAI_RECORD_FILE, EXECUTORS)
-        odem_process.odem_configuration = CFG
+        odem_process.logger = LOGGER
+        odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, OAI_RECORD_FILE, EXECUTORS)
+        odem_process.configuration = CFG
         LOCAL_STORE_ROOT = CFG.get('global', 'local_store_root', fallback=None)
         if LOCAL_STORE_ROOT is not None:
             STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
-            STORE = df_r.LocalStore(STORE_DIR, req_dst_dir)
+            STORE = df.LocalStore(STORE_DIR, req_dst_dir)
             odem_process.store = STORE
         process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),
@@ -190,7 +189,7 @@ if __name__ == "__main__":
             raise ODEMException(f"process run error: {record.identifier}")
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
+        odem_process.logger.info("[%s] %s", local_ident, odem_process.statistics)
         # odem_process.link_ocr_files()
         # odem_process.postprocess_ocr()
         wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
@@ -214,14 +213,14 @@ if __name__ == "__main__":
                 odem_process.record.info.update(_kwargs)
                 _info = f"{odem_process.record.info}"
             except:
-                odem_process.the_logger.warning("Can't parse '%s', store info literally",
+                odem_process.logger.warning("Can't parse '%s', store info literally",
                                          odem_process.record.info)
                 _info = f"{_kwargs}"
         else:
             _info = f"{_kwargs}"
         handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_info)
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
-        odem_process.the_logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
+        odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
                                 odem_process.statistics['timedelta'], _mode, odem_process.statistics)
         # finale
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
