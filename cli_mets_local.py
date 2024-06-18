@@ -143,7 +143,7 @@ if __name__ == "__main__":
         if ocr_results is None or len(ocr_results) == 0:
             raise odem.ODEMException(f"OCR Process Runner error for {record.identifier}")
         odem_process.calculate_statistics_ocr(ocr_results)
-        odem_process._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
         odem_process.link_ocr_files()
         odem_process.postprocess_ocr()
@@ -165,9 +165,9 @@ if __name__ == "__main__":
             odem_process.export_data()
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         odem_process.the_logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
-                                     odem_process.duration, _mode, odem_process.statistics)
+                                     odem_process.statistics['timedelta'], _mode, odem_process.statistics)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
-                    odem_process.process_identifier, odem_process.duration, EXECUTORS)
+                    odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)
     except odem.ODEMNoTypeForOCRException as type_unknown:
         LOGGER.warning("[%s] odem skips '%s'",
                        odem_process.process_identifier, type_unknown.args[0])
@@ -179,5 +179,5 @@ if __name__ == "__main__":
         LOGGER.error("[%s] odem fails with: '%s'", odem_process.process_identifier, _err_args)
     except RuntimeError as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
-                     record, odem_process.duration, str(exc))
+                     record, odem_process.statistics['timedelta'], str(exc))
         sys.exit(1)

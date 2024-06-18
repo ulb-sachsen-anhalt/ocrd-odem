@@ -12,7 +12,9 @@ import time
 import typing
 
 import requests
+
 import digiflow as df
+import digiflow.record as df_r
 
 import lib.odem as odem
 import lib.odem.monitoring as odem_rm
@@ -32,7 +34,7 @@ CFG = None
 def trnfrm(row):
     """callback function"""
     oai_id = row['IDENTIFIER']
-    oai_record = df.OAIRecord(oai_id)
+    oai_record = df_r.Record(oai_id)
     return oai_record
 
 
@@ -92,13 +94,13 @@ class OAIServiceClient:
             sys.exit(1)
         return response.json()
 
-    def get_record(self) -> df.OAIRecord:
+    def get_record(self) -> df_r.Record:
         """Return requested data
         as temporary OAI Record but
         store internally as plain dictionary"""
 
         self.record_data = self._request_record()
-        _oai_record = df.OAIRecord(self.record_data[odem.RECORD_IDENTIFIER])
+        _oai_record = df_r.Record(self.record_data[odem.RECORD_IDENTIFIER])
         return _oai_record
 
     def update(self, status, oai_urn, **kwargs):
@@ -305,7 +307,7 @@ if __name__ == "__main__":
         if ocr_results is None or len(ocr_results) == 0:
             raise odem.ODEMException(f"process run error: {record.identifier}")
         odem_process.calculate_statistics_ocr(ocr_results)
-        odem_process._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS        
+        odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         _stats_ocr = odem_process.statistics
         odem_process.the_logger.info("[%s] %s", local_ident, _stats_ocr)
         wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
@@ -331,16 +333,16 @@ if __name__ == "__main__":
         # finale
         odem_process.clear_resources(remove_all=True)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
-                    odem_process.process_identifier, odem_process.duration, EXECUTORS)
+                    odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)
     except odem.ODEMNoTypeForOCRException as type_unknown:
-        LOGGER.warning("[%s] odem skips '%s'", 
-                       odem_process.process_identifier,  type_unknown.args)
+        LOGGER.warning("[%s] odem skips '%s'",
+                       odem_process.process_identifier, type_unknown.args)
         err_dict = {'NoTypeForOCR': type_unknown.args[0]}
         CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **err_dict)
         odem_process.clear_resources(remove_all=True)
     except odem.ODEMNoImagesForOCRException as not_ocrable:
-        LOGGER.warning("[%s] odem no ocrables '%s'", 
-                       odem_process.process_identifier,  not_ocrable.args)
+        LOGGER.warning("[%s] odem no ocrables '%s'",
+                       odem_process.process_identifier, not_ocrable.args)
         err_dict = {'NoImagesForOCR': not_ocrable.args[0]}
         CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **err_dict)
         odem_process.clear_resources(remove_all=True)

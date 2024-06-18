@@ -2,6 +2,7 @@
 
 import configparser
 import logging
+import logging.config
 import os
 import socket
 import time
@@ -11,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 
 import ocrd_utils
-import digiflow as df
+import digiflow.record as df_r
 
 #
 # ODEM States
@@ -30,6 +31,7 @@ DEFAULT_EXECUTORS = 2
 
 
 class ExportFormat(str, Enum):
+    """Set of excepted eport formats"""
     SAF = 'SAF'
     FLAT_ZIP = 'FLAT_ZIP'
 
@@ -109,12 +111,46 @@ class OAIRecordExhaustedException(Exception):
 
 
 class OdemWorkflowProcessType(str, Enum):
+    """Accepted values for process types"""
     OCRD_PAGE_PARALLEL = "OCRD_PAGE_PARALLEL"
     ODEM_TESSERACT = "ODEM_TESSERACT"
 
 
-class OdemProcess:
+class ODEMProcess:
     """Basic Interface for ODEM"""
+
+    def __init__(self,
+                 configuration: configparser.ConfigParser,
+                 work_dir_root: Path,
+                 the_logger: logging.Logger,
+                 log_dir=None,
+                 record: df_r.Record = None):
+        self.odem_configuration = configuration
+        self.work_dir_root = work_dir_root
+        self.record = record
+        self.process_identifier = None
+        self.the_logger = the_logger
+        self.process_statistics = {}
+        self.ocr_candidates = []
+        if the_logger is not None:
+            self.the_logger = the_logger
+        if log_dir is not None and os.path.exists(log_dir):
+            self._init_logger(log_dir)
+
+    def _init_logger(self, log_dir):
+        today = time.strftime('%Y-%m-%d', time.localtime())
+        if not log_dir:
+            log_parent = os.path.dirname(os.path.dirname(self.work_dir_root))
+            if not os.access(log_parent, os.W_OK):
+                raise RuntimeError(f"cant store log files at invalid {log_dir}")
+            log_dir = os.path.join(log_parent, 'log')
+            os.makedirs(log_dir, exist_ok=True)
+        logfile_name = os.path.join(
+            log_dir, f"odem_{today}.log")
+        conf_logname = {'logname': logfile_name}
+        conf_file_location = os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
+        logging.config.fileConfig(conf_file_location, defaults=conf_logname)
+        self.the_logger = logging.getLogger('odem')
 
     def load(self):
         """Load Data via OAI-PMH-API very LAZY
@@ -131,7 +167,7 @@ class OdemProcess:
            will be corrupt at this segment)
         * no page images for OCR
         """
-    
+
     def export_data(self):
         """re-do metadata and transform into output format"""
 
@@ -165,7 +201,7 @@ def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
     in log_dir.
     Log output from "page-to-alto" set to disable WARNING:
         "PAGE-XML has Border but no PrintSpace - Margins will be empty"
-    
+
     please note:
     call of OCR-D initLogging() required, otherwise something like this pops up:
 
@@ -215,7 +251,7 @@ def merge_args(the_configuration: configparser.ConfigParser, the_args) -> typing
     return _repls
 
 
-def to_dict(record: df.OAIRecord) -> typing.Dict:
+def to_dict(record: df_r.Record) -> typing.Dict:
     """Serialize OAIRecord into dictionary
     as input for JSON format"""
 
@@ -227,18 +263,19 @@ def to_dict(record: df.OAIRecord) -> typing.Dict:
         RECORD_TIME: record.state_datetime,
     }
 
-def from_dict(data) -> df.OAIRecord:
+
+def from_dict(data) -> df_r.Record:
     """deserialize into OAIRecord"""
 
-    _record = df.OAIRecord(data[RECORD_IDENTIFIER])
+    _record = df_r.Record(data[RECORD_IDENTIFIER])
     _record.info = data[RECORD_INFO]
     return _record
 
 
-def list_files(dir_root, sub_dir, format='.xml') -> typing.List:
-    actual_dir = os.path.join(dir_root, sub_dir)
+def list_files(the_directory, file_ext='.xml') -> typing.List:
+    """List all files in the_directory with given suffix"""
     return [
-        os.path.join(actual_dir, dir_file)
-        for dir_file in os.listdir(actual_dir)
-        if Path(dir_file).suffix == format
+        os.path.join(the_directory, dir_file)
+        for dir_file in os.listdir(the_directory)
+        if Path(dir_file).suffix == file_ext
     ]

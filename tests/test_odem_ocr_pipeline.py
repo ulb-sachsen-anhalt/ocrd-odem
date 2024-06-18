@@ -13,9 +13,9 @@ import requests
 import pytest
 
 import lxml.etree as ET
-import digiflow as df
+import digiflow.record as df_r
 
-import lib.odem as odem
+from lib import odem
 import lib.odem.ocr.ocr_pipeline as o3o_pop
 
 from .conftest import TEST_RES, PROD_RES
@@ -81,10 +81,10 @@ def fixure_a_workspace(tmp_path):
 
 @pytest.fixture(name="my_pipeline")
 def _fixture_default_pipeline(a_workspace: Path):
-    _record = df.OAIRecord('oai:urn:mwe')
+    _record = df_r.Record('oai:urn:mwe')
     odem_process = odem.ODEMProcessImpl(_record, a_workspace)
     odem_process.odem_configuration = ODEM_CFG
-    odem_process._statistics_ocr['languages'] = ['ger']
+    odem_process.process_statistics['languages'] = ['ger']
     odem_process.the_logger = odem.get_logger(a_workspace / 'log')
     odem_tess = odem.ODEMTesseract(odem_process)
     return odem_tess
@@ -119,9 +119,9 @@ def _fixture_custom_config_pipeline(a_workspace):
         conf_dir.mkdir()
     conf_file = TEST_RES / 'ocr_config_full.ini'
     assert os.path.isfile(conf_file)
-    odem_process = odem.ODEMProcessImpl(df.OAIRecord('oai:urn_custom'), a_workspace)
+    odem_process = odem.ODEMProcessImpl(df_r.Record('oai:urn_custom'), a_workspace)
     odem_process.odem_configuration = ODEM_CFG
-    odem_process._statistics_ocr['languages'] = ['ger', 'lat']
+    odem_process.process_statistics['languages'] = ['ger', 'lat']
     odem_process.the_logger = odem.get_logger(a_workspace / 'log')
     odem_tess = odem.ODEMTesseract(odem_process)
     odem_tess.read_pipeline_config(conf_file)
@@ -222,7 +222,7 @@ def test_step_tesseract_path_out_folder(max_dir):
     step.path_in = os.path.join(max_dir, TIF_001)
 
     # assert
-    assert step.path_next.name == '001.xml' 
+    assert step.path_next.name == '001.xml'
 
 
 def test_step_tesseract_change_input(max_dir):
@@ -816,10 +816,10 @@ def test_step_replace_regex_literal(tmp_path):
 
     step = o3o_pop.StepPostReplaceCharsRegex(params)
     step.path_in = tmp_file
-    
+
     # act
     step.execute()
-    
+
     # assert
     assert hasattr(step, 'statistics')
     assert len(step.statistics) == 9
@@ -847,10 +847,10 @@ def test_step_replace_regex_from_configuration(tmp_path):
     params = {k: cfg_parser['step_02'][k] for k in step_keys}
     step = o3o_pop.StepPostReplaceCharsRegex(params)
     step.path_in = tmp_file
-    
+
     # act
     step.execute()
-    
+
     # assert
     assert hasattr(step, 'statistics')
     assert len(step.statistics) == 9

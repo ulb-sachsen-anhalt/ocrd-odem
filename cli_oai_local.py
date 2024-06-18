@@ -7,7 +7,7 @@ import os
 import shutil
 import sys
 
-import digiflow as df
+import digiflow.record as df_r
 
 import lib.odem as odem
 import lib.odem.monitoring as odem_rm
@@ -24,7 +24,7 @@ from lib.odem import (
     ODEMProcessImpl,
     ODEMException,
     get_configparser,
-    get_logger, 
+    get_logger,
 )
 
 DEFAULT_EXECUTORS = 2
@@ -34,9 +34,9 @@ def trnfrm(row):
     oai_id = row[RECORD_IDENTIFIER]
     try:
         _info = ast.literal_eval(row[RECORD_INFO])
-    except:
+    except SyntaxError:
         _info = row[RECORD_INFO]
-    _record = df.OAIRecord(oai_id,)
+    _record = df_r.Record(oai_id,)
     _record.info = _info
     return _record
 
@@ -134,9 +134,9 @@ if __name__ == "__main__":
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
     LOGGER.info("data fields: '%s'", DATA_FIELDS)
     LOGGER.info("use records from '%s'", OAI_RECORD_FILE)
-    handler = df.OAIRecordHandler(
+    handler = df_r.RecordHandler(
         OAI_RECORD_FILE, data_fields=DATA_FIELDS, transform_func=trnfrm)
-    record: df.OAIRecord = handler.next_record(state=MARK_OCR_OPEN)
+    record: df_r.Record = handler.next_record(state=MARK_OCR_OPEN)
     if not record:
         LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE)
         sys.exit(1)
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         LOCAL_STORE_ROOT = CFG.get('global', 'local_store_root', fallback=None)
         if LOCAL_STORE_ROOT is not None:
             STORE_DIR = os.path.join(LOCAL_STORE_ROOT, local_ident)
-            STORE = df.LocalStore(STORE_DIR, req_dst_dir)
+            STORE = df_r.LocalStore(STORE_DIR, req_dst_dir)
             odem_process.store = STORE
         process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         if ocr_results is None or len(ocr_results) == 0:
             raise ODEMException(f"process run error: {record.identifier}")
         odem_process.calculate_statistics_ocr(ocr_results)
-        odem_process._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         odem_process.the_logger.info("[%s] %s", local_ident, odem_process.statistics)
         # odem_process.link_ocr_files()
         # odem_process.postprocess_ocr()
@@ -222,10 +222,10 @@ if __name__ == "__main__":
         handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_info)
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         odem_process.the_logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
-                                odem_process.duration, _mode, odem_process.statistics)
+                                odem_process.statistics['timedelta'], _mode, odem_process.statistics)
         # finale
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
-                    odem_process.process_identifier, odem_process.duration, EXECUTORS)
+                    odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)
     except odem.ODEMNoTypeForOCRException as type_unknown:
         # we don't ocr this one
         LOGGER.warning("[%s] odem skips '%s'", 
@@ -241,6 +241,6 @@ if __name__ == "__main__":
         handler.save_record_state(record.identifier, MARK_OCR_FAIL, INFO=f'{_err_args}')
     except RuntimeError as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
-                     record, odem_process.duration, str(exc))
+                     record, odem_process.statistics['timedelta'], str(exc))
         handler.save_record_state(record.identifier, MARK_OCR_FAIL, INFO=f'{str(exc) : exc.args[0]}')
         sys.exit(1)

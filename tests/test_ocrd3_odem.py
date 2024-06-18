@@ -6,11 +6,15 @@ import shutil
 import unittest
 import unittest.mock
 
-import lxml.etree as ET
-import pytest
-import digiflow as df
+from pathlib import Path
 
-import lib.odem as odem
+import digiflow as df
+import digiflow.record as df_r
+import lxml.etree as ET
+
+import pytest
+
+from lib import odem
 
 from .conftest import (
     PROJECT_ROOT_DIR,
@@ -22,11 +26,14 @@ from .conftest import (
 
 @pytest.mark.parametrize("img_path,lang_str", [
     ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k.traineddata'),
-    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg', 'lat_ocr.traineddata+gt4hist_5000k.traineddata'),
-    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg', 'grc.traineddata+lat_ocr.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat+ger.jpg',
+     'lat_ocr.traineddata+gt4hist_5000k.traineddata'),
+    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_gre+lat.jpg',
+     'grc.traineddata+lat_ocr.traineddata'),
     ('resources/urn+nbn+de+gbv+3+1-116899-p0062-3_ger.jpg', 'gt4hist_5000k.traineddata'),
     ('resources/urn+nbn+de+gbv+3+1-116299-p0107-6_lat.jpg', 'lat_ocr.traineddata'),
-    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg', 'gt4hist_5000k.traineddata+lat_ocr.traineddata')
+    ('resources/urn+nbn+de+gbv+3+1-118702-p0055-9_ger+lat.jpg',
+     'gt4hist_5000k.traineddata+lat_ocr.traineddata')
 ])
 def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     """Ensure ODEM Object picks 
@@ -43,7 +50,7 @@ def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     odem_processor.odem_configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                           f'{_tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+                                          f'{_tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     odem_processor.the_logger = odem.get_logger(str(log_dir))
     odem_processor.local_mode = True
 
@@ -148,7 +155,7 @@ def test_load_mock_called(tmp_path_factory):
     _workdir.mkdir()
     _log_dir = _root_workdir / 'log'
     _log_dir.mkdir()
-    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
     odem_proc = odem.ODEMProcessImpl(_record, _workdir)
     odem_proc.odem_configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(_workdir)
@@ -167,7 +174,7 @@ def test_load_mock_called(tmp_path_factory):
 
     # assert
     assert request_mock.call_count == 1
-    assert os.path.exists(odem_proc.mets_file)
+    assert os.path.exists(odem_proc.mets_file_path)
 
 
 def test_odem_process_identifier_local_workdir(tmp_path):
@@ -199,7 +206,7 @@ def _fixture_odem_setup(tmp_path):
     odem_processor.odem_configuration = cfg
     _model_dir = prepare_tessdata_dir(work_dir)
     odem_processor.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                           f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+                                          f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     odem_processor.local_mode = True
     odem_processor.the_logger = odem.get_logger(log_dir)
     return odem_processor
@@ -242,7 +249,7 @@ def test_module_fixture_one_integrated_ocr_in_mets(fixture_27949: odem.ODEMProce
     # arrange
     assert len(fixture_27949.ocr_files) == 4
 
-    _root = ET.parse(fixture_27949.mets_file).getroot()
+    _root = ET.parse(fixture_27949.mets_file_path).getroot()
     _phys_links = _root.xpath('//mets:div[@TYPE="physSequence"]/mets:div', namespaces=df.XMLNS)
     # at most 2: one MAX-Image plus according optional FULLTEXT
     assert len(_phys_links[1].getchildren()) == 1
@@ -261,7 +268,7 @@ def test_module_fixture_one_images_4_ocr_by_metadata(fixture_27949: odem.ODEMPro
     their physical presens and according METS metadata
     """
 
-    assert len(fixture_27949.images_4_ocr) == 4
+    assert len(fixture_27949.ocr_candidates) == 4
 
 
 def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEMProcessImpl):
@@ -275,14 +282,14 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEM
     """
 
     # arrange
-    tmp_path = fixture_27949.work_dir_main
+    tmp_path = fixture_27949.work_dir_root
 
     # act
     fixture_27949.link_ocr_files()
     fixture_27949.create_text_bundle_data()
 
     # assert
-    _txt_bundle_file = tmp_path / '198114125.pdf.txt'
+    _txt_bundle_file = Path(tmp_path) / '198114125.pdf.txt'
     assert os.path.exists(_txt_bundle_file)
     assert 111 == fixture_27949.statistics['n_text_lines']
     with open(_txt_bundle_file, encoding='utf-8') as bundle_handle:
@@ -299,7 +306,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
 
     """
 
-    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
     _work_dir = tmp_path / '1981185920_44046'
     _work_dir.mkdir()
     _max_dir = _work_dir / 'MAX'
@@ -323,17 +330,17 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     odem_processor.set_local_images()
 
     # assert
-    assert len(odem_processor.images_4_ocr) == 4
-    assert odem_processor.images_4_ocr[0][0].endswith('1981185920_44046/MAX/00000001.jpg')
+    assert len(odem_processor.ocr_candidates) == 4
+    assert odem_processor.ocr_candidates[0][0].endswith('1981185920_44046/MAX/00000001.jpg')
 
 
-@unittest.mock.patch('digiflow.OAILoader.load', side_effect=df.OAILoadException("url '{}' returned '{}'"))
+@unittest.mock.patch('digiflow.OAILoader.load', side_effect=df.LoadException("url '{}' returned '{}'"))
 def test_no_catch_when_load_exc(mock_load, tmp_path):
     """Ensure df.OAILoadException is raised for internal server errors (#9992)
     """
 
     # arrange
-    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
     _work_dir = tmp_path / '1981185920_44046'
     _work_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
@@ -345,7 +352,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     odem_processor.the_logger = odem.get_logger(str(_log_dir))
 
     # act
-    with pytest.raises(df.OAILoadException) as err:
+    with pytest.raises(df.LoadException) as err:
         odem_processor.load()
 
     # assert
@@ -359,19 +366,20 @@ def test_record_with_unknown_language(tmp_path):
     not unknown (gmh == German, Middle High 1050-1500)
     """
 
-    path_workdir = tmp_path / 'workdir'
+    identifier = '1981185920_72977'
+    path_workdir = tmp_path / identifier
     path_workdir.mkdir()
-    orig_file = TEST_RES / '1981185920_72977.xml'
-    trgt_mets = path_workdir / 'test.xml'
+    orig_file = TEST_RES / f'{identifier}.xml'
+    trgt_mets = path_workdir / f'{identifier}.xml'
     shutil.copyfile(orig_file, trgt_mets)
     (path_workdir / 'log').mkdir()
-    record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/72977')
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/72977')
     oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.odem_configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
     oproc.odem_configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                  f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
-    oproc.mets_file = str(trgt_mets)
+                                 f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    oproc.mets_file_path = str(trgt_mets)
     oproc.inspect_metadata()
     _langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
 
@@ -390,7 +398,8 @@ def test_export_flat_zip(tmp_path):
     semantics VLS systems
     """
 
-    path_workdir = tmp_path / 'workdir'
+    identifier = '1981185920_44046'
+    path_workdir = tmp_path / identifier
     path_workdir.mkdir()
     path_tmp_export_dir = tmp_path / 'tmp_export'
     path_tmp_export_dir.mkdir()
@@ -398,7 +407,7 @@ def test_export_flat_zip(tmp_path):
     path_export_dir.mkdir()
 
     orig_file = TEST_RES / '1981185920_44046.xml'
-    trgt_mets = path_workdir / 'test.xml'
+    trgt_mets = path_workdir / f'{identifier}.xml'
     shutil.copyfile(orig_file, trgt_mets)
 
     orig_files = TEST_RES / 'vd18-1180329' / 'FULLTEXT'
@@ -406,7 +415,7 @@ def test_export_flat_zip(tmp_path):
     shutil.copytree(orig_files, trgt_files)
 
     (path_workdir / 'log').mkdir()
-    record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/44046')
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
     oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
     oproc.odem_configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
@@ -420,7 +429,7 @@ def test_export_flat_zip(tmp_path):
         f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize'
     )
 
-    oproc.mets_file = str(trgt_mets)
+    oproc.mets_file_path = str(trgt_mets)
     oproc.inspect_metadata()
     # _langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
 

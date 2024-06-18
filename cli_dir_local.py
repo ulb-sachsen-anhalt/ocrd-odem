@@ -100,19 +100,20 @@ if __name__ == "__main__":
         PROCESS.odem_configuration = CFG
         PROCESS.the_logger = LOGGER
         local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
-        PROCESS._statistics_ocr[odem.STATS_KEY_N_PAGES] = len(local_images)
-        PROCESS._statistics_ocr[odem.STATS_KEY_N_OCRABLE] = 0
-        PROCESS._statistics_ocr[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        PROCESS.images_4_ocr = local_images
+        PROCESS.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
+        PROCESS.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
+        PROCESS.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        PROCESS.ocr_candidates = local_images
         # Type and Value change!!!
         # ODEMProcess.single_ocr() needs Tuple[str,str], in non-local
         # this is assigned to "PROCESS.images_4_ocr" in ODEMProcess.filter_images()
         # thats why we have to manually fit that requirement
-        PROCESS.images_4_ocr = list(zip(PROCESS.images_4_ocr, [pathlib.Path(i).stem for i in PROCESS.images_4_ocr]))
+        PROCESS.ocr_candidates = list(zip(PROCESS.ocr_candidates, 
+                                          [pathlib.Path(i).stem for i in PROCESS.ocr_candidates]))
         PROCESS.run()
         PROCESS.the_logger.info("[%s] duration: %s (%s)", req_idn,
-                                PROCESS.duration, PROCESS.statistics)
+                                PROCESS.statistics['timedelta'], PROCESS.statistics)
     except Exception as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
-                     req_idn, PROCESS.duration, str(exc))
+                     req_idn, PROCESS.statistics['timedelta'], str(exc))
         sys.exit(0)

@@ -2,6 +2,8 @@
 
 import os
 
+from pathlib import Path
+
 import lxml.etree as ET
 import digiflow as df
 
@@ -17,7 +19,7 @@ def test_module_fixture_one_integrated_ocr_files_fit_identifier(fixture_27949: o
     """
 
     # arrange
-    tmp_path = fixture_27949.work_dir_main
+    tmp_path = Path(fixture_27949.work_dir_root)
 
     # assert
     assert not os.path.exists(tmp_path / 'FULLTEXT' / '00000002.xml')
@@ -35,7 +37,7 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: odem.ODEMProcessImpl):
     diacritics occour more several times in single word"""
 
     # arrange
-    tmp_path = fixture_27949.work_dir_main
+    tmp_path = Path(fixture_27949.work_dir_root)
     path_file = tmp_path / 'FULLTEXT' / '00000003.xml'
     strip_tags = fixture_configuration().getlist(odem.CFG_SEC_OCR, 'strip_tags')  # pylint: disable=no-member
 

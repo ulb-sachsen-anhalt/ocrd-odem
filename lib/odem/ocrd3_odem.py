@@ -3,10 +3,7 @@
 
 from __future__ import annotations
 
-import configparser
 import datetime
-import typing
-import logging
 import os
 import shutil
 import socket
@@ -21,6 +18,7 @@ import numpy as np
 import digiflow as df
 import digiflow.digiflow_export as dfx
 import digiflow.digiflow_metadata as dfm
+import digiflow.record as df_r
 
 import lib.odem.odem_commons as odem_c
 import lib.odem.processing.image as odem_image
@@ -40,7 +38,7 @@ os.environ['OMP_THREAD_LIMIT'] = '1'
 DEFAULT_LANG = 'ger'
 
 
-class ODEMProcessImpl(odem_c.OdemProcess):
+class ODEMProcessImpl(odem_c.ODEMProcess):
     """Create OCR for OAI Records.
 
         Runs both wiht OAIRecord or local path as input.
@@ -53,7 +51,8 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         for the underlying OCR-Engine Tesseract-OCR.
     """
 
-    def __init__(self, record: df.OAIRecord, work_dir, executors=2, log_dir=None, logger=None):
+    def __init__(self, record: df_r.Record, work_dir,
+                 log_dir=None, logger=None, configuration=None):
         """Create new ODEM Process.
         Args:
             record (OAIRecord): OAI Record dataset
@@ -64,57 +63,31 @@ class ODEMProcessImpl(odem_c.OdemProcess):
                 Defaults to None.
         """
 
-        self.record = record
-        self.work_dir_main = work_dir
+        super().__init__(configuration, work_dir_root=work_dir,
+                         the_logger=logger, log_dir=log_dir, record=record)
         self.digi_type = None
         self.mods_identifier = None
         self.local_mode = record is None
-        self.process_identifier = None
         if self.local_mode:
             self.process_identifier = os.path.basename(work_dir)
         if record is not None and record.local_identifier is not None:
             self.process_identifier = record.local_identifier
         self.export_dir = None
-        self.the_logger: logging.Logger = None
-        self.odem_configuration: configparser.ConfigParser = None
         self.store: df.LocalStore = None
-        self.images_4_ocr: typing.List = []  # List[str] | List[Tuple[str, str]]
         self.ocr_files = []
-        self.ocr_function = None
-        self.ocr_input: typing.List = []
-        self._statistics_ocr = {'execs': executors}
         self._process_start = time.time()
-        if logger is not None:
-            self.the_logger = logger
-        elif log_dir is not None and os.path.exists(log_dir):
-            self._init_logger(log_dir)
-        self.mets_file = os.path.join(
-            work_dir, os.path.basename(work_dir) + '.xml')
-
-    def _init_logger(self, log_dir):
-        today = time.strftime('%Y-%m-%d', time.localtime())
-        if not log_dir:
-            log_parent = os.path.dirname(os.path.dirname(self.work_dir_main))
-            if not os.access(log_parent, os.W_OK):
-                raise RuntimeError(f"cant store log files at invalid {log_dir}")
-            log_dir = os.path.join(log_parent, 'log')
-            os.makedirs(log_dir, exist_ok=True)
-        logfile_name = os.path.join(
-            log_dir, f"odem_{today}.log")
-        conf_logname = {'logname': logfile_name}
-        conf_file_location = os.path.join(
-            odem_c.PROJECT_ROOT, 'resources', 'odem_logging.ini')
-        logging.config.fileConfig(conf_file_location, defaults=conf_logname)
-        self.the_logger = logging.getLogger('odem')
+        # self.mets_file = os.path.join(
+        #     work_dir, os.path.basename(work_dir) + '.xml')
 
     def load(self):
         request_identifier = self.record.identifier
         local_identifier = self.record.local_identifier
         req_dst_dir = os.path.join(
-            os.path.dirname(self.work_dir_main), local_identifier)
+            os.path.dirname(self.work_dir_root), local_identifier)
         if not os.path.exists(req_dst_dir):
             os.makedirs(req_dst_dir, exist_ok=True)
-        req_dst = os.path.join(req_dst_dir, local_identifier + '.xml')
+        # req_dst = os.path.join(req_dst_dir, local_identifier + '.xml')
+        req_dst = self.mets_file_path
         self.the_logger.debug("[%s] download %s to %s",
                               self.process_identifier, request_identifier, req_dst)
         base_url = self.odem_configuration.get('global', 'base_url')
@@ -122,7 +95,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
             loader = df.OAILoader(req_dst_dir, base_url=base_url, post_oai=dfm.extract_mets)
             loader.store = self.store
             loader.load(request_identifier, local_dst=req_dst)
-        except df.OAILoadClientError as load_err:
+        except df.ClientError as load_err:
             raise odem_c.ODEMException(load_err.args[0]) from load_err
         except RuntimeError as _err:
             raise odem_c.ODEMException(_err.args[0]) from _err
@@ -137,31 +110,31 @@ class ODEMProcessImpl(odem_c.OdemProcess):
             sweeper.sweep()
             if remove_all:
                 shutil.rmtree(self.store.dir_store_root)
-        if os.path.exists(self.work_dir_main):
-            shutil.rmtree(self.work_dir_main)
+        if os.path.exists(self.work_dir_root):
+            shutil.rmtree(self.work_dir_root)
 
     def inspect_metadata(self):
-        insp = ODEMMetadataInspecteur(self.mets_file,
+        insp = ODEMMetadataInspecteur(self.mets_file_path,
                                       self.record.identifier,
                                       cfg=self.odem_configuration)
         try:
             the_report = insp.metadata_report()
             self.digi_type = the_report.type
-            self.images_4_ocr = insp.image_pairs
+            self.ocr_candidates = insp.image_pairs
         except RuntimeError as mde:
             raise odem_c.ODEMException(f"{mde.args[0]}") from mde
         self.mods_identifier = insp.mods_record_identifier
         for t, ident in insp.identifiers.items():
-            self._statistics_ocr[t] = ident
-        self._statistics_ocr['type'] = insp.type
-        self._statistics_ocr[odem_c.STATS_KEY_LANGS] = insp.languages
-        self._statistics_ocr['n_images_pages'] = insp.n_images_pages
-        self._statistics_ocr['n_images_ocrable'] = insp.n_images_ocrable
+            self.process_statistics[t] = ident
+        self.process_statistics['type'] = insp.type
+        self.process_statistics[odem_c.STATS_KEY_LANGS] = insp.languages
+        self.process_statistics['n_images_pages'] = insp.n_images_pages
+        self.process_statistics['n_images_ocrable'] = insp.n_images_ocrable
         _ratio = insp.n_images_ocrable / insp.n_images_pages * 100
         self.the_logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
                              self.process_identifier, insp.n_images_ocrable, _ratio,
                              insp.n_images_pages)
-        self._statistics_ocr['host'] = socket.gethostname()
+        self.process_statistics['host'] = socket.gethostname()
 
     def clear_existing_entries(self):
         """Clear METS/MODS of configured file groups"""
@@ -170,7 +143,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
             _blacklisted = self.odem_configuration.getlist('mets', 'blacklist_file_groups')
             _ident = self.process_identifier
             self.the_logger.info("[%s] remove %s", _ident, _blacklisted)
-            _proc = df.MetsProcessor(self.mets_file)
+            _proc = df.MetsProcessor(self.mets_file_path)
             _proc.clear_filegroups(_blacklisted)
             _proc.write()
 
@@ -190,7 +163,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         self.the_logger.info("[%s] inspect languages '%s'",
                              self.process_identifier, languages)
         if languages is None:
-            languages = self._statistics_ocr.get(odem_c.STATS_KEY_LANGS)
+            languages = self.process_statistics.get(odem_c.STATS_KEY_LANGS)
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
@@ -201,7 +174,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
                 else:
                     raise odem_c.ODEMException(f"'{model}' model config not found !")
         _model_conf = '+'.join(_models) if self.odem_configuration.getboolean(odem_c.CFG_SEC_OCR, "model_combinable", fallback=True) else _models[0]
-        self._statistics_ocr[odem_c.STATS_KEY_MODELS] = _model_conf
+        self.process_statistics[odem_c.STATS_KEY_MODELS] = _model_conf
         self.the_logger.info("[%s] map languages '%s' => '%s'",
                              self.process_identifier, languages, _model_conf)
         return _model_conf
@@ -260,7 +233,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
            i.e., pre-existing evaluation image data
         """
 
-        image_dir = os.path.join(self.work_dir_main, 'MAX')
+        image_dir = os.path.join(self.work_dir_root, 'MAX')
         if image_local_dir:
             if not os.path.isdir(image_local_dir):
                 raise RuntimeError(f"invalid path: {image_local_dir}!")
@@ -288,13 +261,13 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         images and original page urn
         """
         _images_of_interest = []
-        _local_max_dir = os.path.join(self.work_dir_main, 'MAX')
-        for _img, _urn in self.images_4_ocr:
+        _local_max_dir = os.path.join(self.work_dir_root, 'MAX')
+        for _img, _urn in self.ocr_candidates:
             _the_file = os.path.join(_local_max_dir, _img)
             if not os.path.exists(_the_file):
                 raise odem_c.ODEMException(f"[{self.process_identifier}] missing {_the_file}!")
             _images_of_interest.append((_the_file, _urn))
-        self.images_4_ocr = _images_of_interest
+        self.ocr_candidates = _images_of_interest
 
     def calculate_statistics_ocr(self, outcomes: typing.List):
         """Calculate and aggregate runtime stats"""
@@ -303,17 +276,18 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         _mod_val_counts = np.unique(_total_mps, return_counts=True)
         mps = list(zip(*_mod_val_counts))
         total_mb = sum([e[3] for e in outcomes if e[0] == 1])
-        self._statistics_ocr[odem_c.STATS_KEY_N_OCR] = n_ocr
-        self._statistics_ocr[odem_c.STATS_KEY_MB] = round(total_mb, 2)
-        self._statistics_ocr[odem_c.STATS_KEY_MPS] = mps
+        self.process_statistics[odem_c.STATS_KEY_N_OCR] = n_ocr
+        self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
+        self.process_statistics[odem_c.STATS_KEY_MPS] = mps
 
     def link_ocr_files(self) -> int:
         """Prepare and link OCR-data"""
 
-        self.ocr_files = odem_c.list_files(self.work_dir_main, odem_c.FILEGROUP_FULLTEXT)
+        list_from_dir = Path(self.work_dir_root) / odem_c.FILEGROUP_FULLTEXT
+        self.ocr_files = odem_c.list_files(list_from_dir)
         if not self.ocr_files:
             return 0
-        proc = df.MetsProcessor(self.mets_file)
+        proc = df.MetsProcessor(self.mets_file_path)
         _n_linked_ocr = integrate_ocr_file(proc.tree, self.ocr_files)
         proc.write()
         return _n_linked_ocr
@@ -325,12 +299,12 @@ class ODEMProcessImpl(odem_c.OdemProcess):
 
         txt_lines = extract_text_content(self.ocr_files)
         txt_content = '\n'.join(txt_lines)
-        _out_path = os.path.join(self.work_dir_main, f'{self.mods_identifier}.pdf.txt')
+        _out_path = os.path.join(self.work_dir_root, f'{self.mods_identifier}.pdf.txt')
         with open(_out_path, mode='w', encoding='UTF-8') as _writer:
             _writer.write(txt_content)
         self.the_logger.info("[%s] harvested %d lines from %d ocr files to %s",
                              self.process_identifier, len(txt_lines), len(self.ocr_files), _out_path)
-        self._statistics_ocr['n_text_lines'] = len(txt_lines)
+        self.process_statistics['n_text_lines'] = len(txt_lines)
 
     def create_pdf(self):
         """Forward PDF-creation to Derivans"""
@@ -350,7 +324,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         derivans_image = self.odem_configuration.get('derivans', 'derivans_image', fallback=None)
         path_logging = self.odem_configuration.get('derivans', 'derivans_logdir', fallback=None)
         derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
-            self.mets_file,
+            self.mets_file_path,
             container_image_name=derivans_image,
             path_binary=path_bin,
             path_configuration=path_cfg,
@@ -372,7 +346,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
     def delete_before_export(self, folders):
         """delete folders given by list"""
 
-        work = self.work_dir_main
+        work = self.work_dir_root
         self.the_logger.info(
             "[%s] delete folders: %s", self.process_identifier, folders)
         for folder in folders:
@@ -385,7 +359,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
     def postprocess_mets(self):
         """wrap work related to processing METS/MODS"""
 
-        postprocess_mets(self.mets_file, self.odem_configuration)
+        postprocess_mets(self.mets_file_path, self.odem_configuration)
 
     def validate_metadata(self):
         """Forward (optional) validation concerning
@@ -402,7 +376,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         # dtype = 'Aa'
         # if 'pica' in self.record.info:
         #     dtype = self.record.info['pica']
-        return validate(self.mets_file, validate_ddb=check_ddb, 
+        return validate(self.mets_file_path, validate_ddb=check_ddb,
                         digi_type=self.digi_type, ddb_ignores=ignore_ddb)
 
     def export_data(self):
@@ -420,11 +394,11 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         # created due OCR and do more specific mapping, though
         exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
         if export_mets:
-            exp_map[os.path.basename(self.mets_file)] = 'mets.xml'
+            exp_map[os.path.basename(self.mets_file_path)] = 'mets.xml'
         saf_name = self.mods_identifier
         if export_format == odem_c.ExportFormat.SAF:
             export_result = df.export_data_from(
-                self.mets_file,
+                self.mets_file_path,
                 exp_col,
                 saf_final_name=saf_name,
                 export_dst=exp_dst,
@@ -433,7 +407,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
             )
         elif export_format == odem_c.ExportFormat.FLAT_ZIP:
             prefix = 'opendata-working-'
-            source_path_dir = os.path.dirname(self.mets_file)
+            source_path_dir = os.path.dirname(self.mets_file_path)
             tmp_dir = tempfile.gettempdir()
             if exp_tmp:
                 tmp_dir = exp_tmp
@@ -443,7 +417,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
                 for mapping in export_mappings:
                     mapping.copy()
                 tmp_zip_path, size = ODEMProcessImpl.compress_flat(os.path.dirname(work_dir), saf_name)
-                path_export_processing = dfx._move_to_tmp_file(tmp_zip_path, exp_dst)
+                path_export_processing = dfx.move_to_tmp_file(tmp_zip_path, exp_dst)
                 export_result = path_export_processing, size
         else:
             raise odem_c.ODEMException(f'Unsupported export format: {export_format}')
@@ -464,6 +438,7 @@ class ODEMProcessImpl(odem_c.OdemProcess):
 
     @classmethod
     def compress_flat(cls, work_dir, archive_name):
+        """Create flat ZIP file (instead of SAF with items)"""
         zip_file_path = os.path.join(os.path.dirname(work_dir), archive_name) + '.zip'
         previous_dir = os.getcwd()
         os.chdir(os.path.join(work_dir, archive_name))
@@ -475,12 +450,16 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         return zip_file_path, f"{zip_size}MiB"
 
     @property
-    def duration(self):
-        """Get current duration of ODEMProcess.
-        Most likely at the final end to get an idea
-        how much the whole process takes."""
+    def mets_file_path(self) -> Path:
+        """Get actual METS/MODS file from work_dir"""
+        mets_file = f"{os.path.basename(self.work_dir_root)}.xml"
+        return Path(self.work_dir_root) / mets_file
 
-        return datetime.timedelta(seconds=round(time.time() - self._process_start))
+    @mets_file_path.setter
+    def mets_file_path(self, mets_path):
+        """Set enclosed MET/MODS data for testing purposes"""
+        mets_dir = os.path.dirname(mets_path)
+        self.work_dir_root = mets_dir
 
     @property
     def statistics(self):
@@ -488,5 +467,6 @@ class ODEMProcessImpl(odem_c.OdemProcess):
         with execution duration updated each call by
         requesting it's string representation"""
 
-        self._statistics_ocr['timedelta'] = f'{self.duration}'
-        return self._statistics_ocr
+        current_duration = datetime.timedelta(seconds=round(time.time() - self._process_start))
+        self.process_statistics['timedelta'] = f'{current_duration}'
+        return self.process_statistics

@@ -8,6 +8,7 @@ import pytest
 
 import lxml.etree as ET
 import digiflow as df
+import digiflow.record as df_r
 
 import lib.odem as odem
 import lib.odem.processing.mets as o3o_pm
@@ -26,8 +27,8 @@ def _fixture_1981185920_44046():
     _ident = '1981185920_44046'
     file = TEST_RES / '1981185920_44046.xml'
     inspc = odem.ODEMMetadataInspecteur(file,
-                                   process_identifier=_ident,
-                                   cfg=fixture_configuration())
+                                        process_identifier=_ident,
+                                        cfg=fixture_configuration())
     yield inspc
 
 
@@ -135,7 +136,7 @@ def test_opendata_record_no_printwork():
         inspc.metadata_report()
 
     # assert
-    assert f"{_oai_urn} no PICA type for OCR: Ac" ==  odem_exc.value.args[0]
+    assert f"{_oai_urn} no PICA type for OCR: Ac" == odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present():
@@ -175,7 +176,7 @@ def test_opendata_record_type_error():
         inspc.metadata_report()
 
     # assert
-    assert "2x: Page PHYS_0112 not linked,Page PHYS_0113 not linked" ==  odem_exc.value.args[0]
+    assert "2x: Page PHYS_0112 not linked,Page PHYS_0113 not linked" == odem_exc.value.args[0]
 
 
 def test_mets_mods_sbb_vol01_with_ulb_defaults():
@@ -274,34 +275,34 @@ def test_validate_mets_105054_schema_fails(tmp_path):
     If Schema validation is required, then throw according exception
     in this case: alert invalid order data format
     """
-    _record = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/105054')
+    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/105054')
     _work_dir = tmp_path / '1981185920_105054'
     _work_dir.mkdir()
     _orig_mets = TEST_RES / '1981185920_105054.xml'
     shutil.copyfile(_orig_mets, _work_dir / '1981185920_105054.xml')
     odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
     odem_processor.odem_configuration = fixture_configuration()
-    with pytest.raises(odem.ODEMException) as exec:
+    with pytest.raises(odem.ODEMException) as odem_exec:
         odem_processor.validate_metadata()
 
-    assert "'order': '1.1979' is not a valid value of the atomic type 'xs:integer'" in exec.value.args[0]
-    
-    
+    assert "'order': '1.1979' is not a valid value of the atomic type 'xs:integer'" in odem_exec.value.args[0]
+
+
 def test_validate_mets_37167_schema_fails(tmp_path):
     """
     if is invalid mets file, throw according exception
     """
-    rec = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/37167')
+    rec = df_r.Record('oai:opendata.uni-halle.de:1981185920/37167')
     work_dir = tmp_path / '1981185920_37167'
     work_dir.mkdir()
     original_mets = TEST_RES / '1981185920_37167_01.xml'
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
     odem_processor.odem_configuration = fixture_configuration()
-    with pytest.raises(odem.ODEMException) as exec:
+    with pytest.raises(odem.ODEMException) as odem_exc:
         odem_processor.validate_metadata()
 
-    assert "recordIdentifier': This element is not expected" in exec.value.args[0]
+    assert "recordIdentifier': This element is not expected" in odem_exc.value.args[0]
 
 
 def test_validate_mets_37167_ddb_fails(tmp_path):
@@ -312,10 +313,10 @@ def test_validate_mets_37167_ddb_fails(tmp_path):
     * extra mets:dmdSec not linked to LOGICAL MAP with 
       only shelfLocator and also missing titleInfo
       (these are all related to each other)
-      
+
       => this we had already at Rahbar
     """
-    rec = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/37167')
+    rec = df_r.Record('oai:opendata.uni-halle.de:1981185920/37167')
     work_dir = tmp_path / '1981185920_37167'
     work_dir.mkdir()
     original_mets = TEST_RES / '1981185920_37167_02.xml'
@@ -323,10 +324,10 @@ def test_validate_mets_37167_ddb_fails(tmp_path):
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
     odem_processor.odem_configuration = fixture_configuration()
     odem_processor.odem_configuration.set('mets', 'ddb_validation', 'True')
-    with pytest.raises(odem.ODEMException) as exec:
+    with pytest.raises(odem.ODEMException) as odem_exec:
         odem_processor.validate_metadata()
 
-    ddb_complains = exec.value.args[0]
+    ddb_complains = odem_exec.value.args[0]
     assert len(ddb_complains) == 4
     assert '[titleInfo_02]  dmd_id:DMDPHYS_0000 test:Pon Ya 4371' in ddb_complains[0]
     assert '[relatedItem_04]  dmd_id:DMDLOG_0000' in ddb_complains[1]
@@ -339,8 +340,8 @@ def test_validate_mets_37167_finally_succeeds(tmp_path):
     This time METS/MODS and also DDB-validation are both pleased,
     therefore a plain 'True' shall be returned
     """
-    
-    rec = df.OAIRecord('oai:opendata.uni-halle.de:1981185920/37167')
+
+    rec = df_r.Record('oai:opendata.uni-halle.de:1981185920/37167')
     work_dir = tmp_path / '1981185920_37167'
     work_dir.mkdir()
     original_mets = TEST_RES / '1981185920_37167_03.xml'
@@ -348,7 +349,7 @@ def test_validate_mets_37167_finally_succeeds(tmp_path):
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
     odem_processor.odem_configuration = fixture_configuration()
     odem_processor.odem_configuration.set('mets', 'ddb_validation', 'True')
-    
+
     assert odem_processor.validate_metadata()
 
 
@@ -358,7 +359,7 @@ def test_integrate_alto_from_ocr_pipeline(tmp_path):
     """
 
     # arrange
-    mets_file = TEST_RES /    '1981185920_42296.xml'
+    mets_file = TEST_RES / '1981185920_42296.xml'
     fulltext_dir = TEST_RES / '1981185920_42296_FULLTEXT'
     assert mets_file.exists()
     assert fulltext_dir.exists()
@@ -370,7 +371,7 @@ def test_integrate_alto_from_ocr_pipeline(tmp_path):
 
     # actsert
     assert 4 == o3o_pm.integrate_ocr_file(mets_tree, ocr_files)
-    
+
 
 def test_extract_text_content_from_alto_file():
     """Ensure we can read ALTO output and get its contents
@@ -384,7 +385,7 @@ def test_extract_text_content_from_alto_file():
     # act
     text = o3o_pm.extract_text_content(ocr_files)
 
-    # assert 
+    # assert
     assert text is not None
     assert len(text) == 126
 
@@ -398,7 +399,7 @@ def test_extract_identifiers():
 
     # arrange
     mets_file = TEST_RES / '1516514412012_175762.xml'
-    inspecteur = o3o_pm.ODEMMetadataInspecteur(mets_file, 
+    inspecteur = o3o_pm.ODEMMetadataInspecteur(mets_file,
                                                '1516514412012_175762',
                                                fixture_configuration())
     # act
