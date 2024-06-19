@@ -271,11 +271,14 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
     def calculate_statistics_ocr(self, outcomes: typing.List):
         """Calculate and aggregate runtime stats"""
-        n_ocr = sum([e[0] for e in outcomes if e[0] == 1])
-        _total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
-        _mod_val_counts = np.unique(_total_mps, return_counts=True)
-        mps = list(zip(*_mod_val_counts))
-        total_mb = sum([e[3] for e in outcomes if e[0] == 1])
+        self.logger.info("[%s] calculate stats from %d",
+                         self.process_identifier,
+                         len(outcomes))
+        n_ocr = sum([e[0] for e in outcomes if e[0] == 1], 0)
+        total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
+        mod_val_counts = np.unique(total_mps, return_counts=True)
+        mps = list(zip(*mod_val_counts))
+        total_mb = sum([e[3] for e in outcomes if e[0] == 1], 0)
         self.process_statistics[odem_c.STATS_KEY_N_OCR] = n_ocr
         self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
         self.process_statistics[odem_c.STATS_KEY_MPS] = mps
