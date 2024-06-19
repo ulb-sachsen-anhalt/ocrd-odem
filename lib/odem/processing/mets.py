@@ -1,8 +1,9 @@
 """Encapsulate Implementations concerning METS/MODS handling"""
 
 import configparser
-import os
 import typing
+
+from pathlib import Path
 
 import lxml.etree as ET
 import digiflow as df
@@ -25,6 +26,9 @@ METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
 IMAGE_GROUP_ULB = 'MAX'
 IMAGE_GROUP_DEFAULT = 'DEFAULT'
 
+
+# please linter for lxml.etree contains no-member message
+# pylint:disable=I1101
 
 class ODEMMetadataMetsException(Exception):
     """Mark state when inconsistencies exist
@@ -85,7 +89,7 @@ class ODEMMetadataInspecteur:
         # PICA types *might* contain trailing 'u' or 'v' = 'Afu'
         if len(_type) in range(2, 4) and _type[1] not in TYPE_PRINTS_PICA:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} no PICA type for OCR: {report.type}")
-        elif len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
+        if len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
         reader = df.MetsReader(self._data)
         reader.check()
@@ -258,37 +262,44 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
     Returns number of linked files
     """
 
-    _n_linked_ocr = 0
+    n_linked_ocr = 0
     file_sec = xml_tree.find('.//mets:fileSec', df.XMLNS)
     tag_file_group = f'{{{df.XMLNS["mets"]}}}fileGrp'
     tag_file = f'{{{df.XMLNS["mets"]}}}file'
     tag_flocat = f'{{{df.XMLNS["mets"]}}}FLocat'
 
     file_grp_fulltext = ET.Element(tag_file_group, USE=odem_c.FILEGROUP_FULLTEXT)
-    for _ocr_file in ocr_files:
-        _file_name = os.path.basename(_ocr_file).split('.')[0]
-        new_id = odem_c.FILEGROUP_FULLTEXT + '_' + _file_name
-        file_ocr = ET.Element(
-            tag_file, MIMETYPE="application/alto+xml", ID=new_id)
-        flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
-        flocat_href.set(Q_XLINK_HREF, _ocr_file)
-        file_ocr.append(flocat_href)
-        file_grp_fulltext.append(file_ocr)
+    for ocr_file in ocr_files:
+        file_name = df.UNSET_LABEL
+        try:
+            file_name = Path(ocr_file).stem
+            new_id = odem_c.FILEGROUP_FULLTEXT + '_' + file_name
+            file_ocr = ET.Element(
+                tag_file, MIMETYPE="application/alto+xml", ID=new_id)
+            flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
+            flocat_href.set(Q_XLINK_HREF, ocr_file)
+            file_ocr.append(flocat_href)
+            file_grp_fulltext.append(file_ocr)
 
-        # Referencing / linking the ALTO data as a file pointer in
-        # the sequence container of the physical structMap
-        # Assignment takes place via the name of the corresponding
-        # image (= name ALTO file)
-        _mproc = df.MetsProcessor(_ocr_file)
-        ns_map = _sanitize_namespaces(_mproc.tree)
-        src_info = _mproc.tree.xpath('//alto:sourceImageInformation/alto:fileName', namespaces=ns_map)[0]
-        src_info.text = f'{_file_name}.jpg'
-        first_page_el = _mproc.tree.xpath('//alto:Page', namespaces=ns_map)[0]
-        first_page_el.attrib['ID'] = f'p{_file_name}'
-        _mproc.write()
-        _n_linked_ocr += _link_fulltext(new_id, xml_tree)
+            # Referencing / linking the ALTO data as a file pointer in
+            # the sequence container of the physical structMap
+            # Assignment takes place via the name of the corresponding
+            # image (= name ALTO file)
+            mproc = df.MetsProcessor(ocr_file)
+            ns_map = _sanitize_namespaces(mproc.tree)
+            xpr_file_name = '//alto:sourceImageInformation/alto:fileName'
+            src_info = mproc.tree.xpath(xpr_file_name, namespaces=ns_map)[0]
+            src_info.text = f'{file_name}.jpg'
+            first_page_el = mproc.tree.xpath('//alto:Page', namespaces=ns_map)[0]
+            first_page_el.attrib['ID'] = f'p{file_name}'
+            mproc.write()
+            n_linked_ocr += _link_fulltext(new_id, xml_tree)
+        except IndexError as idx_exc:
+            note = f"{ocr_file}({file_name}):{idx_exc.args[0]}"
+            raise ODEMMetadataMetsException(note) from idx_exc
+
     file_sec.append(file_grp_fulltext)
-    return _n_linked_ocr
+    return n_linked_ocr
 
 
 def _sanitize_namespaces(tree):
