@@ -12,7 +12,11 @@ import lib.odem as odem
 from .conftest import fixture_configuration
 
 
-def test_module_fixture_one_integrated_ocr_files_fit_identifier(fixture_27949: odem.ODEMProcessImpl):
+# please linter for lxml.etree contains no-member message
+# pylint:disable=I1101
+
+
+def test_integrated_ocr_files_fit_identifier(fixture_27949: odem.ODEMProcessImpl):
     """Ensure ocr-file elements fit syntactically
     * proper fileName
     * proper PageId set

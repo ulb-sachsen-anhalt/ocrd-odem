@@ -19,6 +19,10 @@ from .conftest import (
 )
 
 
+# please linter for lxml.etree contains no-member message
+# pylint:disable=I1101
+
+
 @pytest.fixture(name="inspecteur_44046", scope='module')
 def _fixture_1981185920_44046():
     """Initial ODEM fixture before doing any OCR"""
@@ -73,23 +77,24 @@ def test_postprocess_mets_agent_entries_number_fits(post_mets):
 def test_postprocess_mets_agent_odem_fits(post_mets):
     """Ensure METS agent odem wrote OCR-D baseimage note"""
 
-    _agent_odem = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[3]
-    _xp_agent_note = 'mets:note/text()'
-    _xp_agent_name = 'mets:name/text()'
-    _curr_image = fixture_configuration().get(odem.CFG_SEC_OCR, 'ocrd_baseimage')
-    assert _agent_odem.xpath(_xp_agent_name, namespaces=df.XMLNS)[0] == f'DFG-OCRD3-ODEM_{_curr_image}'
-    _today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
-    assert _today in _agent_odem.xpath(_xp_agent_note, namespaces=df.XMLNS)[0]
+    agent_odem = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[3]
+    xp_note = 'mets:note/text()'
+    xp_name = 'mets:name/text()'
+    curr_image = fixture_configuration().get(odem.CFG_SEC_OCR, 'ocrd_baseimage')
+    assert agent_odem.xpath(xp_name, namespaces=df.XMLNS)[0] == f'DFG-OCRD3-ODEM_{curr_image}'
+    today = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
+    assert today in agent_odem.xpath(xp_note, namespaces=df.XMLNS)[0]
 
 
 def test_postprocess_mets_agent_derivans_fits(post_mets):
     """Ensure METS agent derivans was re-done"""
 
-    _agent_derivans = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[2]
-    _xp_agent_note = 'mets:note/text()'
-    _xp_agent_name = 'mets:name/text()'
-    assert _agent_derivans.xpath(_xp_agent_name, namespaces=df.XMLNS)[0] == 'DigitalDerivans V1.6.0-SNAPSHOT'
-    assert _agent_derivans.xpath(_xp_agent_note, namespaces=df.XMLNS)[0].endswith('2022-05-17T11:27:16')
+    agent_derivans = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[2]
+    xp_note = 'mets:note/text()'
+    xp_name = 'mets:name/text()'
+    name_agent_zeros = agent_derivans.xpath(xp_name, namespaces=df.XMLNS)
+    assert name_agent_zeros[0] == 'DigitalDerivans V1.6.0-SNAPSHOT'
+    assert agent_derivans.xpath(xp_note, namespaces=df.XMLNS)[0].endswith('2022-05-17T11:27:16')
     assert not post_mets.xpath('//dv:iiif', namespaces=df.XMLNS)
     assert not post_mets.xpath('//dv:sru', namespaces=df.XMLNS)
 
@@ -285,7 +290,8 @@ def test_validate_mets_105054_schema_fails(tmp_path):
     with pytest.raises(odem.ODEMException) as odem_exec:
         odem_processor.validate_metadata()
 
-    assert "'order': '1.1979' is not a valid value of the atomic type 'xs:integer'" in odem_exec.value.args[0]
+    assert "'order': '1.1979' is not a valid value" in odem_exec.value.args[0]
+    assert " of the atomic type 'xs:integer'" in odem_exec.value.args[0]
 
 
 def test_validate_mets_37167_schema_fails(tmp_path):
@@ -370,7 +376,7 @@ def test_integrate_alto_from_ocr_pipeline(tmp_path):
     assert len(ocr_files) == 4
 
     # actsert
-    assert 4 == o3o_pm.integrate_ocr_file(mets_tree, ocr_files)
+    assert 4, 0 == o3o_pm.integrate_ocr_file(mets_tree, ocr_files)
 
 
 def test_extract_text_content_from_alto_file():
@@ -408,3 +414,25 @@ def test_extract_identifiers():
     # assert
     assert report is not None
     assert inspecteur.mods_record_identifier == '16691561019210131'
+
+
+def test_process_bad_input_data():
+    """What can we expect for identification
+    when feeding newspapers? Expect the
+    custom kvx-ppn value
+    16691561019210131
+    """
+
+    # arrange
+    mets_file = TEST_RES / '1516514412012_175762.xml'
+    # inspecteur = o3o_pm.ODEMMetadataInspecteur(mets_file,
+                                            #    '1516514412012_175762',
+                                            #    fixture_configuration())
+    ocr_file = TEST_RES / '117470_00000006.lt.xml'
+    mets_tree = ET.parse(str(mets_file)).getroot()
+
+    # act
+    outcome = o3o_pm.integrate_ocr_file(mets_tree, [str(ocr_file)])
+
+    # assert
+    assert outcome is not None

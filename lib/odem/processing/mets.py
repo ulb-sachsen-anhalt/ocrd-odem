@@ -263,6 +263,7 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
     """
 
     n_linked_ocr = 0
+    n_passed_ocr = 0
     file_sec = xml_tree.find('.//mets:fileSec', df.XMLNS)
     tag_file_group = f'{{{df.XMLNS["mets"]}}}fileGrp'
     tag_file = f'{{{df.XMLNS["mets"]}}}file'
@@ -290,7 +291,11 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
             xpr_file_name = '//alto:sourceImageInformation/alto:fileName'
             src_info = mproc.tree.xpath(xpr_file_name, namespaces=ns_map)[0]
             src_info.text = f'{file_name}.jpg'
-            first_page_el = mproc.tree.xpath('//alto:Page', namespaces=ns_map)[0]
+            page_elements = mproc.tree.xpath('//alto:Page', namespaces=ns_map)
+            if len(page_elements) == 0:
+                n_passed_ocr += 1
+                continue
+            first_page_el = page_elements[0]
             first_page_el.attrib['ID'] = f'p{file_name}'
             mproc.write()
             n_linked_ocr += _link_fulltext(new_id, xml_tree)
@@ -299,7 +304,7 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
             raise ODEMMetadataMetsException(note) from idx_exc
 
     file_sec.append(file_grp_fulltext)
-    return n_linked_ocr
+    return n_linked_ocr, n_passed_ocr
 
 
 def _sanitize_namespaces(tree):

@@ -89,7 +89,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         # req_dst = os.path.join(req_dst_dir, local_identifier + '.xml')
         req_dst = self.mets_file_path
         self.logger.debug("[%s] download %s to %s",
-                              self.process_identifier, request_identifier, req_dst)
+                          self.process_identifier, request_identifier, req_dst)
         base_url = self.configuration.get('global', 'base_url')
         try:
             loader = df.OAILoader(req_dst_dir, base_url=base_url, post_oai=dfm.extract_mets)
@@ -132,8 +132,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         self.process_statistics['n_images_ocrable'] = insp.n_images_ocrable
         _ratio = insp.n_images_ocrable / insp.n_images_pages * 100
         self.logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
-                             self.process_identifier, insp.n_images_ocrable, _ratio,
-                             insp.n_images_pages)
+                         self.process_identifier, insp.n_images_ocrable, _ratio,
+                         insp.n_images_pages)
         self.process_statistics['host'] = socket.gethostname()
 
     def clear_existing_entries(self):
@@ -161,7 +161,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         model_mappings: dict = self.configuration.getdict(  # pylint: disable=no-member
             odem_c.CFG_SEC_OCR, 'model_mapping')
         self.logger.info("[%s] inspect languages '%s'",
-                             self.process_identifier, languages)
+                         self.process_identifier, languages)
         if languages is None:
             languages = self.process_statistics.get(odem_c.STATS_KEY_LANGS)
         for lang in languages:
@@ -176,7 +176,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         _model_conf = '+'.join(_models) if self.configuration.getboolean(odem_c.CFG_SEC_OCR, "model_combinable", fallback=True) else _models[0]
         self.process_statistics[odem_c.STATS_KEY_MODELS] = _model_conf
         self.logger.info("[%s] map languages '%s' => '%s'",
-                             self.process_identifier, languages, _model_conf)
+                         self.process_identifier, languages, _model_conf)
         return _model_conf
 
     def map_language_to_modelconfig(self, image_path) -> str:
@@ -207,8 +207,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 _file_lang_suffixes = _image_name.split('_')[-1].split('+')
             except odem_c.ODEMException as oxc:
                 self.logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
-                                        self.process_identifier, oxc.args[0],
-                                        image_path, DEFAULT_LANG)
+                                    self.process_identifier, oxc.args[0],
+                                    image_path, DEFAULT_LANG)
             return self.language_modelconfig(_file_lang_suffixes)
         # inspect language information from MODS metadata
         return self.language_modelconfig()
@@ -252,7 +252,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             raise odem_c.ODEMException(f"{self.record.identifier} contains no images!")
 
         self.logger.info("[%s] %d images total",
-                             self.process_identifier, len(images))
+                         self.process_identifier, len(images))
         return images
 
     def set_local_images(self):
@@ -291,9 +291,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if not self.ocr_files:
             return 0
         proc = df.MetsProcessor(self.mets_file_path)
-        _n_linked_ocr = integrate_ocr_file(proc.tree, self.ocr_files)
+        n_linked_ocr, n_dropped = integrate_ocr_file(proc.tree, self.ocr_files)
+        if n_dropped > 0:
+            self.logger.warning("[%s] failed to link %d ocr files",
+                                self.process_identifier, n_dropped)
         proc.write()
-        return _n_linked_ocr
+        return n_linked_ocr
 
     def create_text_bundle_data(self):
         """create additional dspace bundle for indexing ocr text
@@ -302,11 +305,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
         txt_lines = extract_text_content(self.ocr_files)
         txt_content = '\n'.join(txt_lines)
-        _out_path = os.path.join(self.work_dir_root, f'{self.mods_identifier}.pdf.txt')
-        with open(_out_path, mode='w', encoding='UTF-8') as _writer:
+        out_path = os.path.join(self.work_dir_root, f'{self.mods_identifier}.pdf.txt')
+        with open(out_path, mode='w', encoding='UTF-8') as _writer:
             _writer.write(txt_content)
         self.logger.info("[%s] harvested %d lines from %d ocr files to %s",
-                             self.process_identifier, len(txt_lines), len(self.ocr_files), _out_path)
+                         self.process_identifier, len(txt_lines),
+                         len(self.ocr_files), out_path)
         self.process_statistics['n_text_lines'] = len(txt_lines)
 
     def create_pdf(self):
@@ -339,7 +343,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         try:
             dresult: df.DerivansResult = derivans.start()
             self.logger.info("[%s] create derivates in %.1fs",
-                                 self.process_identifier, dresult.duration)
+                             self.process_identifier, dresult.duration)
         except subprocess.CalledProcessError as _sub_err:
             _err_msg = _sub_err.stdout.decode().split(os.linesep)[0].replace("'", "\"")
             _args = [_err_msg]
@@ -425,16 +429,16 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         else:
             raise odem_c.ODEMException(f'Unsupported export format: {export_format}')
         self.logger.info("[%s] exported data: %s",
-                             self.process_identifier, export_result)
+                         self.process_identifier, export_result)
         if export_result:
             pth, size = export_result
             self.logger.info("[%s] create %s (%s)",
-                                 self.process_identifier, pth, size)
+                             self.process_identifier, pth, size)
             # final re-move at export destination
             if '.processing' in str(pth):
                 final_path = pth.replace('.processing', '')
                 self.logger.debug('[%s] rename %s to %s',
-                                      self.process_identifier, pth, final_path)
+                                  self.process_identifier, pth, final_path)
                 shutil.move(pth, final_path)
                 return final_path, size
         return None
