@@ -277,7 +277,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         n_ocr = sum([e[0] for e in outcomes if e[0] == 1], 0)
         total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
         mod_val_counts = np.unique(total_mps, return_counts=True)
-        mps = list(zip(*mod_val_counts))
+        mps_np = list(zip(*mod_val_counts))
+        mps = [(float(pair[0]), int(pair[1])) for pair in mps_np] # since numyp 2.x
         total_mb = sum([e[3] for e in outcomes if e[0] == 1], 0)
         self.process_statistics[odem_c.STATS_KEY_N_OCR] = n_ocr
         self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
@@ -389,7 +390,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def export_data(self):
         """re-do metadata and transform into output format"""
 
-        export_format: str = self.configuration.get('export', 'export_format', fallback=odem_c.ExportFormat.SAF)
+        export_format: str = self.configuration.get('export', 'export_format', 
+                                                    fallback=odem_c.ExportFormat.SAF)
         export_mets: bool = self.configuration.getboolean('export', 'export_mets', fallback=True)
 
         exp_dst = self.configuration.get('export', 'local_export_dir')
