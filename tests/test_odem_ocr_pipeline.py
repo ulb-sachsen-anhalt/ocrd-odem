@@ -606,7 +606,7 @@ def test_step_estimateocr_textline_conversions():
 # pylint: disable=unused-argument
 
 
-def _fixture_languagetool(*args):
+def _fixture_languagetool(*args, **kwargs):
     result = unittest.mock.Mock()
     result.status_code = 200
     response_path = os.path.join(TEST_RES / 'languagetool_response_500_gray00003.json')

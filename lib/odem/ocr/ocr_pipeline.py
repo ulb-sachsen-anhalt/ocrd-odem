@@ -20,7 +20,7 @@ import digiflow as df
 import lxml.etree as ET
 
 from lib.odem.odem_commons import ODEMException
-from .ocr_model import TextLine, get_lines
+from lib.odem.ocr.ocr_model import TextLine, get_lines
 
 NAMESPACES = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}
 
@@ -101,8 +101,8 @@ class StepIOExtern(StepIO):
 
     def execute(self):
         try:
-            completed_process = subprocess.run(self.cmd, 
-                                               shell=True, 
+            completed_process = subprocess.run(self.cmd,
+                                               shell=True,
                                                capture_output=True,
                                                check=True, env=self._env)
             return completed_process
@@ -155,7 +155,7 @@ class StepTesseract(StepIOExtern):
         if 'output_configs' in self._params:
             del self._params['output_configs']
         # otherwise output
-        outputs = [k for k, v in self._params.items() 
+        outputs = [k for k, v in self._params.items()
                    if v is None and k in ['alto', 'txt', 'pdf']
                   ]
         if len(outputs) > 0:
@@ -167,7 +167,7 @@ class StepTesseract(StepIOExtern):
 
     @property
     def path_next(self):
-        if not self._path_in.suffix == '.xml':
+        if self._path_in.suffix != '.xml':
             return self._path_in.with_suffix('.xml')
         return self._path_in
 
@@ -337,7 +337,7 @@ class StepEstimateOCR(StepI):
         """Connection established ?"""
 
         try:
-            requests.head(self.service_url)
+            requests.head(self.service_url, timeout=20)
         except requests.ConnectionError:
             return False
         return True
@@ -369,7 +369,7 @@ class StepEstimateOCR(StepI):
     def request_data(self, params):
         """Get word errors for text from webservice"""
 
-        response = requests.post(self.service_url, params)
+        response = requests.post(self.service_url, params, timeout=20)
         if not response.ok:
             raise StepException(
                 f"'{self.service_url}' returned invalid '{response}!'")
@@ -593,7 +593,7 @@ def run_pipeline(*args):
         for step in the_steps:
             step.path_in = next_in
             if isinstance(step, StepIOExtern):
-                the_logger.debug("[%s] call '%s' (env: '%s')", 
+                the_logger.debug("[%s] call '%s' (env: '%s')",
                               file_name, step.cmd, step._env)
             profile_result = profile(step.execute)
             if hasattr(step, 'statistics'):
