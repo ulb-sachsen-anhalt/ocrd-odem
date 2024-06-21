@@ -149,7 +149,7 @@ class OCRDPageParallel(ODEMWorkflow):
         # find model config for tesseract
         model_config = self.odem_process.map_language_to_modelconfig(image_path)
 
-        stored = 0
+        stored = odem_c.UNSET
         mps = 0
         filesize_mb = 0
         # use original image rather than
@@ -239,7 +239,7 @@ class OCRDPageParallel(ODEMWorkflow):
             self.logger.warning("[%s] No ocrd.log in %s",
                                 self.odem_process.process_identifier, work_subdir)
 
-    def _store_fulltext(self, image_subdir, original_image_path) -> int:
+    def _store_fulltext(self, image_subdir, original_image_path) -> str:
         """Move OCR Result from Workspace Subdir to export folder if exists"""
 
         # inspect possible ocr result dirs from within
@@ -274,7 +274,7 @@ class OCRDPageParallel(ODEMWorkflow):
             # final storage
             target_path = os.path.join(wd_fulltext, old_id + '.xml')
             shutil.copy(renamed, target_path)
-        return 1
+        return target_path
 
     def foster_outputs(self):
         """In this case:

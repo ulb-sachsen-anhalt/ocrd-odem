@@ -50,7 +50,7 @@ def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     odem_processor.configuration = fixture_configuration()
     _tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                                          f'{_tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+                                     f'{_tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     odem_processor.logger = odem.get_logger(str(log_dir))
     odem_processor.local_mode = True
 
@@ -378,7 +378,7 @@ def test_record_with_unknown_language(tmp_path):
     oproc.configuration = fixture_configuration()
     _model_dir = prepare_tessdata_dir(tmp_path)
     oproc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                                 f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+                            f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     oproc.mets_file_path = str(trgt_mets)
     oproc.inspect_metadata()
     _langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
@@ -438,3 +438,68 @@ def test_export_flat_zip(tmp_path):
 
     # assert
     assert os.path.exists(zipfilepath) and os.path.getsize(zipfilepath) == 58552
+
+
+def test_odem_common_ocr_statistics(tmp_path):
+    """Fix behavor for common data"""
+
+    # arrange
+    identifier = '1981185920_44046'
+    path_workdir = tmp_path / identifier
+    path_workdir.mkdir()
+    path_log_dir = path_workdir / 'log'
+    path_log_dir.mkdir()
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
+    oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_log_dir)
+    oproc.ocr_candidates = [('/MAX/00000002.jpg', 'PHYS_02'),
+                            ('/MAX/00000003.jpg', 'PHYS_03'),
+                            ('/MAX/00000004.jpg', 'PHYS_04'),
+                            ('/MAX/00000005.jpg', 'PHYS_05'),
+                            ('/MAX/00000006.jpg', 'PHYS_06'),
+                            ]
+    ocr_outcomes = [('/odem-wrk-dir/1981185920_38841/PAGE/00000002.xml', 1, 3.893415, 0.5577),
+                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000003.xml', 1, 3.893415, 0.6628),
+                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000004.xml', 1, 3.893415, 0.6748),
+                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000005.xml', 1, 3.893415, 0.6669),
+                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000006.xml', 1, 3.893415, 0.6753)]
+
+    # act
+    oproc.calculate_statistics_ocr(ocr_outcomes)
+
+    # assert
+    assert oproc.statistics.get(odem.STATS_KEY_N_OCR) == 5
+    assert odem.STATS_KEY_OCR_LOSS not in oproc.statistics
+
+
+def test_odem_ocr_statistics_some_loss(tmp_path):
+    """Fix behavor if single data set missing
+    Actually we miss OCR data for image 00000005.jpg
+    """
+
+    # arrange
+    identifier = '1981185920_44046'
+    path_workdir = tmp_path / identifier
+    path_workdir.mkdir()
+    path_log_dir = path_workdir / 'log'
+    path_log_dir.mkdir()
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
+    oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_log_dir)
+    oproc.ocr_candidates = [('/MAX/00000002.jpg', 'PHYS_02'),
+                            ('/MAX/00000003.jpg', 'PHYS_03'),
+                            ('/MAX/00000004.jpg', 'PHYS_04'),
+                            ('/MAX/00000005.jpg', 'PHYS_05'),
+                            ('/MAX/00000006.jpg', 'PHYS_06'),
+                            ]
+    ocr_outcomes = [('/odem-wrk-dir/1981185920_38841/PAGE/00000002.xml', 1, 3.893415, 0.5577),
+                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000003.xml', 1, 3.893415, 0.6628),
+                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000004.xml', 1, 3.893415, 0.6748),
+                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000006.xml', 1, 3.893415, 0.6753)
+                    ]
+
+    # act
+    oproc.calculate_statistics_ocr(ocr_outcomes)
+
+    # assert
+    assert oproc.statistics.get(odem.STATS_KEY_N_OCR) == 4
+    assert odem.STATS_KEY_OCR_LOSS in oproc.statistics
+    assert oproc.statistics.get(odem.STATS_KEY_OCR_LOSS) == {'00000005'}

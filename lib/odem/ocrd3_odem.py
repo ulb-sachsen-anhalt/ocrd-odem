@@ -274,15 +274,22 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         self.logger.info("[%s] calculate stats from %d",
                          self.process_identifier,
                          len(outcomes))
-        n_ocr = sum([e[0] for e in outcomes if e[0] == 1], 0)
+        ocr_pages = [e[0] for e in outcomes if e[0] != odem_c.UNSET]
         total_mps = [round(e[2], 1) for e in outcomes if e[0] == 1]
         mod_val_counts = np.unique(total_mps, return_counts=True)
         mps_np = list(zip(*mod_val_counts))
         mps = [(float(pair[0]), int(pair[1])) for pair in mps_np] # since numyp 2.x
         total_mb = sum([e[3] for e in outcomes if e[0] == 1], 0)
-        self.process_statistics[odem_c.STATS_KEY_N_OCR] = n_ocr
+        self.process_statistics[odem_c.STATS_KEY_N_OCR] = len(ocr_pages)
         self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
         self.process_statistics[odem_c.STATS_KEY_MPS] = mps
+        img_candidate_names = [Path(pair[0]).stem
+                               for pair in self.ocr_candidates
+                               if isinstance(pair, tuple)]
+        ocr_names = [Path(page).stem for page in ocr_pages]
+        data_loss = set(img_candidate_names) ^ set(ocr_names)
+        if len(data_loss) > 0:
+            self.process_statistics[odem_c.STATS_KEY_OCR_LOSS] = data_loss
 
     def link_ocr_files(self) -> int:
         """Prepare and link OCR-data"""

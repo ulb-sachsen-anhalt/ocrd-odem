@@ -17,7 +17,8 @@ import digiflow.record as df_r
 #
 # ODEM States
 #
-MARK_OCR_OPEN = 'n.a.'
+UNSET = 'n.a.'
+MARK_OCR_OPEN = UNSET
 MARK_OCR_BUSY = 'ocr_busy'
 MARK_OCR_FAIL = 'ocr_fail'
 MARK_OCR_DONE = 'ocr_done'
@@ -87,6 +88,7 @@ STATS_KEY_N_OCRABLE = 'n_images_ocrable'
 STATS_KEY_N_LINES = 'n_text_lines'
 STATS_KEY_N_EXECS = 'n_execs'
 STATS_KEY_N_OCR = 'n_ocr'
+STATS_KEY_OCR_LOSS = 'ocr_loss'
 STATS_KEY_MB = 'mb'
 STATS_KEY_MPS = 'mps'
 
