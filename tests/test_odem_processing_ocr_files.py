@@ -6,10 +6,13 @@ from pathlib import Path
 
 import lxml.etree as ET
 import digiflow as df
+import digiflow.validate as df_v
 
-import lib.odem as odem
+import pytest
 
-from .conftest import fixture_configuration
+from lib import odem
+
+from .conftest import TEST_RES, fixture_configuration
 
 
 # please linter for lxml.etree contains no-member message
@@ -68,3 +71,20 @@ def test_fixture_one_postprocess_ocr_files(fixture_27949: odem.ODEMProcessImpl):
             # is now in it's own STRING element
             if _punc in _content[-1]:
                 assert len(_content) == 1
+
+
+def test_postprocess_empty_alto():
+    """What happens with empty input file?"""
+
+    # arrange
+    res_path = TEST_RES / '117470_00000006.lt.xml'
+    strip_tags = ['alto:Shape','alto:Processing',
+                  'alto:Illustration','alto:GraphicalElement']
+
+    # act
+    with pytest.raises(df_v.InvalidXMLException) as inv_exc:
+        df_v.validate_xml(res_path)
+
+    assert ' Missing child element(s)' in str(inv_exc)
+    assert 'Expected is ( {http://www.loc.gov/standards/alto/ns-v4#}Layout' in str(inv_exc)
+    odem.postprocess_ocr_file(res_path, strip_tags)
