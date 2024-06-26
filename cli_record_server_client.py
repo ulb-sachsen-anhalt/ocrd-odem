@@ -298,6 +298,8 @@ if __name__ == "__main__":
         ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
         if ocr_results is None or len(ocr_results) == 0:
             raise odem.ODEMException(f"process run error: {record.identifier}")
+        odem_process.logger.info("[%s] calculate ODEM statistics for %d items",
+                                 local_ident, len(ocr_results))
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         _stats_ocr = odem_process.statistics

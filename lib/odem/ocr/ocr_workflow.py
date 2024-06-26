@@ -49,6 +49,9 @@ class ODEMWorkflowRunner:
         else:
             the_outcomes = self.run_sequential(input_data)
         self.odem_workflow.foster_outputs()
+        self.logger.info("[%s] for %d images create %s files",
+                         self.process_identifier, len(input_data),
+                         len(the_outcomes))
         return the_outcomes
 
     def run_parallel(self, input_data):
@@ -295,8 +298,12 @@ class OCRDPageParallel(ODEMWorkflow):
         self.logger.info("[%s] converted '%d' files page-to-alto",
                          self.odem_process.process_identifier, len(self.ocr_files))
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
+        self.logger.info("[%s] start postprocessing of '%d' files",
+                         self.odem_process.process_identifier, len(self.ocr_files))
         for _ocr_file in self.ocr_files:
             odem_fmt.postprocess_ocr_file(_ocr_file, strip_tags)
+        self.logger.info("[%s] postprocessing of '%d' files done",
+                         self.odem_process.process_identifier, len(self.ocr_files))
 
 
 class ODEMTesseract(ODEMWorkflow):
