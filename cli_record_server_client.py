@@ -17,7 +17,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 import lib.odem as odem
-import lib.odem.monitoring as odem_rm
+import lib.odem.monitoring.resource as odem_rm
 
 # internal lock file
 # when running lock mode
