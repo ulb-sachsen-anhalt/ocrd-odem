@@ -11,7 +11,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 import lib.odem as odem
-import lib.odem.monitoring as odem_rm
+import lib.odem.monitoring.resource as odem_rm
 
 from lib.odem.odem_commons import (
     RECORD_IDENTIFIER,

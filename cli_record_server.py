@@ -39,22 +39,6 @@ _MIME_TXT = 'text/plain'
 LOGGER = None
 
 
-# def _to_full_record(row):
-#     """Serialize CSV row into OAIRecord
-#     with all attributes being evaluated"""
-
-#     oai_id = row[RECORD_IDENTIFIER]
-#     record = df_r.Record(oai_id)
-#     # legacy field for backward compatibility
-#     if RECORD_SPEC in row:
-#         record.set = row[RECORD_SPEC]
-#     # legacy field for backward compatibility
-#     if RECORD_RELEASED in row:
-#         record.date_stamp = row[RECORD_RELEASED]
-#     record.info = row[RECORD_INFO]
-#     return record
-
-
 class RecordRequestHandler(http.server.SimpleHTTPRequestHandler):
     """Http Request handler for POST and GET requests"""
 

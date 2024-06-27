@@ -10,7 +10,7 @@ from pathlib import Path
 import digiflow as df
 
 import lib.odem as odem
-import lib.odem.monitoring as odem_rm
+import lib.odem.monitoring.resource as odem_rm
 
 
 DEFAULT_EXECUTORS = 2

@@ -1,5 +1,8 @@
-# -*- coding: utf-8 -*-
-"""OCR-Generation for OAI-Records"""
+"""OCR-Generation for records
+Created as implementation project ODEM in OCR-D phase III 2021-2024
+
+cf. https://gepris.dfg.de/gepris/projekt/460554747
+"""
 
 from __future__ import annotations
 

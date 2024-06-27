@@ -16,7 +16,8 @@ import requests
 import digiflow as df
 import digiflow.record as df_r
 
-import lib.odem as odem
+from lib import odem
+import lib.odem.monitoring.datatypes as odem_md
 import lib.odem.monitoring.resource as odem_rm
 
 # internal lock file
@@ -353,7 +354,7 @@ if __name__ == "__main__":
         CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, **err_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{err_dict}')
         odem_process.clear_resources()
-    except odem_rm.NotEnoughDiskSpaceException as _space_exc:
+    except odem_md.NotEnoughDiskSpaceException as _space_exc:
         err_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", odem_process.process_identifier, err_dict)
@@ -362,7 +363,7 @@ if __name__ == "__main__":
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
         odem_process.clear_resources(remove_all=True)
-    except odem_rm.VirtualMemoryExceededException as _vmem_exc:
+    except odem_md.VirtualMemoryExceededException as _vmem_exc:
         err_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", odem_process.process_identifier, err_dict)

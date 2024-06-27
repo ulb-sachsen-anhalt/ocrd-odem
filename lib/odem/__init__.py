@@ -1,10 +1,10 @@
 """Public ODEM API"""
 
 from .odem_commons import *
-from .ocrd3_odem import (
+from .odem_process import (
     ODEMProcessImpl,
 )
-from .ocr.ocr_workflow import (
+from .odem_workflow import (
     ODEMWorkflowRunner,
     ODEMWorkflow,
     OCRDPageParallel,
