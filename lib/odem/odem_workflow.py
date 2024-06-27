@@ -45,7 +45,7 @@ class ODEMWorkflowRunner:
         """Actual run wrapper"""
         input_data = self.odem_workflow.get_inputs()
         self.logger.info("[%s] run %d images with %d executors",
-                          self.process_identifier, self.n_executors)
+                          self.process_identifier, len(input_data), self.n_executors)
         if self.n_executors > 1:
             the_outcomes = self.run_parallel(input_data)
         else:
