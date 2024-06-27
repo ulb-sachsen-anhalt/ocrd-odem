@@ -257,7 +257,10 @@ def clear_filegroups(xml_file, removals):
 
 
 def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
-    """Enrich given OCR-Files into XML tree
+    """Enrich given OCR-Files
+    Reference / link ALTO files as file pointer in METS/MODS
+    fileGrp, if final transformed output contains content and a page element 
+    Assignment done by name: image file == name ALTO file
 
     Returns number of linked files
     """
@@ -274,18 +277,6 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
         file_name = df.UNSET_LABEL
         try:
             file_name = Path(ocr_file).stem
-            new_id = odem_c.FILEGROUP_FULLTEXT + '_' + file_name
-            file_ocr = ET.Element(
-                tag_file, MIMETYPE="application/alto+xml", ID=new_id)
-            flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
-            flocat_href.set(Q_XLINK_HREF, ocr_file)
-            file_ocr.append(flocat_href)
-            file_grp_fulltext.append(file_ocr)
-
-            # Referencing / linking the ALTO data as a file pointer in
-            # the sequence container of the physical structMap
-            # Assignment takes place via the name of the corresponding
-            # image (= name ALTO file)
             mproc = df.MetsProcessor(ocr_file)
             ns_map = _sanitize_namespaces(mproc.tree)
             xpr_file_name = '//alto:sourceImageInformation/alto:fileName'
@@ -295,9 +286,24 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
             if len(page_elements) == 0:
                 n_passed_ocr += 1
                 continue
+
+            # only enrich ocr-file if Page present!
+            # prevent invalid METS/MODS:
+            # fileSec_09]  id:FULLTEXT_00000820
+            # (Das Element mets:file muss über sein Attribut ID mit
+            # einem mets:fptr-Element im Element mets:structMap[@TYPE='PHYSICAL']
+            # über dessen Attribut FILEID referenziert werden.
+            new_id = odem_c.FILEGROUP_FULLTEXT + '_' + file_name
+            file_ocr = ET.Element(
+                tag_file, MIMETYPE="application/alto+xml", ID=new_id)
+            flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
+            flocat_href.set(Q_XLINK_HREF, ocr_file)
+            file_ocr.append(flocat_href)
+            file_grp_fulltext.append(file_ocr)
             first_page_el = page_elements[0]
             first_page_el.attrib['ID'] = f'p{file_name}'
             mproc.write()
+
             n_linked_ocr += _link_fulltext(new_id, xml_tree)
         except IndexError as idx_exc:
             note = f"{ocr_file}({file_name}):{idx_exc.args[0]}"
