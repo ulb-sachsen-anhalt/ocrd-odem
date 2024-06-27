@@ -273,7 +273,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
     def calculate_statistics_ocr(self, outcomes: typing.List):
         """Calculate and aggregate runtime stats"""
-        self.logger.info("[%s] calculate statistics from %d items",
+        self.logger.info("[%s] calculate statistics for %d results",
                          self.process_identifier,
                          len(outcomes))
         data_result = [e for e in outcomes if e[0] != odem_c.UNSET]

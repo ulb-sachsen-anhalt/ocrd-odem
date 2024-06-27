@@ -2,7 +2,7 @@
 
 import os
 import subprocess
-from typing import List
+import typing
 
 from ocrd.resolver import (
     Resolver
@@ -46,7 +46,7 @@ def ocrd_workspace_setup(path_workspace, image_path):
     return image_path
 
 
-def get_recognition_level(model_config: str, rtl_models: List[str]) -> str:
+def get_recognition_level(model_config: str, rtl_models: typing.List) -> str:
     """Determine tesseract recognition level
     with respect to language order by model
     configuration"""
@@ -72,7 +72,7 @@ def run_ocr_page(*args):
     container_name = args[4]
     container_user_id = args[5]
 
-    ocrd_process_list: List[str] = args[6]
+    ocrd_process_list: typing.List = args[6]
 
     model_config = args[7]
 
@@ -92,7 +92,7 @@ def run_ocr_page(*args):
         'tesseract_level': tess_level,
         'model_config': model_config
     }
-    ocrd_process_list: List[str] = [f'"{p.format(**ocrd_process_args)}"' for p in ocrd_process_list]
+    ocrd_process_list: typing.List = [f'"{p.format(**ocrd_process_args)}"' for p in ocrd_process_list]
     ocrd_process_str: str = " ".join(ocrd_process_list)
 
     cmd: str = f"docker run --rm -u {container_user_id}"

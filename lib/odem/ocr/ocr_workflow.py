@@ -8,6 +8,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import time
 import typing
 
@@ -43,32 +44,41 @@ class ODEMWorkflowRunner:
     def run(self):
         """Actual run wrapper"""
         input_data = self.odem_workflow.get_inputs()
-        the_outcomes = [(0, 0, 0, 0)]
+        self.logger.info("[%s] run %d images with %d executors",
+                          self.process_identifier, self.n_executors)
         if self.n_executors > 1:
             the_outcomes = self.run_parallel(input_data)
         else:
             the_outcomes = self.run_sequential(input_data)
         self.odem_workflow.foster_outputs()
-        self.logger.info("[%s] for %d images create %s files",
-                         self.process_identifier, len(input_data),
-                         len(the_outcomes))
+        self.logger.info("[%s] created %d ocr files for %d images",
+                         self.process_identifier,
+                         len(the_outcomes), len(input_data))
         return the_outcomes
 
     def run_parallel(self, input_data):
         """Run workflow parallel with given executors"""
 
         n_inputs = len(input_data)
-        self.logger.info("[%s] %d inputs run_parallel by %d executors",
+        self.logger.info("[%s] %d inputs run_parallel with %d executors",
                          self.process_identifier, n_inputs, self.n_executors)
         try:
             with concurrent.futures.ThreadPoolExecutor(
                     max_workers=self.n_executors,
                     thread_name_prefix='odem.ocrd'
             ) as executor:
-                return list(executor.map(self.odem_workflow.run, input_data))
+                outcomes = list(executor.map(self.odem_workflow.run, input_data))
+            self.logger.info("[%s] created %d results with %d executors",
+                                self.process_identifier, len(outcomes),
+                                self.n_executors)
+            return outcomes
         except (OSError, AttributeError) as err:
-            self.logger.error(err)
+            self.logger.error("[%s] %s ", self.process_identifier, err)
             raise odem_c.ODEMException(f"ODEM parallel: {err.args[0]}") from err
+        except:
+            last_exc = str(sys.exc_info())
+            self.logger.error("[%s] %s ", self.process_identifier, last_exc)
+            raise odem_c.ODEMException(f"ODEM parallel: {last_exc}")
 
     def run_sequential(self, input_data):
         """run complete workflow plain sequential
@@ -126,7 +136,6 @@ class OCRDPageParallel(ODEMWorkflow):
         return self.odem_process.ocr_candidates
 
     def run(self, input_data):
-        """Create OCR Data"""
 
         ocr_log_conf = os.path.join(
             odem_c.PROJECT_ROOT, self.config.get(odem_c.CFG_SEC_OCR, 'ocrd_logging'))
@@ -295,14 +304,12 @@ class OCRDPageParallel(ODEMWorkflow):
         if not os.path.isdir(final_fulltext_dir):
             os.makedirs(final_fulltext_dir, exist_ok=True)
         self.ocr_files = odem_fmt.convert_to_output_format(ocrd_data_files, final_fulltext_dir)
-        self.logger.info("[%s] converted '%d' files page-to-alto",
+        self.logger.info("[%s] converted %d ocr files to alto",
                          self.odem_process.process_identifier, len(self.ocr_files))
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
-        self.logger.info("[%s] start postprocessing of '%d' files",
-                         self.odem_process.process_identifier, len(self.ocr_files))
         for _ocr_file in self.ocr_files:
             odem_fmt.postprocess_ocr_file(_ocr_file, strip_tags)
-        self.logger.info("[%s] postprocessing of '%d' files done",
+        self.logger.info("[%s] postprocessed %d ocr files",
                          self.odem_process.process_identifier, len(self.ocr_files))
 
 
