@@ -256,7 +256,9 @@ if __name__ == "__main__":
     rec_ident = record.identifier
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
-    odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record, req_dst_dir)
+    odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, req_dst_dir,
+                                                              LOGGER, LOCAL_LOG_DIR,
+                                                              record)
     odem_process.logger = LOGGER
     odem_process.logger.debug(
         "request %s from %s (%s part slots)",
@@ -292,8 +294,8 @@ if __name__ == "__main__":
         odem_process.language_modelconfig()
         odem_process.set_local_images()
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
-        odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
-        odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
+        odem_wf = odem.ODEMWorkflow.create(proc_type, odem_process)
+        odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_wf)
         if CFG.getboolean(odem.CFG_SEC_MONITOR, 'live', fallback=False):
             LOGGER.info("[%s] live-monitoring of ocr workflow resources",
                         local_ident)

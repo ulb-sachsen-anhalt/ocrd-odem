@@ -7,7 +7,7 @@ import sys
 
 from pathlib import Path
 
-import digiflow as df
+import digiflow.record as df_r
 
 import lib.odem as odem
 import lib.odem.monitoring.resource as odem_rm
@@ -80,7 +80,6 @@ if __name__ == "__main__":
 
     CREATE_PDF = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
 
-
     # set work_dirs and logger
     DELETE_BEVOR_EXPORT = []
     if CFG.has_option('export', 'delete_before_export'):
@@ -115,8 +114,9 @@ if __name__ == "__main__":
         proc_type: str = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
-        record = df.OAIRecord(local_ident)
-        odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record, mets_file_dir)
+        record = df_r.Record(urn=local_ident)
+        odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, mets_file_dir,
+                                                                  LOGGER, LOCAL_LOG_DIR, record)
         odem_process.logger = LOGGER
         odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, mets_file, EXECUTORS)
         odem_process.configuration = CFG
@@ -157,13 +157,13 @@ if __name__ == "__main__":
             odem_process.validate_metadata()
         if odem_process.configuration.has_option('export', 'local_export_dir'):
             odem_process.logger.info("[%s] start to export data",
-                                         odem_process.process_identifier)
+                                     odem_process.process_identifier)
             if not MUST_KEEP_RESOURCES and len(DELETE_BEVOR_EXPORT) > 0:
                 odem_process.delete_before_export(DELETE_BEVOR_EXPORT)
             odem_process.export_data()
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
-                                     odem_process.statistics['timedelta'], _mode, odem_process.statistics)
+                                 odem_process.statistics['timedelta'], _mode, odem_process.statistics)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)
     except odem.ODEMNoTypeForOCRException as type_unknown:
