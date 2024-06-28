@@ -233,7 +233,7 @@ if __name__ == "__main__":
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
     HOST = CFG.get('record-server', 'record_server_url')
     PORT = CFG.getint('record-server', 'record_server_port')
-    LOGGER.info("Client instance listens %s:%s for '%s' (format:%s)",
+    LOGGER.info("client requests %s:%s for record source %s (fmt:%s)",
                 HOST, PORT, OAI_RECORD_FILE_NAME, DATA_FIELDS)
     CLIENT = Client(OAI_RECORD_FILE_NAME, HOST, PORT)
     CLIENT.logger = LOGGER
@@ -257,16 +257,10 @@ if __name__ == "__main__":
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
     odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, req_dst_dir,
-                                                              LOGGER, LOCAL_LOG_DIR,
-                                                              record)
-    odem_process.logger = LOGGER
-    odem_process.logger.debug(
-        "request %s from %s (%s part slots)",
-        local_ident,
-        CLIENT.host, EXECUTORS
-    )
-    odem_process.configuration = CFG
-
+                                                              LOGGER, None,
+                                                              record=record)
+    odem_process.logger.debug("[%s] request record from %s (%s part slots)",
+                              local_ident, CLIENT.host, EXECUTORS)
     try:
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
@@ -276,7 +270,7 @@ if __name__ == "__main__":
             store_root_dir = os.path.join(local_store_root, local_ident)
             odem_process.store = df.LocalStore(store_root_dir, req_dst_dir)
 
-        process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
+        pr_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),
             LOGGER.error,
             CLIENT.update,
@@ -285,8 +279,8 @@ if __name__ == "__main__":
             rec_ident
         )
 
-        process_resource_monitor.check_vmem()
-        process_resource_monitor.monit_disk_space(odem_process.load)
+        pr_monitor.check_vmem()
+        pr_monitor.monit_disk_space(odem_process.load)
         odem_process.inspect_metadata()
         if CFG.getboolean('mets', 'prevalidate', fallback=True):
             odem_process.validate_metadata()
@@ -299,7 +293,7 @@ if __name__ == "__main__":
         if CFG.getboolean(odem.CFG_SEC_MONITOR, 'live', fallback=False):
             LOGGER.info("[%s] live-monitoring of ocr workflow resources",
                         local_ident)
-            ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+            ocr_results = pr_monitor.monit_vmem(odem_runner.run)
         else:
             LOGGER.info("[%s] execute ocr workflow with poolsize %d",
                         local_ident, EXECUTORS)
