@@ -135,8 +135,6 @@ if __name__ == "__main__":
         odem_process.clear_existing_entries()
         odem_process.language_modelconfig()
         odem_process.set_local_images()
-
-        # NEW NEW NEW
         odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
         odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
         ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)

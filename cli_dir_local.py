@@ -84,36 +84,33 @@ if __name__ == "__main__":
     LOGGER.info("process data in '%s' with %s executors in mode %s",
                 LOCAL_WORK_ROOT, EXECUTORS, RUN_SEQUENTIAL)
 
-    req_idn = 'n.a.'
+    REQ_IDENT = odem.UNSET
     try:
-        req_idn = os.path.basename(ROOT_PATH)
-        req_dst_dir = os.path.join(LOCAL_WORK_ROOT, req_idn)
+        REQ_IDENT = os.path.basename(ROOT_PATH)
+        req_dst_dir = os.path.join(LOCAL_WORK_ROOT, REQ_IDENT)
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
         os.makedirs(req_dst_dir, exist_ok=True)
-
-        proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
-        if proc_type is None:
-            LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
-        PROCESS: odem.ODEMProcessImpl = odem.ODEMProcessImpl.create(proc_type, None, req_dst_dir, EXECUTORS)
-        PROCESS.local_mode = True
-        PROCESS.configuration = CFG
-        PROCESS.logger = LOGGER
-        local_images = PROCESS.get_local_image_paths(image_local_dir=ROOT_PATH)
-        PROCESS.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
-        PROCESS.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
-        PROCESS.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        PROCESS.ocr_candidates = local_images
+        proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=odem.DEFAULT_WORKLFOW)
+        odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, ROOT_PATH, logger=LOGGER,
+                                                                 log_dir=log_dir)
+        local_images = odem_process.get_local_image_paths(image_local_dir=ROOT_PATH)
+        the_workflow: odem.ODEMWorkflow = odem.ODEMWorkflow.create(proc_type, odem_process)
+        odem_runner = odem.ODEMWorkflowRunner(REQ_IDENT, EXECUTORS, LOGGER, the_workflow)
+        odem_process.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
+        odem_process.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
+        odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         # Type and Value change!!!
         # ODEMProcess.single_ocr() needs Tuple[str,str], in non-local
         # this is assigned to "PROCESS.images_4_ocr" in ODEMProcess.filter_images()
         # thats why we have to manually fit that requirement
-        PROCESS.ocr_candidates = list(zip(PROCESS.ocr_candidates, 
-                                          [pathlib.Path(i).stem for i in PROCESS.ocr_candidates]))
-        PROCESS.run()
-        PROCESS.logger.info("[%s] duration: %s (%s)", req_idn,
-                                PROCESS.statistics['timedelta'], PROCESS.statistics)
+        candidate_tuples = list(zip(odem_process.ocr_candidates,
+                                    [pathlib.Path(i).stem for i in odem_process.ocr_candidates]))
+        odem_process.ocr_candidates = candidate_tuples
+        odem_runner.run()
+        odem_process.logger.info("[%s] duration: %s (%s)", REQ_IDENT,
+                                odem_process.statistics['timedelta'], odem_process.statistics)
     except Exception as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
-                     req_idn, PROCESS.statistics['timedelta'], str(exc))
+                     REQ_IDENT, odem_process.statistics['timedelta'], str(exc))
         sys.exit(0)

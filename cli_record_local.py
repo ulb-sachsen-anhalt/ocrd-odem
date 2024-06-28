@@ -151,12 +151,11 @@ if __name__ == "__main__":
         req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
-        proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
-        if proc_type is None:
-            LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
+        proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=odem.DEFAULT_WORKLFOW)
         odem_process: ODEMProcessImpl = ODEMProcessImpl(record, req_dst_dir)
         odem_process.logger = LOGGER
-        odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, OAI_RECORD_FILE, EXECUTORS)
+        odem_process.logger.info("[%s] odem from %s, %d executors", local_ident,
+                                 OAI_RECORD_FILE, EXECUTORS)
         odem_process.configuration = CFG
         local_store_root = CFG.get('global', 'local_store_root', fallback=None)
         if local_store_root is not None:
@@ -173,24 +172,28 @@ if __name__ == "__main__":
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(odem_process.load)
         odem_process.inspect_metadata()
-        if CFG.getboolean('mets','prevalidate', fallback=True):
+        if CFG.getboolean('mets', 'prevalidate', fallback=True):
             odem_process.validate_metadata()
         odem_process.clear_existing_entries()
         odem_process.language_modelconfig()
         odem_process.set_local_images()
-
-        # NEW NEW NEW
         odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
         odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
-        ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        if CFG.getboolean(odem.CFG_SEC_MONITOR, 'live', fallback=False):
+            LOGGER.info("[%s] live-monitoring of ocr workflow resources",
+                        local_ident)
+            ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        else:
+            LOGGER.info("[%s] execute ocr workflow with poolsize %d",
+                        local_ident, EXECUTORS)
+            ocr_results = odem_runner.run()
         if ocr_results is None or len(ocr_results) == 0:
             raise ODEMException(f"process run error: {record.identifier}")
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         odem_process.logger.info("[%s] %s", local_ident, odem_process.statistics)
-        # odem_process.link_ocr_files()
-        # odem_process.postprocess_ocr()
-        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
+        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH,
+                                       fallback=True)
         if wf_enrich_ocr:
             odem_process.link_ocr_files()
         wf_create_pdf = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
@@ -198,7 +201,7 @@ if __name__ == "__main__":
             odem_process.create_pdf()
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
-        if CFG.getboolean('mets','postvalidate', fallback=True):
+        if CFG.getboolean('mets', 'postvalidate', fallback=True):
             odem_process.validate_metadata()
         if not MUST_KEEP_RESOURCES:
             odem_process.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)
@@ -211,26 +214,28 @@ if __name__ == "__main__":
                 odem_process.record.info.update(_kwargs)
                 _info = f"{odem_process.record.info}"
             except:
-                odem_process.logger.warning("Can't parse '%s', store info literally",
-                                         odem_process.record.info)
+                odem_process.logger.warning("Can't parse '%s', store info str",
+                                            odem_process.record.info)
                 _info = f"{_kwargs}"
         else:
             _info = f"{_kwargs}"
         handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_info)
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
-                                odem_process.statistics['timedelta'], _mode, odem_process.statistics)
+                                 odem_process.statistics['timedelta'], _mode,
+                                 odem_process.statistics)
         # finale
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
-                    odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)
+                    odem_process.process_identifier,
+                    odem_process.statistics['timedelta'], EXECUTORS)
     except odem.ODEMNoTypeForOCRException as type_unknown:
         # we don't ocr this one
-        LOGGER.warning("[%s] odem skips '%s'", 
+        LOGGER.warning("[%s] odem skips '%s'",
                        odem_process.process_identifier, type_unknown.args[0])
         handler.save_record_state(record.identifier, odem.MARK_OCR_SKIP)
     except odem.ODEMNoImagesForOCRException as not_ocrable:
-        LOGGER.warning("[%s] odem no ocrables '%s'", 
-                       odem_process.process_identifier,  not_ocrable.args)
+        LOGGER.warning("[%s] odem no ocrables '%s'",
+                       odem_process.process_identifier, not_ocrable.args)
         handler.save_record_state(record.identifier, odem.MARK_OCR_SKIP)
     except ODEMException as _odem_exc:
         _err_args = {'ODEMException': _odem_exc.args[0]}
@@ -239,5 +244,6 @@ if __name__ == "__main__":
     except RuntimeError as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
                      record, odem_process.statistics['timedelta'], str(exc))
-        handler.save_record_state(record.identifier, MARK_OCR_FAIL, INFO=f'{str(exc) : exc.args[0]}')
+        handler.save_record_state(record.identifier, MARK_OCR_FAIL,
+                                  INFO=f'{str(exc) : exc.args[0]}')
         sys.exit(1)

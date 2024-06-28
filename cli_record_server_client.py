@@ -291,12 +291,17 @@ if __name__ == "__main__":
         odem_process.clear_existing_entries()
         odem_process.language_modelconfig()
         odem_process.set_local_images()
-
-        # NEW NEW NEW
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
         odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
-        ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        if CFG.getboolean(odem.CFG_SEC_MONITOR, 'live', fallback=False):
+            LOGGER.info("[%s] live-monitoring of ocr workflow resources",
+                        local_ident)
+            ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        else:
+            LOGGER.info("[%s] execute ocr workflow with poolsize %d",
+                        local_ident, EXECUTORS)
+            ocr_results = odem_runner.run()
         if ocr_results is None or len(ocr_results) == 0:
             raise odem.ODEMException(f"process run error: {record.identifier}")
         odem_process.logger.info("[%s] calculate ODEM statistics for %d items",
@@ -305,7 +310,8 @@ if __name__ == "__main__":
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         _stats_ocr = odem_process.statistics
         odem_process.logger.info("[%s] %s", local_ident, _stats_ocr)
-        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
+        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH,
+                                       fallback=True)
         if wf_enrich_ocr:
             odem_process.link_ocr_files()
         wf_create_pdf = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
@@ -324,11 +330,13 @@ if __name__ == "__main__":
         if status_code == 200:
             LOGGER.info("[%s] state %s set", odem_process.process_identifier, status_code)
         else:
-            LOGGER.error("[%s] update request failed: %s", odem_process.process_identifier, status_code)
+            LOGGER.error("[%s] update request failed: %s", odem_process.process_identifier,
+                         status_code)
         # finale
         odem_process.clear_resources(remove_all=True)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
-                    odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)
+                    odem_process.process_identifier,
+                    odem_process.statistics['timedelta'], EXECUTORS)
     except odem.ODEMNoTypeForOCRException as type_unknown:
         LOGGER.warning("[%s] odem skips '%s'",
                        odem_process.process_identifier, type_unknown.args)

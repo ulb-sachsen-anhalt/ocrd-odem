@@ -39,6 +39,7 @@ class ExportFormat(str, Enum):
 
 #
 # ODEM configuration keys
+CFG_SEC_MONITOR = 'monitoring'
 CFG_SEC_OCR = 'ocr'
 CFG_SEC_OCR_OPT_RES_VOL = "ocrd_resources_volumes"
 CFG_SEC_OCR_OPT_MODEL_COMBINABLE = "model_combinable"
@@ -118,24 +119,27 @@ class OdemWorkflowProcessType(str, Enum):
     ODEM_TESSERACT = "ODEM_TESSERACT"
 
 
+DEFAULT_WORKLFOW = OdemWorkflowProcessType.OCRD_PAGE_PARALLEL
+
+
 class ODEMProcess:
     """Basic Interface for ODEM"""
 
     def __init__(self,
                  configuration: configparser.ConfigParser,
-                 work_dir_root: Path,
-                 the_logger: logging.Logger,
+                 work_dir: Path,
+                 logger: logging.Logger,
                  log_dir=None,
                  record: df_r.Record = None):
         self.configuration = configuration
-        self.work_dir_root = work_dir_root
+        self.work_dir_root = work_dir
         self.record = record
         self.process_identifier = None
         self.process_statistics = {}
         self.ocr_candidates = []
-        self.logger = the_logger
-        if the_logger is not None:
-            self.logger = the_logger
+        self.logger = logger
+        if logger is not None:
+            self.logger = logger
         if log_dir is not None and os.path.exists(log_dir):
             self._init_logger(log_dir)
 

@@ -147,20 +147,22 @@ def test_load_mock_called(tmp_path_factory):
         doing *real* requests with storage"""
 
         orig_file = TEST_RES / '1981185920_44046.xml'
-        trgt_mets = _workdir / '1981185920_44046.xml'
+        trgt_mets = workdir / '1981185920_44046.xml'
         shutil.copyfile(orig_file, trgt_mets)
 
-    _root_workdir = tmp_path_factory.mktemp('workdir')
-    _workdir = _root_workdir / '1981185920_44046'
-    _workdir.mkdir()
-    _log_dir = _root_workdir / 'log'
-    _log_dir.mkdir()
-    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
-    odem_proc = odem.ODEMProcessImpl(_record, _workdir)
-    odem_proc.configuration = fixture_configuration()
-    _model_dir = prepare_tessdata_dir(_workdir)
-    odem_proc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL, f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
-    odem_proc.logger = odem.get_logger(str(_log_dir))
+    root_workdir = tmp_path_factory.mktemp('workdir')
+    workdir = root_workdir / '1981185920_44046'
+    workdir.mkdir()
+    log_dir = root_workdir / 'log'
+    log_dir.mkdir()
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
+    odem_proc = odem.ODEMProcessImpl(fixture_configuration(), workdir,
+                                     odem.get_logger(str(log_dir)),
+                                     str(log_dir), record)
+    model_dir = prepare_tessdata_dir(workdir)
+    odem_proc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
+                                f'{model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    odem_proc.logger = odem.get_logger(str(log_dir))
 
     # mock loading of OAI Record
     # actual load attempt *must* be done
@@ -306,25 +308,21 @@ def test_images_4_ocr_properly_filtered(tmp_path):
 
     """
 
-    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
-    _work_dir = tmp_path / '1981185920_44046'
-    _work_dir.mkdir()
-    _max_dir = _work_dir / 'MAX'
-    _max_dir.mkdir()
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
+    work_dir = tmp_path / '1981185920_44046'
+    work_dir.mkdir()
+    log_dir = tmp_path / 'log'
+    log_dir.mkdir()
+    max_dir = work_dir / 'MAX'
+    max_dir.mkdir()
     for i in range(1, 6):
-        _file_path = f"{_max_dir}/{i:08d}.jpg"
+        _file_path = f"{max_dir}/{i:08d}.jpg"
         with open(_file_path, 'wb') as _writer:
             _writer.write(b'0x00')
-    _orig_mets = TEST_RES / '1981185920_44046.xml'
-    shutil.copyfile(_orig_mets, _work_dir / '1981185920_44046.xml')
-    odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
-    cfg = odem.get_configparser()
-    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
-    odem_processor.configuration = cfg
-    _log_dir = tmp_path / 'log'
-    _log_dir.mkdir()
-    odem_processor.logger = odem.get_logger(str(_log_dir))
-
+    orig_mets = TEST_RES / '1981185920_44046.xml'
+    shutil.copyfile(orig_mets, work_dir / '1981185920_44046.xml')
+    odem_processor = odem.ODEMProcessImpl(fixture_configuration(), work_dir,
+                                          odem.get_logger(str(log_dir)), record=record)
     # act
     odem_processor.inspect_metadata()
     odem_processor.set_local_images()
@@ -340,20 +338,21 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     """
 
     # arrange
-    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
-    _work_dir = tmp_path / '1981185920_44046'
-    _work_dir.mkdir()
-    odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
-    cfg = odem.get_configparser()
-    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
-    odem_processor.configuration = cfg
-    _log_dir = tmp_path / 'log'
-    _log_dir.mkdir()
-    odem_processor.logger = odem.get_logger(str(_log_dir))
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
+    work_dir = tmp_path / '1981185920_44046'
+    work_dir.mkdir()
+    log_dir = tmp_path / 'log'
+    log_dir.mkdir()
+    odem_proc = odem.ODEMProcessImpl(fixture_configuration(),
+                                     work_dir,
+                                     logger=None,
+                                     log_dir=log_dir, record=record)
+    odem_proc.configuration.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
+    odem_proc.logger = odem.get_logger(str(log_dir))
 
     # act
     with pytest.raises(df.LoadException) as err:
-        odem_processor.load()
+        odem_proc.load()
 
     # assert
     assert "url" in err.value.args[0] and "returned" in err.value.args[0]
@@ -372,20 +371,23 @@ def test_record_with_unknown_language(tmp_path):
     orig_file = TEST_RES / f'{identifier}.xml'
     trgt_mets = path_workdir / f'{identifier}.xml'
     shutil.copyfile(orig_file, trgt_mets)
-    (path_workdir / 'log').mkdir()
+    log_dir = path_workdir / 'log'
+    log_dir.mkdir()
     record = df_r.Record('oai:opendata.uni-halle.de:1981185920/72977')
-    oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.configuration = fixture_configuration()
-    _model_dir = prepare_tessdata_dir(tmp_path)
+    oproc = odem.ODEMProcessImpl(fixture_configuration(),
+                                     path_workdir,
+                                     logger=None,
+                                     log_dir=log_dir, record=record)
+    model_dir = prepare_tessdata_dir(tmp_path)
     oproc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                            f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+                            f'{model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
     oproc.mets_file_path = str(trgt_mets)
     oproc.inspect_metadata()
-    _langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
+    langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
 
     # act
     with pytest.raises(odem.ODEMException) as odem_exc:
-        oproc.language_modelconfig(_langs)
+        oproc.language_modelconfig(langs)
 
     # assert
     assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" == odem_exc.value.args[0]
@@ -413,20 +415,21 @@ def test_export_flat_zip(tmp_path):
     orig_files = TEST_RES / 'vd18-1180329' / 'FULLTEXT'
     trgt_files = path_workdir / 'FULLTEXT'
     shutil.copytree(orig_files, trgt_files)
-
-    (path_workdir / 'log').mkdir()
+    log_dir = path_workdir / 'log'
+    log_dir.mkdir()
     record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
-    oproc = odem.ODEMProcessImpl(record, work_dir=path_workdir, log_dir=path_workdir / 'log')
-    oproc.configuration = fixture_configuration()
-    _model_dir = prepare_tessdata_dir(tmp_path)
-
+    oproc = odem.ODEMProcessImpl(fixture_configuration(),
+                                 path_workdir,
+                                 logger=None, log_dir=log_dir, record=record)
+    # oproc.configuration = fixture_configuration()
+    model_dir = prepare_tessdata_dir(tmp_path)
     oproc.configuration.set('export', 'export_format', odem.ExportFormat.FLAT_ZIP)
     oproc.configuration.set('export', 'local_export_tmp', str(path_tmp_export_dir))
     oproc.configuration.set('export', 'local_export_dir', str(path_export_dir))
     oproc.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,
-        f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize'
+        f'{model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize'
     )
 
     oproc.mets_file_path = str(trgt_mets)

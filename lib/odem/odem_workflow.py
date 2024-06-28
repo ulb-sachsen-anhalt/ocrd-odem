@@ -45,7 +45,7 @@ class ODEMWorkflowRunner:
         """Actual run wrapper"""
         input_data = self.odem_workflow.get_inputs()
         self.logger.info("[%s] run %d images with %d executors",
-                          self.process_identifier, len(input_data), self.n_executors)
+                         self.process_identifier, len(input_data), self.n_executors)
         if self.n_executors > 1:
             the_outcomes = self.run_parallel(input_data)
         else:
@@ -69,8 +69,8 @@ class ODEMWorkflowRunner:
             ) as executor:
                 outcomes = list(executor.map(self.odem_workflow.run, input_data))
             self.logger.info("[%s] created %d results with %d executors",
-                                self.process_identifier, len(outcomes),
-                                self.n_executors)
+                             self.process_identifier, len(outcomes),
+                             self.n_executors)
             return outcomes
         except (OSError, AttributeError) as err:
             self.logger.error("[%s] %s ", self.process_identifier, err)
@@ -181,8 +181,11 @@ class OCRDPageParallel(ODEMWorkflow):
         profiling = ('n.a.', 0)
 
         container_name: str = f'{self.odem_process.process_identifier}_{os.path.basename(page_workdir)}'
-        container_memory_limit: str = self.config.get(odem_c.CFG_SEC_OCR, 'docker_container_memory_limit', fallback=None)
-        container_user = self.config.get(odem_c.CFG_SEC_OCR, 'docker_container_user', fallback=os.getuid())
+        container_memory_limit: str = self.config.get(odem_c.CFG_SEC_OCR,
+                                                      'docker_container_memory_limit',
+                                                      fallback=None)
+        container_user = self.config.get(odem_c.CFG_SEC_OCR,
+                                         'docker_container_user', fallback=os.getuid())
         container_timeout: int = self.config.getint(
             odem_c.CFG_SEC_OCR,
             'docker_container_timeout',
@@ -190,8 +193,12 @@ class OCRDPageParallel(ODEMWorkflow):
         )
         base_image = self.config.get(odem_c.CFG_SEC_OCR, 'ocrd_baseimage')
         ocrd_process_list = self.config.getlist(odem_c.CFG_SEC_OCR, 'ocrd_process_list')
-        tesseract_model_rtl: typing.List[str] = self.config.getlist(odem_c.CFG_SEC_OCR, 'tesseract_model_rtl', fallback=odem_c.DEFAULT_RTL_MODELS)
-        ocrd_resources_volumes: typing.Dict[str, str] = self.config.getdict(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_RES_VOL, fallback={})
+        tesseract_model_rtl: typing.List[str] = self.config.getlist(odem_c.CFG_SEC_OCR,
+                                                                    'tesseract_model_rtl',
+                                                                    fallback=odem_c.DEFAULT_RTL_MODELS)
+        ocrd_resources_volumes: typing.Dict[str, str] = self.config.getdict(odem_c.CFG_SEC_OCR,
+                                                                            odem_c.CFG_SEC_OCR_OPT_RES_VOL,
+                                                                            fallback={})
 
         if self.odem_process.local_mode:
             container_name = os.path.basename(page_workdir)
@@ -300,7 +307,8 @@ class OCRDPageParallel(ODEMWorkflow):
         ocrd_data_files = odem_c.list_files(list_from_dir)
         if len(ocrd_data_files) == 0 and n_candidates > 0:
             raise odem_c.ODEMException(f"No OCR result for {n_candidates} candidates created!")
-        final_fulltext_dir = os.path.join(self.odem_process.work_dir_root, odem_c.FILEGROUP_FULLTEXT)
+        final_fulltext_dir = os.path.join(self.odem_process.work_dir_root,
+                                          odem_c.FILEGROUP_FULLTEXT)
         if not os.path.isdir(final_fulltext_dir):
             os.makedirs(final_fulltext_dir, exist_ok=True)
         self.ocr_files = odem_fmt.convert_to_output_format(ocrd_data_files, final_fulltext_dir)

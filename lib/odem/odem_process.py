@@ -54,8 +54,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         for the underlying OCR-Engine Tesseract-OCR.
     """
 
-    def __init__(self, record: df_r.Record, work_dir,
-                 log_dir=None, logger=None, configuration=None):
+    def __init__(self, configuration=None, work_dir=None,
+                 logger=None, log_dir=None, record: df_r.Record = None):
         """Create new ODEM Process.
         Args:
             record (OAIRecord): OAI Record dataset
@@ -66,8 +66,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 Defaults to None.
         """
 
-        super().__init__(configuration, work_dir_root=work_dir,
-                         the_logger=logger, log_dir=log_dir, record=record)
+        super().__init__(configuration, work_dir=work_dir,
+                         logger=logger, log_dir=log_dir, record=record)
         self.digi_type = None
         self.mods_identifier = None
         self.local_mode = record is None
@@ -173,9 +173,10 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                     models.append(model)
                 else:
                     raise odem_c.ODEMException(f"'{model}' model config not found !")
-        model_cfg = '+'.join(models) if self.configuration.getboolean(odem_c.CFG_SEC_OCR, 
-                                                                         "model_combinable", 
-                                                                         fallback=True) else models[0]
+        model_cfg = models[0]
+        if self.configuration.getboolean(odem_c.CFG_SEC_OCR, "model_combinable",
+                                         fallback=True):
+            model_cfg = '+'.join(models)
         self.process_statistics[odem_c.STATS_KEY_MODELS] = model_cfg
         self.logger.info("[%s] map languages '%s' => '%s'",
                          self.process_identifier, languages, model_cfg)
@@ -199,7 +200,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         # inspect language arg
         if self.configuration.has_option(odem_c.CFG_SEC_OCR, odem_c.KEY_LANGUAGES):
             file_lang_suffixes = self.configuration.get(odem_c.CFG_SEC_OCR,
-                                                         odem_c.KEY_LANGUAGES).split('+')
+                                                        odem_c.KEY_LANGUAGES).split('+')
             return self.language_modelconfig(file_lang_suffixes)
         # inspect final '_' segment of local file names
         if self.local_mode:
@@ -333,7 +334,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         path_bin = None
         if cfg_path_dir_bin is not None:
             path_bin = os.path.join(odem_c.PROJECT_ROOT, cfg_path_dir_bin)
-        cfg_path_dir_project = self.configuration.get('derivans', 'derivans_dir_project', fallback=None)
+        cfg_path_dir_project = self.configuration.get('derivans', 'derivans_dir_project',
+                                                      fallback=None)
         path_prj = None
         if cfg_path_dir_project is not None:
             path_prj = os.path.join(odem_c.PROJECT_ROOT, cfg_path_dir_project)
@@ -437,7 +439,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 export_mappings = df.map_contents(source_path_dir, work_dir, exp_map)
                 for mapping in export_mappings:
                     mapping.copy()
-                tmp_zip_path, size = ODEMProcessImpl.compress_flat(os.path.dirname(work_dir), saf_name)
+                tmp_zip_path, size = ODEMProcessImpl.compress_flat(os.path.dirname(work_dir),
+                                                                   saf_name)
                 path_export_processing = dfx.move_to_tmp_file(tmp_zip_path, exp_dst)
                 export_result = path_export_processing, size
         else:

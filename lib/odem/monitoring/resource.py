@@ -282,16 +282,16 @@ def from_configuration(config: configparser.ConfigParser) -> odem_mdt.ProcessRes
     """Encapsulate transformation from configuration options into
     process monitor input config"""
 
-    cfg_enabled_monitoring = config.getboolean('resource-monitoring', 'enable', fallback=False)
-    cfg_polling_interval = config.getfloat('resource-monitoring', 'polling_interval', fallback=1)
-    cfg_path_usage = config.get('resource-monitoring', 'path_disk_usage', fallback='/home/ocr')
+    cfg_enabled_monitoring = config.getboolean(odem.CFG_SEC_MONITOR, 'enable', fallback=False)
+    cfg_polling_interval = config.getfloat(odem.CFG_SEC_MONITOR, 'polling_interval', fallback=1)
+    cfg_path_usage = config.get(odem.CFG_SEC_MONITOR, 'path_disk_usage', fallback='/home/ocr')
     cfg_space_needed = config.getfloat(
-        'resource-monitoring',
+        odem.CFG_SEC_MONITOR,
         'factor_free_disk_space_needed',
         fallback=3.0
     )
-    cfg_vmem_percentage = config.getfloat('resource-monitoring', 'max_vmem_percentage', fallback=None)
-    cfg_vmem_bytes = config.getint('resource-monitoring', 'max_vmem_bytes', fallback=None)
+    cfg_vmem_percentage = config.getfloat(odem.CFG_SEC_MONITOR, 'max_vmem_percentage', fallback=None)
+    cfg_vmem_bytes = config.getint(odem.CFG_SEC_MONITOR, 'max_vmem_bytes', fallback=None)
     return odem_mdt.ProcessResourceMonitorConfig(
         enable_resource_monitoring=cfg_enabled_monitoring,
         polling_interval=cfg_polling_interval,

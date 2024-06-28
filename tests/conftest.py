@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Shared test functionalities"""
 
+import configparser
 import os
 import pathlib
 import shutil
@@ -77,12 +78,14 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     shutil.copytree(orig_alto, trgt_alto)
     _model_dir = prepare_tessdata_dir(path_work_dir)
     record = df_r.Record('oai:dev.opendata.uni-halle.de:123456789/27949')
-    odem_proc = odem.ODEMProcessImpl(record, work_dir=path_work_dir, log_dir=work_dir_root / 'log')
-    odem_proc.configuration = fixture_configuration()
-    odem_proc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                                  f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    mock_cfg: configparser.ConfigParser = fixture_configuration()
+    mock_cfg.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
+                 f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    odem_proc = odem.ODEMProcessImpl(mock_cfg, work_dir=path_work_dir,
+                                     log_dir=work_dir_root / 'log',
+                                     record=record)
     odem_proc.ocr_files = [os.path.join(trgt_alto, a)
-                        for a in os.listdir(trgt_alto)]
+                           for a in os.listdir(trgt_alto)]
     odem_proc.mets_file_path = str(trgt_mets)
     odem_proc.inspect_metadata()
     odem_proc.clear_existing_entries()
