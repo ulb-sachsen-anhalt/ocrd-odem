@@ -41,6 +41,10 @@ os.environ['OMP_THREAD_LIMIT'] = '1'
 DEFAULT_LANG = 'ger'
 
 
+class ODEMModelMissingException(odem_c.ODEMException):
+    """Mark ODEM process misses model configuration"""
+
+
 class ODEMProcessImpl(odem_c.ODEMProcess):
     """Create OCR for OAI Records.
 
@@ -167,12 +171,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
-                raise odem_c.ODEMException(f"'{lang}' mapping not found (languages: {languages})!")
+                raise ODEMModelMissingException(f"'{lang}' mapping not found (languages: {languages})!")
             for model in model_entry.split('+'):
                 if self._is_model_available(model):
                     models.append(model)
                 else:
-                    raise odem_c.ODEMException(f"'{model}' model config not found !")
+                    raise ODEMModelMissingException(f"'{model}' model config not found !")
         model_cfg = models[0]
         if self.configuration.getboolean(odem_c.CFG_SEC_OCR, "model_combinable",
                                          fallback=True):

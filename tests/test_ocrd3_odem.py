@@ -386,7 +386,7 @@ def test_record_with_unknown_language(tmp_path):
     langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
 
     # act
-    with pytest.raises(odem.ODEMException) as odem_exc:
+    with pytest.raises(odem.ODEMModelMissingException) as odem_exc:
         oproc.language_modelconfig(langs)
 
     # assert

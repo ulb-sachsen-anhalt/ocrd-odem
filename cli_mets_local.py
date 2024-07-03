@@ -166,12 +166,12 @@ if __name__ == "__main__":
                                  odem_process.statistics['timedelta'], _mode, odem_process.statistics)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier, odem_process.statistics['timedelta'], EXECUTORS)
-    except odem.ODEMNoTypeForOCRException as type_unknown:
+    except (odem.ODEMNoTypeForOCRException, 
+            odem.ODEMNoImagesForOCRException,
+            odem.ODEMModelMissingException) as odem_missmatch:
+        exc_label = odem_missmatch.__class__.__name__
         LOGGER.warning("[%s] odem skips '%s'",
-                       odem_process.process_identifier, type_unknown.args[0])
-    except odem.ODEMNoImagesForOCRException as not_ocrable:
-        LOGGER.warning("[%s] odem no ocrables '%s'",
-                       odem_process.process_identifier, not_ocrable.args)
+                       odem_process.process_identifier, odem_missmatch.args)
     except odem.ODEMException as _odem_exc:
         _err_args = {'ODEMException': _odem_exc.args[0]}
         LOGGER.error("[%s] odem fails with: '%s'", odem_process.process_identifier, _err_args)

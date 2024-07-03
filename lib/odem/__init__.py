@@ -2,6 +2,7 @@
 
 from .odem_commons import *
 from .odem_process import (
+    ODEMModelMissingException,
     ODEMProcessImpl,
 )
 from .odem_workflow import (
