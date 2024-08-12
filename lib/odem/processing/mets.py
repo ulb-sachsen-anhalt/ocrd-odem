@@ -396,22 +396,15 @@ def _clear_provenance_links(mproc):
         parent.remove(old_dv)
 
 
-def validate(mets_file: str, ddb_ignores,
-             validate_ddb=False, digi_type='Aa'):
+def validate(mets_file: str, ddb_ignores, ddb_min_level):
     """Forward METS-schema validation"""
 
-    xml_root = ET.parse(mets_file).getroot()
-    try:
-        dfv.validate_xml(xml_root)
-        if validate_ddb:
-            df.ddb_validation(path_mets=mets_file, digi_type=digi_type,
-                              ignore_rules=ddb_ignores)
-    except dfv.InvalidXMLException as err:
-        if len(err.args) > 0 and ('SCHEMASV' in str(err.args[0])):
-            raise odem_c.ODEMException(str(err.args[0])) from err
-        raise err
-    except df.DigiflowDDBException as ddb_err:
-        raise odem_c.ODEMException(ddb_err.args[0]) from ddb_err
+    reporter = dfv.Reporter(mets_file)
+    report: dfv.Report = reporter.get(ignore_ddb_rule_ids=ddb_ignores, min_ddb_level=ddb_min_level)
+    if report.alert(min_ddb_role_label=ddb_min_level):
+        xsd_msg = report.xsd_errors if report.xsd_errors else ''
+        ddb_msg = report.read()
+        raise odem_c.ODEMException(f"{xsd_msg}{ddb_msg}")
     return True
 
 

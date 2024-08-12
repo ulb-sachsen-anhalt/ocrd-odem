@@ -329,16 +329,17 @@ def test_validate_mets_37167_ddb_fails(tmp_path):
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
     odem_processor.configuration = fixture_configuration()
-    odem_processor.configuration.set('mets', 'ddb_validation', 'True')
+    odem_processor.configuration.set('mets', 'validate', 'True')
+    odem_processor.configuration.set('mets', 'ddb_min_level', 'warn')
     with pytest.raises(odem.ODEMException) as odem_exec:
         odem_processor.validate_metadata()
 
     ddb_complains = odem_exec.value.args[0]
-    assert len(ddb_complains) == 4
-    assert '[titleInfo_02]  dmd_id:DMDPHYS_0000 test:Pon Ya 4371' in ddb_complains[0]
-    assert '[relatedItem_04]  dmd_id:DMDLOG_0000' in ddb_complains[1]
-    assert '[location_01]  dmd_id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[2]
-    assert '[dmdSec_04]  id:DMDPHYS_0000 test:Pon Ya 4371, QK' in ddb_complains[3]
+    assert len(ddb_complains) > 0
+    assert 'titleInfo_02' in ddb_complains
+    assert 'relatedItem_04' in ddb_complains
+    assert 'location_01' in ddb_complains
+    assert 'dmdSec_04' in ddb_complains
 
 
 def test_validate_mets_37167_finally_succeeds(tmp_path):
@@ -354,7 +355,7 @@ def test_validate_mets_37167_finally_succeeds(tmp_path):
     shutil.copyfile(original_mets, work_dir / '1981185920_37167.xml')
     odem_processor = odem.ODEMProcessImpl(rec, work_dir=work_dir)
     odem_processor.configuration = fixture_configuration()
-    odem_processor.configuration.set('mets', 'ddb_validation', 'True')
+    odem_processor.configuration.set('mets', 'validate', 'True')
 
     assert odem_processor.validate_metadata()
 

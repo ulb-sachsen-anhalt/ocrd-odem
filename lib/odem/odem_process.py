@@ -392,18 +392,16 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         METS/MODS XML-schema and/or current DDB-schematron
         validation for 'digitalisierte medien'
         """
-        check_ddb = False
-        ignore_ddb = []
-        if self.configuration.has_option('mets', 'ddb_validation'):
-            check_ddb = self.configuration.getboolean('mets', 'ddb_validation', fallback=False)
-        if self.configuration.has_option('mets', 'ddb_validation_ignore'):
-            raw_ignore_str = self.configuration.get('mets', 'ddb_validation_ignore')
-            ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
-        # dtype = 'Aa'
-        # if 'pica' in self.record.info:
-        #     dtype = self.record.info['pica']
-        return validate(self.mets_file_path, validate_ddb=check_ddb,
-                        digi_type=self.digi_type, ddb_ignores=ignore_ddb)
+        if self.configuration.has_option('mets', 'validate'):
+            ignore_ddb = []
+            if self.configuration.has_option('mets', 'ddb_validation_ignore'):
+                raw_ignore_str = self.configuration.get('mets', 'ddb_validation_ignore')
+                ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
+            ddb_min_level = 'fatal'
+            if self.configuration.has_option('mets', 'ddb_min_level'):
+                ddb_min_level = self.configuration.get('mets', 'ddb_min_level')
+            return validate(self.mets_file_path, ddb_ignores=ignore_ddb,
+                            ddb_min_level=ddb_min_level)
 
     def export_data(self):
         """re-do metadata and transform into output format"""

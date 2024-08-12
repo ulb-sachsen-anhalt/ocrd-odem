@@ -6,4 +6,4 @@ ocrd
 ocrd-page-to-alto
 psutil
 humanize
-digiflow
+digiflow>=5
