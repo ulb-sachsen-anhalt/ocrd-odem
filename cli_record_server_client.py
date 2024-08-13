@@ -100,7 +100,7 @@ class Client:
     def update(self, status, oai_urn, **kwargs):
         """Store status update && send message to OAI Service"""
         if self.logger is not None:
-            self.logger.debug("update record status: %s urn: %s", status, oai_urn)
+            self.logger.debug("set status '%s' for urn '%s'", status, oai_urn)
         right_now = time.strftime(STATETIME_FORMAT)
         self.record_data[odem.RECORD_IDENTIFIER] = oai_urn
         self.record_data[odem.RECORD_STATE] = status
@@ -108,12 +108,17 @@ class Client:
         # if we have to report somethin' new, then append it
         if kwargs is not None and len(kwargs) > 0:
             try:
-                prev_info = ast.literal_eval(self.record_data[odem.RECORD_INFO])
-                prev_info.update(kwargs)
-                self.record_data[odem.RECORD_INFO] = f'{prev_info}'
-            except:
-                self.logger.error("failed to update info data for %s",
-                                  self.record_data[odem.RECORD_IDENTIFIER])
+                curr_info = ast.literal_eval(self.record_data[odem.RECORD_INFO])
+                if isinstance(curr_info, dict):
+                    curr_info.update(kwargs)
+                    self.record_data[odem.RECORD_INFO] = f'{curr_info}'
+                elif isinstance(curr_info, tuple):
+                    curr_info[-1].update(kwargs)
+                    self.record_data[odem.RECORD_INFO] = f'{curr_info[-1]}'
+            except AttributeError as attr_err:
+                self.logger.error("info update failed for %s: %s (prev:%s, in:%s)",
+                                  self.record_data[odem.RECORD_IDENTIFIER],
+                                  attr_err.args[0], curr_info, kwargs)
         if self.logger is not None:
             self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
         return requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=60)
