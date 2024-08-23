@@ -1,17 +1,12 @@
-# -*- coding: utf-8 -*-
 """MAIN CLI ODEM OAI Client"""
 # pylint: disable=invalid-name
+# pylint: disable=broad-exception-caught
 
 import argparse
-import ast
-import logging
 import os
 import shutil
 import sys
 import time
-import typing
-
-import requests
 
 import digiflow as df
 import digiflow.record as df_r
@@ -45,89 +40,7 @@ def _notify(subject, message):
         LOGGER.warning("No [mail] section in config, no mail sent!")
 
 
-class Client:
-    """Implementation of OAI Service client with
-    capabilities to get next OAI Record data
-    and communicate results (done|fail)
-    """
-
-    def __init__(self, oai_record_list_label, host, port):
-        self.oai_record_list_label = oai_record_list_label
-        self.port = port
-        self.host = host
-        self.record_data = {}
-        self.oai_server_url = \
-            f'http://{self.host}:{self.port}/{oai_record_list_label}'
-        self.logger: typing.Optional[logging.Logger] = None
-
-    def _request_record(self):
-        """Request next open OAI record from service
-           return OAIRecord as json encoded content"""
-        try:
-            response = requests.get(f'{self.oai_server_url}/next', timeout=300)
-        except requests.exceptions.RequestException as err:
-            if self.logger is not None:
-                self.logger.error("OAI server connection fails: %s", err)
-            _notify(f'[OCR-D-ODEM] Failure for {self.oai_server_url}', err)
-            sys.exit(1)
-        status = response.status_code
-        result = response.content
-        if status == 404:
-            # probably nothing more to do?
-            if odem.MARK_DATA_EXHAUSTED_PREFIX in str(result):
-                if self.logger is not None:
-                    self.logger.info(result)
-                raise odem.OAIRecordExhaustedException(result.decode(encoding='utf-8'))
-            # otherwise exit anyway
-            sys.exit(1)
-
-        if status != 200:
-            if self.logger is not None:
-                self.logger.error(
-                    "OAI server connection status: %s -> %s", status, result)
-            sys.exit(1)
-        return response.json()
-
-    def get_record(self) -> df_r.Record:
-        """Return requested data
-        as temporary OAI Record but
-        store internally as plain dictionary"""
-
-        self.record_data = self._request_record()
-        _oai_record = df_r.Record(self.record_data[odem.RECORD_IDENTIFIER])
-        return _oai_record
-
-    def update(self, status, oai_urn, **kwargs):
-        """Store status update && send message to OAI Service"""
-        if self.logger is not None:
-            self.logger.debug("set status '%s' for urn '%s'", status, oai_urn)
-        right_now = time.strftime(STATETIME_FORMAT)
-        self.record_data[odem.RECORD_IDENTIFIER] = oai_urn
-        self.record_data[odem.RECORD_STATE] = status
-        self.record_data[odem.RECORD_TIME] = right_now
-        # if we have to report somethin' new, then append it
-        if kwargs is not None and len(kwargs) > 0:
-            try:
-                curr_info = ast.literal_eval(self.record_data[odem.RECORD_INFO])
-                if isinstance(curr_info, dict):
-                    curr_info.update(kwargs)
-                    self.record_data[odem.RECORD_INFO] = f'{curr_info}'
-                elif isinstance(curr_info, tuple):
-                    curr_info[-1].update(kwargs)
-                    self.record_data[odem.RECORD_INFO] = f'{curr_info[-1]}'
-            except AttributeError as attr_err:
-                self.logger.error("info update failed for %s: %s (prev:%s, in:%s)",
-                                  self.record_data[odem.RECORD_IDENTIFIER],
-                                  attr_err.args[0], curr_info, kwargs)
-        if self.logger is not None:
-            self.logger.debug("update record %s url %s", self.record_data, self.oai_server_url)
-        return requests.post(f'{self.oai_server_url}/update', json=self.record_data, timeout=60)
-
-
-CLIENT: typing.Optional[Client] = None
-
-
-def oai_arg_parser(value):
+def _oai_arg_parser(value):
     """helper function for parsing args"""
     if '.' in value:
         print(
@@ -152,7 +65,7 @@ if __name__ == "__main__":
         description="generate ocr-data for records")
     PARSER.add_argument(
         "data_file",
-        type=oai_arg_parser,
+        type=_oai_arg_parser,
         help="Name of file with record data")
     PARSER.add_argument(
         "-c",
@@ -238,14 +151,14 @@ if __name__ == "__main__":
     DATA_FIELDS = CFG.getlist('global', 'data_fields')
     HOST = CFG.get('record-server', 'record_server_url')
     PORT = CFG.getint('record-server', 'record_server_port')
-    LOGGER.info("client requests %s:%s for record source %s (fmt:%s)",
-                HOST, PORT, OAI_RECORD_FILE_NAME, DATA_FIELDS)
-    CLIENT = Client(OAI_RECORD_FILE_NAME, HOST, PORT)
-    CLIENT.logger = LOGGER
+    LOGGER.info("client requests %s:%s/%s for records (state: %s, fmt:%s)",
+                HOST, PORT, OAI_RECORD_FILE_NAME, odem.MARK_OCR_OPEN, DATA_FIELDS)
+    CLIENT = df_r.Client(OAI_RECORD_FILE_NAME, HOST, PORT, logger=LOGGER)
 
     # try to get next data record
     try:
-        record = CLIENT.get_record()
+        record = CLIENT.get_record(get_record_state=odem.MARK_OCR_OPEN,
+                                   set_record_state=odem.MARK_OCR_BUSY)
         if not record:
             # if no open data records, lock worker and exit
             LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE_NAME)
@@ -255,7 +168,7 @@ if __name__ == "__main__":
         LOGGER.warning("no data for '%s' from '%s':'%s': %s",
                        OAI_RECORD_FILE_NAME, HOST, PORT, exc_dict)
         _notify('[OCR-D-ODEM] Date done', exc_dict)
-        # don't remove lock file, human interaction required
+        # human interaction required
         sys.exit(1)
 
     rec_ident = record.identifier
@@ -264,8 +177,6 @@ if __name__ == "__main__":
     odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, req_dst_dir,
                                                               LOGGER, None,
                                                               record=record)
-    odem_process.logger.debug("[%s] request record from %s (%s part slots)",
-                              local_ident, CLIENT.host, EXECUTORS)
     try:
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
@@ -315,15 +226,15 @@ if __name__ == "__main__":
                                        fallback=True)
         if wf_enrich_ocr:
             odem_process.link_ocr_files()
-        wf_create_pdf = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
-        if wf_create_pdf:
-            odem_process.create_pdf()
-            odem_process.create_text_bundle_data()
+        wf_create_derivates = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
+        if wf_create_derivates:
+            odem_process.create_derivates()
+        odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
         if CFG.getboolean('mets', 'postvalidate', fallback=True):
             odem_process.validate_metadata()
         if not MUST_KEEP_RESOURCES:
-            odem_process.delete_before_export(LOCAL_DELETE_BEFORE_EXPORT)
+            odem_process.delete_local_directories(LOCAL_DELETE_BEFORE_EXPORT)
         odem_process.export_data()
         # report outcome
         _response = CLIENT.update(odem.MARK_OCR_DONE, rec_ident, **_stats_ocr)
@@ -378,6 +289,7 @@ if __name__ == "__main__":
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
         odem_process.clear_resources(remove_all=True)
+
     except Exception as exc:
         # pick whole error context, since some exception's args are
         # rather mysterious, i.e. "13" for PermissionError
