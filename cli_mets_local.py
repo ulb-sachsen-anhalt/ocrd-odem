@@ -149,7 +149,7 @@ if __name__ == "__main__":
         if wf_enrich_ocr:
             odem_process.link_ocr_files()
         if CREATE_PDF:
-            odem_process.create_pdf()
+            odem_process.create_derivates()
         if CREATE_PDF:
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
@@ -159,7 +159,7 @@ if __name__ == "__main__":
             odem_process.logger.info("[%s] start to export data",
                                      odem_process.process_identifier)
             if not MUST_KEEP_RESOURCES and len(DELETE_BEVOR_EXPORT) > 0:
-                odem_process.delete_before_export(DELETE_BEVOR_EXPORT)
+                odem_process.delete_local_directories(DELETE_BEVOR_EXPORT)
             odem_process.export_data()
         _mode = 'sequential' if SEQUENTIAL else f'n_execs:{EXECUTORS}'
         odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,

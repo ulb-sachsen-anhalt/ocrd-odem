@@ -198,13 +198,13 @@ if __name__ == "__main__":
             odem_process.link_ocr_files()
         wf_create_pdf = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
         if wf_create_pdf:
-            odem_process.create_pdf()
+            odem_process.create_derivates()
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
         if CFG.getboolean('mets', 'postvalidate', fallback=True):
             odem_process.validate_metadata()
         if not MUST_KEEP_RESOURCES:
-            odem_process.delete_before_export(LOCAL_DELETE_BEVOR_EXPORT)
+            odem_process.delete_local_directories(LOCAL_DELETE_BEVOR_EXPORT)
         odem_process.export_data()
         _kwargs = odem_process.statistics
         if odem_process.record.info != 'n.a.':
