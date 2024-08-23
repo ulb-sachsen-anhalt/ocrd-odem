@@ -331,7 +331,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                          len(self.ocr_files), out_path)
         self.process_statistics['n_text_lines'] = len(txt_lines)
 
-    def create_pdf(self):
+    def create_derivates(self):
         """Forward PDF-creation to Derivans"""
 
         cfg_path_dir_bin = self.configuration.get('derivans', 'derivans_dir_bin', fallback=None)
@@ -369,7 +369,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             err_args.extend(_sub_err.args)
             raise odem_c.ODEMException(err_args) from _sub_err
 
-    def delete_before_export(self, folders):
+    def delete_local_directories(self, folders):
         """delete folders given by list"""
 
         work = self.work_dir_root
