@@ -14,7 +14,7 @@ from PIL import Image
 from ocrd.resolver import Resolver
 from ocrd_utils import initLogging
 
-from lib.odem import get_configparser
+from lib.odem import get_configparser, CFG_SEC_WORKFLOW, CFG_SEC_OCR
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 EXT_JPG = '.jpg'
@@ -39,7 +39,7 @@ conf_file = os.path.abspath(args.config)
 cfg_parser: configparser.ConfigParser = get_configparser()
 cfg_parser.read(conf_file)
 
-ocr_log_conf = os.path.join(PROJECT_ROOT, cfg_parser.get('ocr', 'ocrd_logging'))
+ocr_log_conf = os.path.join(PROJECT_ROOT, cfg_parser.get(CFG_SEC_OCR, 'ocrd_logging'))
 LOCAL_WORK_ROOT = cfg_parser.get(CFG_SEC_WORKFLOW, 'local_work_root')
 
 # prepare page work dir
