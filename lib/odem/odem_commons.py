@@ -270,27 +270,6 @@ def merge_args(the_configuration: configparser.ConfigParser, the_args) -> typing
     return _repls
 
 
-def to_dict(record: df_r.Record) -> typing.Dict:
-    """Serialize OAIRecord into dictionary
-    as input for JSON format"""
-
-    return {
-        RECORD_IDENTIFIER: record.identifier,
-        RECORD_RELEASED: record.created_time,
-        RECORD_INFO: record.info,
-        RECORD_STATE: record.state,
-        RECORD_TIME: record.state_time,
-    }
-
-
-def from_dict(data) -> df_r.Record:
-    """deserialize into OAIRecord"""
-
-    _record = df_r.Record(data[RECORD_IDENTIFIER])
-    _record.info = data[RECORD_INFO]
-    return _record
-
-
 def list_files(the_directory, file_ext='.xml') -> typing.List:
     """List all files in the_directory with given suffix"""
     return [
