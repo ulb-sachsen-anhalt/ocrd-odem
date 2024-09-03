@@ -27,8 +27,11 @@ def fixture_configuration():
     """
 
     config = odem.get_configparser()
-    config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
-    config.set('global', 'data_fields', 'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
+    config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.example.ini'))
+    config.set(odem.CFG_SEC_WORKFLOW, 'data_fields',
+               'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
+    config.set(odem.CFG_SEC_WORKFLOW, odem.CFG_SEC_WORKFLOW_OPT_URL,
+               'https://opendata.uni-halle.de/oai/dd')
     config.set(odem.CFG_SEC_METS, 'blacklist_file_groups',
                'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')
     config.set(odem.CFG_SEC_METS, 'blacklist_logical_containers', 'cover_front,cover_back')

@@ -12,6 +12,8 @@ from pathlib import Path
 
 import digiflow.record as df_r
 
+import lib.odem.odem_commons as odem_c
+
 
 _PROJECT_ROOT = Path(__file__).resolve().parent
 _ODEM_LOG_CONFIG_FILE = _PROJECT_ROOT / 'resources' / 'odem_logging.ini'
@@ -35,9 +37,9 @@ if __name__ == "__main__":
     SCRIPT_CONFIGURATION.read(config_file)
 
     # check loggin pre-conditions
-    _log_dir = Path(SCRIPT_CONFIGURATION.get('global', 'local_log_dir'))
-    if not os.access(_log_dir, os.F_OK and os.W_OK):
-        print(f"cant store log files at directory {_log_dir}")
+    LOG_DIR = Path(SCRIPT_CONFIGURATION.get(odem_c.CFG_SEC_WORKFLOW, 'local_log_dir'))
+    if not os.access(LOG_DIR, os.F_OK and os.W_OK):
+        print(f"cant store log files at directory {LOG_DIR}")
         sys.exit(1)
     if not _ODEM_LOG_CONFIG_FILE.exists():
         print(f"config file not found {_ODEM_LOG_CONFIG_FILE.resolve()}")
@@ -45,7 +47,7 @@ if __name__ == "__main__":
 
     # initialize server side logging
     _today = time.strftime('%Y-%m-%d', time.localtime())
-    _logfile_name = Path(_log_dir, f"odem_oai_service_{_today}.log")
+    _logfile_name = Path(LOG_DIR, f"odem_oai_service_{_today}.log")
     _conf_logname = {'logname': str(_logfile_name)}
     logging.config.fileConfig(str(_ODEM_LOG_CONFIG_FILE), defaults=_conf_logname)
     LOGGER = logging.getLogger(_ODEM_LOG_NAME)

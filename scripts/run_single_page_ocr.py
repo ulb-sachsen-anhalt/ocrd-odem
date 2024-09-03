@@ -40,7 +40,7 @@ cfg_parser: configparser.ConfigParser = get_configparser()
 cfg_parser.read(conf_file)
 
 ocr_log_conf = os.path.join(PROJECT_ROOT, cfg_parser.get('ocr', 'ocrd_logging'))
-LOCAL_WORK_ROOT = cfg_parser.get('global', 'local_work_root')
+LOCAL_WORK_ROOT = cfg_parser.get(CFG_SEC_WORKFLOW, 'local_work_root')
 
 # prepare page work dir
 image_file_path = os.path.abspath(args.image)

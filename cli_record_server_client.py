@@ -12,6 +12,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 from lib import odem
+import lib.odem.odem_commons as odem_c
 import lib.odem.monitoring.datatypes as odem_md
 import lib.odem.monitoring.resource as odem_rm
 
@@ -78,26 +79,10 @@ if __name__ == "__main__":
         "--executors",
         required=False,
         help="Number of OCR-D Executors in parallel mode")
-    PARSER.add_argument(
-        "-k",
-        "--keep-resources",
-        required=False,
-        default=False,
-        action='store_true',
-        help="keep stored images after processing")
-    PARSER.add_argument(
-        "-l",
-        "--lock-mode",
-        required=False,
-        default=False,
-        action='store_true',
-        help="lock each run to avoid parallel starts")
 
     # evaluate commandline arguments
     ARGS = PARSER.parse_args()
     OAI_RECORD_FILE_NAME = ARGS.data_file
-    MUST_KEEP_RESOURCES = ARGS.keep_resources
-    MUST_LOCK = ARGS.lock_mode
 
     # check some pre-conditions
     # inspect configuration settings
@@ -112,43 +97,34 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
-    LOCAL_DELETE_BEFORE_EXPORT = []
-    if CFG.has_option('export', 'delete_before_export'):
-        LOCAL_DELETE_BEFORE_EXPORT = CFG.getlist('export', 'delete_before_export')
+    LOCAL_WORK_ROOT = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_work_root')
     LOG_FILE_NAME = None
-    if CFG.has_option('global', 'logfile_name'):
-        LOG_FILE_NAME = CFG.get('global', 'logfile_name')
-    LOCAL_LOG_DIR = CFG.get('global', 'local_log_dir')
+    if CFG.has_option(odem_c.CFG_SEC_WORKFLOW, 'logfile_name'):
+        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'logfile_name')
+    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
     LOGGER = odem.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # respect possible lock
-    if MUST_LOCK:
-        LOGGER.debug("workflow lock mode enforced")
-        if os.path.isfile(LOCK_FILE_PATH):
-            LOGGER.info("workflow already running and locked, skip processing")
-            sys.exit(0)
-        else:
-            LOGGER.info("set workflow lock %s right now", LOCK_FILE_PATH)
-            with open(LOCK_FILE_PATH, mode="+w", encoding="UTF-8") as _lock_file:
-                _msg = (f"start odem workflow with record file '{OAI_RECORD_FILE_NAME}' "
-                        f"and configuration '{CONF_FILE}' at {time.strftime(STATETIME_FORMAT)}")
-                _lock_file.write(_msg)
+    if os.path.isfile(LOCK_FILE_PATH):
+        LOGGER.info("workflow already running and locked, skip processing")
+        sys.exit(0)
     else:
-        LOGGER.warning("no workflow lock mode set, handle with great responsibility")
+        LOGGER.info("set workflow lock %s right now", LOCK_FILE_PATH)
+        with open(LOCK_FILE_PATH, mode="+w", encoding="UTF-8") as a_lock_file:
+            the_msg = (f"start odem workflow with record file '{OAI_RECORD_FILE_NAME}' "
+                       f"and configuration '{CONF_FILE}' at {time.strftime(STATETIME_FORMAT)}")
+            a_lock_file.write(the_msg)
 
-    # determine execution mode and how many
-    # parallel OCR-D instances shall be used
+    # if valid n_executors via cli, use it's value
     EXECUTOR_ARGS = ARGS.executors
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
-        CFG.set(odem.CFG_SEC_OCR, 'n_executors', str(EXECUTOR_ARGS))
-    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, 'n_executors', fallback=odem.DEFAULT_EXECUTORS)
-    LOGGER.debug("local work_root: '%s', executors:%s, keep_res:%s, lock:%s",
-                 LOCAL_WORK_ROOT, EXECUTORS, MUST_KEEP_RESOURCES, MUST_LOCK)
-    DATA_FIELDS = CFG.getlist('global', 'data_fields')
+        CFG.set(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS, str(EXECUTOR_ARGS))
+    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS)
+    LOGGER.debug("local work_root: '%s', executors:%s", LOCAL_WORK_ROOT, EXECUTORS)
+    DATA_FIELDS = CFG.getlist(odem_c.CFG_SEC_WORKFLOW, 'data_fields')
     HOST = CFG.get('record-server', 'record_server_url')
     PORT = CFG.getint('record-server', 'record_server_port')
     LOGGER.info("client requests %s:%s/%s for records (state: %s, fmt:%s)",
@@ -181,7 +157,7 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
 
-        local_store_root = CFG.get('global', 'local_store_root', fallback=None)
+        local_store_root = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_store_root', fallback=None)
         if local_store_root is not None:
             store_root_dir = os.path.join(local_store_root, local_ident)
             odem_process.store = df.LocalStore(store_root_dir, req_dst_dir)
@@ -214,29 +190,9 @@ if __name__ == "__main__":
             LOGGER.info("[%s] execute ocr workflow with poolsize %d",
                         local_ident, EXECUTORS)
             ocr_results = odem_runner.run()
-        if ocr_results is None or len(ocr_results) == 0:
-            raise odem.ODEMException(f"process run error: {record.identifier}")
-        odem_process.logger.info("[%s] calculate ODEM statistics for %d items",
-                                 local_ident, len(ocr_results))
-        odem_process.calculate_statistics_ocr(ocr_results)
-        odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        odem_process.postprocess(ocr_results)
+        # communicate outcome
         the_stats = odem_process.statistics
-        odem_process.logger.info("[%s] %s", local_ident, the_stats)
-        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH,
-                                       fallback=True)
-        if wf_enrich_ocr:
-            odem_process.link_ocr_files()
-        wf_create_derivates = CFG.getboolean('derivans', 'derivans_enabled', fallback=True)
-        if wf_create_derivates:
-            odem_process.create_derivates()
-        odem_process.create_text_bundle_data()
-        odem_process.postprocess_mets()
-        if CFG.getboolean('mets', 'postvalidate', fallback=True):
-            odem_process.validate_metadata()
-        if not MUST_KEEP_RESOURCES:
-            odem_process.delete_local_directories(LOCAL_DELETE_BEFORE_EXPORT)
-        odem_process.export_data()
-        # report outcome
         the_resp = CLIENT.update(odem.MARK_OCR_DONE, rec_ident, **the_stats)
         status_code = the_resp.status_code
         if status_code == 200:
@@ -245,7 +201,6 @@ if __name__ == "__main__":
             LOGGER.error("[%s] update request failed: %s", odem_process.process_identifier,
                          status_code)
         # finale
-        odem_process.clear_resources(remove_all=True)
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier,
                     odem_process.statistics['timedelta'], EXECUTORS)
@@ -257,7 +212,7 @@ if __name__ == "__main__":
                        odem_process.process_identifier, odem_missmatch.args)
         exc_dict = {exc_label: odem_missmatch.args[0]}
         CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **exc_dict)
-        odem_process.clear_resources(remove_all=True)
+        odem_process.clear_oai_resources(remove_all=True)
     except odem.ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
@@ -270,7 +225,7 @@ if __name__ == "__main__":
                      "'%s'", odem_process.process_identifier, exc_dict)
         CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, **exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
-        odem_process.clear_resources()
+        odem_process.clear_oai_resources()
     except odem_md.NotEnoughDiskSpaceException as _space_exc:
         exc_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -279,7 +234,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
-        odem_process.clear_resources(remove_all=True)
+        odem_process.clear_oai_resources(remove_all=True)
     except odem_md.VirtualMemoryExceededException as _vmem_exc:
         exc_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -288,7 +243,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
-        odem_process.clear_resources(remove_all=True)
+        odem_process.clear_oai_resources(remove_all=True)
 
     except Exception as exc:
         # pick whole error context, since some exception's args are
@@ -300,15 +255,15 @@ if __name__ == "__main__":
         # when running parallel
         CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
-        odem_process.clear_resources()
+        odem_process.clear_oai_resources()
         # don't remove lock file, human interaction required
         sys.exit(1)
 
-        # if exception thrown previously which doesn't
-        # resulted in hard workflow exit(1) then
-        # remove the workflow lock file finally
-        # to try next data record after the flesh
-    if MUST_LOCK and os.path.isfile(LOCK_FILE_PATH):
+    # if exception thrown previously which doesn't
+    # resulted in hard workflow exit(1) then
+    # remove the workflow lock file finally
+    # to try next data record after the flesh
+    if os.path.isfile(LOCK_FILE_PATH):
         os.remove(LOCK_FILE_PATH)
         LOGGER.info("[%s] finally removed %s, ready for next onslaught",
                     odem_process.process_identifier, LOCK_FILE_PATH)

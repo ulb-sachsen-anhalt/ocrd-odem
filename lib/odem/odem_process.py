@@ -87,6 +87,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def load(self):
         request_identifier = self.record.identifier
         local_identifier = self.record.local_identifier
+        if not self.configuration.has_option(odem_c.CFG_SEC_WORKFLOW,
+                                             odem_c.CFG_SEC_WORKFLOW_OPT_URL):
+            self.logger.info("[%s] no download", self.process_identifier)
+            return
+        oai_base_url = self.configuration.get(odem_c.CFG_SEC_WORKFLOW,
+                                              odem_c.CFG_SEC_WORKFLOW_OPT_URL)
         req_dst_dir = os.path.join(
             os.path.dirname(self.work_dir_root), local_identifier)
         if not os.path.exists(req_dst_dir):
@@ -94,9 +100,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         req_dst = self.mets_file_path
         self.logger.debug("[%s] download %s to %s",
                           self.process_identifier, request_identifier, req_dst)
-        base_url = self.configuration.get('global', 'base_url')
         try:
-            loader = df.OAILoader(req_dst_dir, base_url=base_url, post_oai=dfm.extract_mets)
+            loader = df.OAILoader(req_dst_dir, base_url=oai_base_url, post_oai=dfm.extract_mets)
             loader.store = self.store
             loader.load(request_identifier, local_dst=req_dst)
         except df.ClientError as load_err:
@@ -104,7 +109,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         except RuntimeError as _err:
             raise odem_c.ODEMException(_err.args[0]) from _err
 
-    def clear_resources(self, remove_all=False):
+    def clear_oai_resources(self, remove_all=False):
         """Remove OAI-Resources from store or even
         anything related to current process
         """
@@ -282,13 +287,45 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             images_of_interest.append((the_file, urn))
         self.ocr_candidates = images_of_interest
 
+    def postprocess(self, ocr_results: typing.List[odem_c.ODEMOutcome]):
+        """Encapsulate after-OCR workflow"""
+        if ocr_results is None or len(ocr_results) == 0:
+            raise odem_c.ODEMException(f"process run error: {self.record.identifier}")
+        self.calculate_statistics_ocr(ocr_results)
+        self.process_statistics[odem_c.STATS_KEY_N_EXECS] = self.configuration.get(odem_c.CFG_SEC_OCR,
+                                                                                   odem_c.CFG_SEC_OCR_OPT_EXECS)
+        self.logger.info("[%s] %s", self.record.local_identifier, self.statistics)
+        wf_enrich_ocr = self.configuration.getboolean(odem_c.CFG_SEC_METS,
+                                                      odem_c.CFG_SEC_METS_OPT_ENRICH,
+                                                      fallback=True)
+        if wf_enrich_ocr:
+            self.link_ocr_files()
+        wf_create_derivates = self.configuration.getboolean('derivans', 'derivans_enabled',
+                                                            fallback=False)
+        if wf_create_derivates:
+            self.create_derivates()
+        if self.configuration.getboolean(odem_c.CFG_SEC_WORKFLOW, odem_c.CFG_SEC_XPR_OPT_CREATE_TL,
+                                         fallback=False):
+            self.create_text_bundle_data()
+        self.postprocess_mets()
+        if self.configuration.getboolean(odem_c.CFG_SEC_METS, 'postvalidate', fallback=True):
+            self.validate_metadata()
+        if self.configuration.getboolean(odem_c.CFG_SEC_XPR, 'export_enabled', fallback=False):
+            self.logger.info("[%s] start export", self.process_identifier)
+            if self.configuration.has_option(odem_c.CFG_SEC_XPR, odem_c.CFG_SEC_XPT_OPT_DEL_SDIRS):
+                del_dirs = self.configuration.get(odem_c.CFG_SEC_XPR,
+                                                  odem_c.CFG_SEC_XPT_OPT_DEL_SDIRS)
+                if len(del_dirs) > 0:
+                    self.delete_local_directories(del_dirs)
+            self.export_data()
+        self.clear_oai_resources(remove_all=True)
+
     def calculate_statistics_ocr(self, outcomes: typing.List[odem_c.ODEMOutcome]):
         """Calculate stats from given ODEMOutcomes"""
 
         self.logger.info("[%s] calculate statistics for %d results",
                          self.process_identifier,
                          len(outcomes))
-        # data_result = [e for e in outcomes if e[0] != odem_c.UNSET]
         total_mps = [round(o.images_mps, 1) for o in outcomes]
         mod_val_counts = np.unique(total_mps, return_counts=True)
         mps_np = list(zip(*mod_val_counts))
@@ -377,13 +414,11 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         """delete folders given by list"""
 
         work = self.work_dir_root
-        self.logger.info(
-            "[%s] delete folders: %s", self.process_identifier, folders)
+        self.logger.debug(
+            "[%s] delete sub_dirs: %s", self.process_identifier, folders)
         for folder in folders:
             delete_me = os.path.join(work, folder)
             if os.path.exists(delete_me):
-                self.logger.info(
-                    "[%s] delete folder: %s", self.process_identifier, delete_me)
                 shutil.rmtree(delete_me)
 
     def postprocess_mets(self):
@@ -410,14 +445,15 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def export_data(self):
         """re-do metadata and transform into output format"""
 
-        export_format: str = self.configuration.get('export', 'export_format',
+        export_format: str = self.configuration.get(odem_c.CFG_SEC_XPR, 'export_format',
                                                     fallback=odem_c.ExportFormat.SAF)
-        export_mets: bool = self.configuration.getboolean('export', 'export_mets', fallback=True)
+        export_mets: bool = self.configuration.getboolean(odem_c.CFG_SEC_XPR,
+                                                          'export_mets', fallback=True)
 
-        exp_dst = self.configuration.get('export', 'local_export_dir')
-        exp_tmp = self.configuration.get('export', 'local_export_tmp')
-        exp_col = self.configuration.get('export', 'export_collection')
-        exp_map = self.configuration.getdict('export', 'export_mappings')
+        exp_dst = self.configuration.get(odem_c.CFG_SEC_XPR, 'local_export_dir')
+        exp_tmp = self.configuration.get(odem_c.CFG_SEC_XPR, 'local_export_tmp')
+        exp_col = self.configuration.get(odem_c.CFG_SEC_XPR, 'export_collection')
+        exp_map = self.configuration.getdict(odem_c.CFG_SEC_XPR, 'export_mappings')
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though

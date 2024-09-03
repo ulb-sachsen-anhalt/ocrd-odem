@@ -40,14 +40,19 @@ class ExportFormat(str, Enum):
 
 #
 # ODEM configuration keys
+CFG_SEC_WORKFLOW = 'workflow'
+CFG_SEC_WORKFLOW_OPT_URL = 'oai_base_url'
 CFG_SEC_MONITOR = 'monitoring'
 CFG_SEC_OCR = 'ocr'
+CFG_SEC_OCR_OPT_EXECS = 'n_executors'
 CFG_SEC_OCR_OPT_RES_VOL = "ocrd_resources_volumes"
 CFG_SEC_OCR_OPT_MODEL_COMBINABLE = "model_combinable"
 CFG_SEC_METS = 'mets'
 CFG_SEC_METS_OPT_AGENTS = 'agents'
 CFG_SEC_METS_OPT_ENRICH = 'enrich_fulltext'
-KEY_EXECS = 'n_executors'
+CFG_SEC_XPR = 'export'
+CFG_SEC_XPR_OPT_CREATE_TL = 'create_textline_asset'
+CFG_SEC_XPT_OPT_DEL_SDIRS = 'delete_subdirs_before_export'
 KEY_LANGUAGES = 'language_model'
 KEY_MODEL_MAP = 'model_mapping'
 KEY_SEQUENTIAL_MODE = 'sequential_mode'
@@ -255,8 +260,8 @@ def merge_args(the_configuration: configparser.ConfigParser, the_args) -> typing
     _repls = []
     if not isinstance(the_args, dict):
         the_args = vars(the_args)
-    if KEY_EXECS in the_args and int(the_args[KEY_EXECS]) > 0:
-        _upd01 = (CFG_SEC_OCR, KEY_EXECS, str(the_args[KEY_EXECS]))
+    if CFG_SEC_OCR_OPT_EXECS in the_args and int(the_args[CFG_SEC_OCR_OPT_EXECS]) > 0:
+        _upd01 = (CFG_SEC_OCR, CFG_SEC_OCR_OPT_EXECS, str(the_args[CFG_SEC_OCR_OPT_EXECS]))
         the_configuration.set(*_upd01)
         _repls.append(_upd01)
     if KEY_LANGUAGES in the_args and the_args[KEY_LANGUAGES] is not None:

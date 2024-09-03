@@ -205,7 +205,7 @@ def _fixture_odem_setup(tmp_path):
     log_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     cfg = odem.get_configparser()
-    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
+    cfg.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.example.ini'))
     odem_processor.configuration = cfg
     model_dir = prepare_tessdata_dir(work_dir)
     model_dir_dst = f'{model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize'

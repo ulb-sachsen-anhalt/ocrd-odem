@@ -11,6 +11,7 @@ import sys
 import ocrd_utils
 
 from lib import odem
+import lib.odem.odem_commons as odem_c
 
 
 ########
@@ -67,9 +68,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_WORK_ROOT = CFG.get('global', 'local_work_root')
+    LOCAL_WORK_ROOT = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_work_root')
     ocrd_utils.initLogging()
-    log_dir = CFG.get('global', 'local_log_dir')
+    log_dir = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_log_dir')
     if not os.path.exists(log_dir) or not os.access(log_dir, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {log_dir}")
     LOGGER = odem.get_logger(log_dir)
@@ -79,7 +80,7 @@ if __name__ == "__main__":
     ROOT_PATH = ARGS.path
     MERGED = odem.merge_args(CFG, ARGS)
     LOGGER.info("merged '%s' config entries with args", MERGED)
-    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem.KEY_EXECS)
+    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_EXECS)
     RUN_SEQUENTIAL = ARGS.sequential_mode
     LOGGER.info("process data in '%s' with %s executors in mode %s",
                 LOCAL_WORK_ROOT, EXECUTORS, RUN_SEQUENTIAL)
