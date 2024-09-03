@@ -234,7 +234,7 @@ class OCRDPageParallel(ODEMWorkflow):
         os.chdir(self.odem_process.work_dir_root)
         if self.config.getboolean(odem_c.CFG_SEC_OCR, 'keep_temp_orcd_data', fallback=False) is False:
             shutil.rmtree(page_workdir, ignore_errors=True)
-        return stored, 1, mps, filesize_mb
+        return odem_c.ODEMOutcome(stored, images_fsize=filesize_mb, images_mps=mps)
 
     def _preserve_log(self, work_subdir, image_ident):
         """preserve ocrd.log for later analyzis as
@@ -268,7 +268,7 @@ class OCRDPageParallel(ODEMWorkflow):
         if not os.path.isdir(ocr_result_dir):
             self.logger.info("[%s] no ocr results for '%s'",
                              self.odem_process.process_identifier, ocr_result_dir)
-            return 0
+            return ''
         ocrs = [os.path.join(ocr_result_dir, ocr)
                 for ocr in os.listdir(ocr_result_dir)
                 if str(ocr).endswith('.xml')]
@@ -339,15 +339,16 @@ class ODEMTesseract(ODEMWorkflow):
     def run(self, input_data):
 
         image_path = input_data[0][0]
-        pipeline_result = odem_tess.run_pipeline(input_data)
-        stored = pipeline_result is not None
+        legacy_result = odem_tess.run_pipeline(input_data)
+        self.logger.debug("run_pipeline: '%s'", legacy_result)
         mps = 0
         filesize_mb = 0
         filestat = os.stat(image_path)
         if filestat:
             filesize_mb = filestat.st_size / 1048576
         (mps, _) = odem_img.get_imageinfo(image_path)
-        return stored, 1, mps, filesize_mb
+        return odem_c.ODEMOutcome(local_path=legacy_result[0],
+                       images_fsize=filesize_mb, images_mps=mps)
 
     def read_pipeline_config(self, path_config=None) -> configparser.ConfigParser:
         """Read pipeline configuration and replace
@@ -361,7 +362,7 @@ class ODEMTesseract(ODEMWorkflow):
                 raise odem_c.ODEMException(f"no ocr-pipeline conf {path_config} !")
             pipe_cfg = configparser.ConfigParser()
             pipe_cfg.read(path_config)
-            self.logger.info(f"use config '{path_config}'")
+            self.logger.debug("use config '%s'", path_config)
             for sect in pipe_cfg.sections():
                 if pipe_cfg.has_option(sect, 'model_configs'):
                     known_langs = self.odem_process.process_statistics.get(odem_c.STATS_KEY_LANGS)

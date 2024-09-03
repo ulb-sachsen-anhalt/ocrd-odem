@@ -1,6 +1,7 @@
 """ODEM Core"""
 
 import configparser
+import dataclasses
 import logging
 import logging.config
 import os
@@ -120,6 +121,18 @@ class OdemWorkflowProcessType(str, Enum):
 
 
 DEFAULT_WORKLFOW = OdemWorkflowProcessType.OCRD_PAGE_PARALLEL
+
+
+@dataclasses.dataclass
+class ODEMOutcome:
+    """Describe the outcome of Running a
+    OCR-like workflow as a container
+    with all desired information for
+    later statistical processing"""
+
+    local_path: Path
+    images_fsize: int
+    images_mps: float
 
 
 class ODEMProcess:
@@ -263,10 +276,10 @@ def to_dict(record: df_r.Record) -> typing.Dict:
 
     return {
         RECORD_IDENTIFIER: record.identifier,
-        RECORD_RELEASED: record.date_stamp,
+        RECORD_RELEASED: record.created_time,
         RECORD_INFO: record.info,
         RECORD_STATE: record.state,
-        RECORD_TIME: record.state_datetime,
+        RECORD_TIME: record.state_time,
     }
 
 

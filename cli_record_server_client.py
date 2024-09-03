@@ -220,8 +220,8 @@ if __name__ == "__main__":
                                  local_ident, len(ocr_results))
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        _stats_ocr = odem_process.statistics
-        odem_process.logger.info("[%s] %s", local_ident, _stats_ocr)
+        the_stats = odem_process.statistics
+        odem_process.logger.info("[%s] %s", local_ident, the_stats)
         wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH,
                                        fallback=True)
         if wf_enrich_ocr:
@@ -237,8 +237,8 @@ if __name__ == "__main__":
             odem_process.delete_local_directories(LOCAL_DELETE_BEFORE_EXPORT)
         odem_process.export_data()
         # report outcome
-        _response = CLIENT.update(odem.MARK_OCR_DONE, rec_ident, **_stats_ocr)
-        status_code = _response.status_code
+        the_resp = CLIENT.update(odem.MARK_OCR_DONE, rec_ident, **the_stats)
+        status_code = the_resp.status_code
         if status_code == 200:
             LOGGER.info("[%s] state %s set", odem_process.process_identifier, status_code)
         else:
@@ -249,7 +249,7 @@ if __name__ == "__main__":
         LOGGER.info("[%s] odem done in '%s' (%d executors)",
                     odem_process.process_identifier,
                     odem_process.statistics['timedelta'], EXECUTORS)
-    except (odem.ODEMNoTypeForOCRException, 
+    except (odem.ODEMNoTypeForOCRException,
             odem.ODEMNoImagesForOCRException,
             odem.ODEMModelMissingException) as odem_missmatch:
         exc_label = odem_missmatch.__class__.__name__

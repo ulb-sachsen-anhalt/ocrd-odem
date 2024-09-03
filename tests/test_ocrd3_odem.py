@@ -15,6 +15,7 @@ import lxml.etree as ET
 import pytest
 
 from lib import odem
+import lib.odem.odem_commons as odem_c
 
 from .conftest import (
     PROJECT_ROOT_DIR,
@@ -421,7 +422,6 @@ def test_export_flat_zip(tmp_path):
     oproc = odem.ODEMProcessImpl(fixture_configuration(),
                                  path_workdir,
                                  logger=None, log_dir=log_dir, record=record)
-    # oproc.configuration = fixture_configuration()
     model_dir = prepare_tessdata_dir(tmp_path)
     oproc.configuration.set('export', 'export_format', odem.ExportFormat.FLAT_ZIP)
     oproc.configuration.set('export', 'local_export_tmp', str(path_tmp_export_dir))
@@ -434,7 +434,6 @@ def test_export_flat_zip(tmp_path):
 
     oproc.mets_file_path = str(trgt_mets)
     oproc.inspect_metadata()
-    # _langs = oproc.statistics.get(odem.STATS_KEY_LANGS)
 
     # act
     zipfilepath, _ = oproc.export_data()
@@ -442,7 +441,7 @@ def test_export_flat_zip(tmp_path):
     # assert
     assert os.path.exists(zipfilepath) and os.path.getsize(zipfilepath) == 58552
 
-
+_PATH_38841 = '/odem-wrk-dir/1981185920_38841/PAGE/'
 def test_odem_common_ocr_statistics(tmp_path):
     """Fix behavor for common data"""
 
@@ -460,11 +459,11 @@ def test_odem_common_ocr_statistics(tmp_path):
                             ('/MAX/00000005.jpg', 'PHYS_05'),
                             ('/MAX/00000006.jpg', 'PHYS_06'),
                             ]
-    ocr_outcomes = [('/odem-wrk-dir/1981185920_38841/PAGE/00000002.xml', 1, 3.893415, 0.5577),
-                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000003.xml', 1, 3.893415, 0.6628),
-                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000004.xml', 1, 3.893415, 0.6748),
-                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000005.xml', 1, 3.893415, 0.6669),
-                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000006.xml', 1, 3.893415, 0.6753)]
+    ocr_outcomes = [odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
+                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
+                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
+                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000005.xml', 0.6669, 3.893415),
+                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)]
 
     # act
     oproc.calculate_statistics_ocr(ocr_outcomes)
@@ -494,10 +493,10 @@ def test_odem_ocr_statistics_some_loss(tmp_path):
                             ('/MAX/00000005.jpg', 'PHYS_05'),
                             ('/MAX/00000006.jpg', 'PHYS_06'),
                             ]
-    ocr_outcomes = [('/odem-wrk-dir/1981185920_38841/PAGE/00000002.xml', 1, 3.893415, 0.5577),
-                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000003.xml', 1, 3.893415, 0.6628),
-                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000004.xml', 1, 3.893415, 0.6748),
-                    ('/odem-wrk-dir/1981185920_38841/PAGE/00000006.xml', 1, 3.893415, 0.6753)
+    ocr_outcomes = [odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
+                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
+                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
+                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)
                     ]
 
     # act

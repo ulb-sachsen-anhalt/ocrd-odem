@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
-"""MAIN CLI plain OCR with optional export"""
+"""MAIN CLI METS-based Workflow alike
+legacy OCR-Pipeline from ULB newspaper
+digitalization (2019-2022)
+
+Please note, that this module with newspapers
+currently only works well with Tesseract based
+workflows. Regular OCR-D-Workflows are going
+to die.
+"""
 
 import argparse
 import os
@@ -93,12 +101,12 @@ if __name__ == "__main__":
         LOG_FILE_NAME = CFG.get('global', 'logfile_name')
     LOGGER = odem.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
-    mets_file: Path = Path(ARGS.mets_file).absolute()
-    if not mets_file.is_file():
-        print(f"unable to read file '{mets_file}! exit!")
+    METS_FILE: Path = Path(ARGS.mets_file).resolve()
+    if not METS_FILE.is_file():
+        print(f"unable to read file '{METS_FILE}! exit!")
         sys.exit(1)
-    LOGGER.info("use '%s'", mets_file)
-    mets_file_dir = mets_file.parent
+    LOGGER.info("use '%s'", METS_FILE)
+    mets_file_dir = METS_FILE.parent
 
     # if valid n_executors via cli, use it's value
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
@@ -110,15 +118,15 @@ if __name__ == "__main__":
                  mets_file_dir, EXECUTORS, MUST_KEEP_RESOURCES, MUST_LOCK)
 
     try:
-        local_ident = mets_file.stem
+        local_ident = METS_FILE.stem
         proc_type: str = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
-            LOGGER.warning("no 'workflow_type' config option in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
+            LOGGER.warning("no 'workflow_type' in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         record = df_r.Record(urn=local_ident)
         odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, mets_file_dir,
                                                                   LOGGER, LOCAL_LOG_DIR, record)
         odem_process.logger = LOGGER
-        odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, mets_file, EXECUTORS)
+        odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, METS_FILE, EXECUTORS)
         odem_process.configuration = CFG
         process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),
@@ -143,14 +151,12 @@ if __name__ == "__main__":
         odem_process.calculate_statistics_ocr(ocr_results)
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
         odem_process.logger.info("[%s] %s", local_ident, odem_process.statistics)
-        odem_process.link_ocr_files()
-        odem_process.postprocess_ocr()
-        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH, fallback=True)
+        wf_enrich_ocr = CFG.getboolean(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_ENRICH,
+                                       fallback=True)
         if wf_enrich_ocr:
             odem_process.link_ocr_files()
         if CREATE_PDF:
             odem_process.create_derivates()
-        if CREATE_PDF:
             odem_process.create_text_bundle_data()
         odem_process.postprocess_mets()
         if CFG.getboolean('mets', 'postvalidate', fallback=True):

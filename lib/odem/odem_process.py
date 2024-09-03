@@ -271,7 +271,10 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         images and original page urn
         """
         images_of_interest = []
-        local_max_dir = os.path.join(self.work_dir_root, 'MAX')
+        images_dir = 'MAX'
+        if self.configuration.has_option('ocr', 'image_subpath'):
+            images_dir = self.configuration.get('ocr', 'image_subpath')
+        local_max_dir = os.path.join(self.work_dir_root, images_dir)
         for img, urn in self.ocr_candidates:
             the_file = os.path.join(local_max_dir, img)
             if not os.path.exists(the_file):
@@ -279,24 +282,25 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             images_of_interest.append((the_file, urn))
         self.ocr_candidates = images_of_interest
 
-    def calculate_statistics_ocr(self, outcomes: typing.List):
-        """Calculate and aggregate runtime stats"""
+    def calculate_statistics_ocr(self, outcomes: typing.List[odem_c.ODEMOutcome]):
+        """Calculate stats from given ODEMOutcomes"""
+
         self.logger.info("[%s] calculate statistics for %d results",
                          self.process_identifier,
                          len(outcomes))
-        data_result = [e for e in outcomes if e[0] != odem_c.UNSET]
-        total_mps = [round(e[2], 1) for e in data_result]
+        # data_result = [e for e in outcomes if e[0] != odem_c.UNSET]
+        total_mps = [round(o.images_mps, 1) for o in outcomes]
         mod_val_counts = np.unique(total_mps, return_counts=True)
         mps_np = list(zip(*mod_val_counts))
         mps = [(float(pair[0]), int(pair[1])) for pair in mps_np]  # since numpy 2.x
-        total_mb = sum([e[3] for e in data_result], 0)
-        self.process_statistics[odem_c.STATS_KEY_N_OCR] = len(data_result)
+        total_mb = sum([o.images_fsize for o in outcomes], 0)
+        self.process_statistics[odem_c.STATS_KEY_N_OCR] = len(outcomes)
         self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
         self.process_statistics[odem_c.STATS_KEY_MPS] = mps
         img_candidate_names = [Path(pair[0]).stem
                                for pair in self.ocr_candidates
                                if isinstance(pair, tuple)]
-        ocr_names = [Path(result[0]).stem for result in data_result]
+        ocr_names = [Path(o.local_path).stem for o in outcomes]
         data_loss = set(img_candidate_names) ^ set(ocr_names)
         if len(data_loss) > 0:
             self.process_statistics[odem_c.STATS_KEY_OCR_LOSS] = data_loss
