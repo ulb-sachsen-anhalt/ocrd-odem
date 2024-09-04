@@ -277,11 +277,13 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         """
         images_of_interest = []
         images_dir = 'MAX'
-        if self.configuration.has_option('ocr', 'image_subpath'):
+        if self.configuration.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
             images_dir = self.configuration.get('ocr', 'image_subpath')
-        local_max_dir = os.path.join(self.work_dir_root, images_dir)
+        local_img_dir = os.path.join(self.work_dir_root, images_dir)
+        self.logger.debug("[%s] inspect local image dir %s",
+                          self.process_identifier, local_img_dir)
         for img, urn in self.ocr_candidates:
-            the_file = os.path.join(local_max_dir, img)
+            the_file = os.path.join(local_img_dir, img)
             if not os.path.exists(the_file):
                 raise odem_c.ODEMException(f"[{self.process_identifier}] missing {the_file}!")
             images_of_interest.append((the_file, urn))

@@ -378,8 +378,8 @@ class ODEMTesseract(ODEMWorkflow):
     def postprocess_outputs(self):
         """Apply some postprocessing to the generated OCR output"""
         odem_root = Path(self.odem_process.work_dir_root)
-        if self.config.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_TMP_DIR):
-            estm_ocr_dir = self.config.get(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_TMP_DIR)
+        if self.config.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
+            estm_ocr_dir = self.config.get(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR)
         else:
             estm_ocr_dir = Path(self.odem_process.ocr_candidates[0][0]).parent
         list_from_dir = odem_root / estm_ocr_dir
