@@ -318,8 +318,8 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     max_dir.mkdir()
     for i in range(1, 6):
         _file_path = f"{max_dir}/{i:08d}.jpg"
-        with open(_file_path, 'wb') as _writer:
-            _writer.write(b'0x00')
+        with open(_file_path, 'wb') as tmp_img_writer:
+            tmp_img_writer.write(b'0x00')
     orig_mets = TEST_RES / '1981185920_44046.xml'
     shutil.copyfile(orig_mets, work_dir / '1981185920_44046.xml')
     odem_processor = odem.ODEMProcessImpl(fixture_configuration(), work_dir,

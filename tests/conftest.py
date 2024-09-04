@@ -50,8 +50,8 @@ def prepare_tessdata_dir(tmp_path: Path) -> str:
     model_dir.mkdir()
     models = ['gt4hist_5000k', 'lat_ocr', 'grc', 'ger', 'fas']
     for _m in models:
-        with open(str(model_dir / f'{_m}.traineddata'), 'wb') as writer:
-            writer.write(b'abc')
+        with open(str(model_dir / f'{_m}.traineddata'), 'wb') as tmp_model_writer:
+            tmp_model_writer.write(b'abc')
     return str(model_dir)
 
 
@@ -61,8 +61,8 @@ def prepare_kraken_dir(tmp_path: Path) -> str:
     model_dir.mkdir()
     models = ['arabic_best']
     for _m in models:
-        with open(str(model_dir / f'{_m}.mlmodel'), 'wb') as writer:
-            writer.write(b'abc')
+        with open(str(model_dir / f'{_m}.mlmodel'), 'wb') as tmp_model_writer:
+            tmp_model_writer.write(b'abc')
     return str(model_dir)
 
 
@@ -91,7 +91,7 @@ def _module_fixture_123456789_27949(tmp_path_factory):
                            for a in os.listdir(trgt_alto)]
     odem_proc.mets_file_path = str(trgt_mets)
     odem_proc.inspect_metadata()
-    odem_proc.clear_existing_entries()
+    odem_proc.modify_mets_groups()
     n_integrated = odem_proc.link_ocr_files()
     assert n_integrated == 4
     yield odem_proc

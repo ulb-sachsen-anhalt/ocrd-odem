@@ -20,6 +20,7 @@ import lib.odem.ocr.ocr_pipeline as o3o_pop
 
 from .conftest import TEST_RES, PROD_RES
 
+# pylint: disable=c-extension-no-member
 
 RES_0001_TIF = "0001.tif"
 RES_0002_PNG = "0002.png"
@@ -826,8 +827,8 @@ def test_step_replace_regex_literal(tmp_path):
     assert len(step._replacements) == 9
     with open(step.path_next, encoding='utf-8') as reader:
         text_out = reader.readlines()
-    J_out = sum((1 for l in text_out if 'J' in l))
-    assert J_out == 172
+    j_out = sum((1 for l in text_out if 'J' in l))
+    assert j_out == 172
 
 
 def test_step_replace_regex_from_configuration(tmp_path):
@@ -839,8 +840,8 @@ def test_step_replace_regex_from_configuration(tmp_path):
     assert tmp_file.exists()
     with open(tmp_file, encoding='utf-8') as reader:
         text_in = reader.readlines()
-    J_in = sum((1 for l in text_in if 'J' in l))
-    assert J_in == 185
+    j_in = sum((1 for l in text_in if 'J' in l))
+    assert j_in == 185
     cfg_parser = odem.get_configparser()
     cfg_parser.read(OCR_PIPELINE_CFG_PATH)
     step_keys = cfg_parser['step_02'].keys()

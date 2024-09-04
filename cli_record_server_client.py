@@ -174,9 +174,8 @@ if __name__ == "__main__":
         pr_monitor.check_vmem()
         pr_monitor.monit_disk_space(odem_process.load)
         odem_process.inspect_metadata()
-        if CFG.getboolean('mets', 'prevalidate', fallback=True):
-            odem_process.validate_metadata()
-        odem_process.clear_existing_entries()
+        odem_process.validate_metadata()
+        odem_process.modify_mets_groups()
         odem_process.language_modelconfig()
         odem_process.set_local_images()
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
@@ -212,7 +211,7 @@ if __name__ == "__main__":
                        odem_process.process_identifier, odem_missmatch.args)
         exc_dict = {exc_label: odem_missmatch.args[0]}
         CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **exc_dict)
-        odem_process.clear_oai_resources(remove_all=True)
+        odem_process.clear_mets_resources(remove_all=True)
     except odem.ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
@@ -225,7 +224,7 @@ if __name__ == "__main__":
                      "'%s'", odem_process.process_identifier, exc_dict)
         CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, **exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
-        odem_process.clear_oai_resources()
+        odem_process.clear_mets_resources()
     except odem_md.NotEnoughDiskSpaceException as _space_exc:
         exc_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -234,7 +233,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
-        odem_process.clear_oai_resources(remove_all=True)
+        odem_process.clear_mets_resources(remove_all=True)
     except odem_md.VirtualMemoryExceededException as _vmem_exc:
         exc_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -243,7 +242,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
-        odem_process.clear_oai_resources(remove_all=True)
+        odem_process.clear_mets_resources(remove_all=True)
 
     except Exception as exc:
         # pick whole error context, since some exception's args are
@@ -255,7 +254,7 @@ if __name__ == "__main__":
         # when running parallel
         CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
-        odem_process.clear_oai_resources()
+        odem_process.clear_mets_resources()
         # don't remove lock file, human interaction required
         sys.exit(1)
 

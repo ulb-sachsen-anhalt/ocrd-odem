@@ -26,13 +26,7 @@ import digiflow.record as df_r
 import lib.odem.odem_commons as odem_c
 import lib.odem.processing.image as odem_image
 
-from .processing.mets import (
-    ODEMMetadataInspecteur,
-    extract_text_content,
-    integrate_ocr_file,
-    postprocess_mets,
-    validate,
-)
+import lib.odem.processing.mets as odem_mets
 
 # python process-wrapper limit
 os.environ['OMP_THREAD_LIMIT'] = '1'
@@ -109,7 +103,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         except RuntimeError as _err:
             raise odem_c.ODEMException(_err.args[0]) from _err
 
-    def clear_oai_resources(self, remove_all=False):
+    def clear_mets_resources(self):
         """Remove OAI-Resources from store or even
         anything related to current process
         """
@@ -117,15 +111,13 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if self.store is not None:
             sweeper = df.OAIFileSweeper(self.store.dir_store_root, '.xml')
             sweeper.sweep()
-            if remove_all:
-                shutil.rmtree(self.store.dir_store_root)
         if os.path.exists(self.work_dir_root):
             shutil.rmtree(self.work_dir_root)
 
     def inspect_metadata(self):
-        insp = ODEMMetadataInspecteur(self.mets_file_path,
-                                      self.record.identifier,
-                                      cfg=self.configuration)
+        insp = odem_mets.ODEMMetadataInspecteur(self.mets_file_path,
+                                                self.record.identifier,
+                                                cfg=self.configuration)
         try:
             the_report = insp.metadata_report()
             self.digi_type = the_report.type
@@ -145,16 +137,23 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                          insp.n_images_pages)
         self.process_statistics['host'] = socket.gethostname()
 
-    def clear_existing_entries(self):
+    def modify_mets_groups(self):
         """Clear METS/MODS of configured file groups"""
 
-        if self.configuration:
-            blacklisted = self.configuration.getlist('mets', 'blacklist_file_groups')
-            ident = self.process_identifier
-            self.logger.info("[%s] remove %s", ident, blacklisted)
-            m_proc = df.MetsProcessor(self.mets_file_path)
-            m_proc.clear_filegroups(blacklisted)
-            m_proc.write()
+        blacklisted = self.configuration.getlist('mets', 'blacklist_file_groups')
+        if len(blacklisted) == 0:
+            self.logger.warning("[%s] no exsting METS filegroups removed",
+                                self.process_identifier)
+            return
+        ident = self.process_identifier
+        self.logger.info("[%s] remove %s", ident, blacklisted)
+        proc = df.MetsProcessor(self.mets_file_path)
+        proc.clear_filegroups(blacklisted)
+        try:
+            proc.write()
+        except PermissionError:
+            self.logger.error("[%s] permission denied %s", self.process_identifier,
+                              self.mets_file_path)
 
     def language_modelconfig(self, languages=None) -> str:
         """resolve model configuration from
@@ -169,10 +168,10 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         models = []
         model_mappings: dict = self.configuration.getdict(  # pylint: disable=no-member
             odem_c.CFG_SEC_OCR, 'model_mapping')
-        self.logger.info("[%s] inspect languages '%s'",
-                         self.process_identifier, languages)
         if languages is None:
             languages = self.process_statistics.get(odem_c.STATS_KEY_LANGS)
+        self.logger.info("[%s] map languages '%s'",
+                         self.process_identifier, languages)
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
@@ -187,7 +186,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                                          fallback=True):
             model_cfg = '+'.join(models)
         self.process_statistics[odem_c.STATS_KEY_MODELS] = model_cfg
-        self.logger.info("[%s] map languages '%s' => '%s'",
+        self.logger.info("[%s] mapped languages '%s' => '%s'",
                          self.process_identifier, languages, model_cfg)
         return model_cfg
 
@@ -227,12 +226,13 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         return self.language_modelconfig()
 
     def _is_model_available(self, model) -> bool:
-        """Determine whether model is available"""
+        """Determine whether model is available at execting
+        host/machine"""
 
         resource_dir_mappings = self.configuration.getdict(odem_c.CFG_SEC_OCR,
                                                            odem_c.CFG_SEC_OCR_OPT_RES_VOL,
                                                            fallback={})
-        for host_dir, _ in resource_dir_mappings.items():
+        for host_dir in resource_dir_mappings:
             training_file = host_dir + '/' + model
             if os.path.exists(training_file):
                 return True
@@ -292,8 +292,9 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if ocr_results is None or len(ocr_results) == 0:
             raise odem_c.ODEMException(f"process run error: {self.record.identifier}")
         self.calculate_statistics_ocr(ocr_results)
-        self.process_statistics[odem_c.STATS_KEY_N_EXECS] = self.configuration.get(odem_c.CFG_SEC_OCR,
-                                                                                   odem_c.CFG_SEC_OCR_OPT_EXECS)
+        self.process_statistics[odem_c.STATS_KEY_N_EXECS] = self.configuration.get(
+            odem_c.CFG_SEC_OCR,
+            odem_c.CFG_SEC_OCR_OPT_EXECS)
         self.logger.info("[%s] %s", self.record.local_identifier, self.statistics)
         wf_enrich_ocr = self.configuration.getboolean(odem_c.CFG_SEC_METS,
                                                       odem_c.CFG_SEC_METS_OPT_ENRICH,
@@ -304,10 +305,13 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                                                             fallback=False)
         if wf_create_derivates:
             self.create_derivates()
+            self.postprocess_review_derivans_agents()
         if self.configuration.getboolean(odem_c.CFG_SEC_WORKFLOW, odem_c.CFG_SEC_XPR_OPT_CREATE_TL,
                                          fallback=False):
             self.create_text_bundle_data()
-        self.postprocess_mets()
+        if self.configuration.getboolean(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_CLEAN,
+                                         fallback=False):
+            self.postprocess_mets()
         if self.configuration.getboolean(odem_c.CFG_SEC_METS, 'postvalidate', fallback=True):
             self.validate_metadata()
         if self.configuration.getboolean(odem_c.CFG_SEC_XPR, 'export_enabled', fallback=False):
@@ -318,7 +322,10 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 if len(del_dirs) > 0:
                     self.delete_local_directories(del_dirs)
             self.export_data()
-        self.clear_oai_resources(remove_all=True)
+        if self.configuration.getboolean(odem_c.CFG_SEC_WORKFLOW,
+                                         odem_c.CFG_SEC_WORKFLOW_REM_RES,
+                                         fallback=False):
+            self.clear_mets_resources()
 
     def calculate_statistics_ocr(self, outcomes: typing.List[odem_c.ODEMOutcome]):
         """Calculate stats from given ODEMOutcomes"""
@@ -350,11 +357,16 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if not self.ocr_files:
             return 0
         proc = df.MetsProcessor(self.mets_file_path)
-        n_linked_ocr, n_dropped = integrate_ocr_file(proc.tree, self.ocr_files)
+        n_linked_ocr, n_dropped = odem_mets.integrate_ocr_file(proc.tree, self.ocr_files)
         if n_dropped > 0:
             self.logger.warning("[%s] failed to link %d ocr files",
                                 self.process_identifier, n_dropped)
-        proc.write()
+        try:
+            proc.write()
+        except PermissionError:
+            self.logger.error("[%s] permission error: can't link OCR files in %s",
+                              self.process_identifier, self.mets_file_path)
+            return 0
         return n_linked_ocr
 
     def create_text_bundle_data(self):
@@ -362,11 +374,11 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         read ocr-file sequential according to their number label
         and extract every row into additional text file"""
 
-        txt_lines = extract_text_content(self.ocr_files)
+        txt_lines = odem_mets.extract_text_content(self.ocr_files)
         txt_content = '\n'.join(txt_lines)
         out_path = os.path.join(self.work_dir_root, f'{self.mods_identifier}.pdf.txt')
-        with open(out_path, mode='w', encoding='UTF-8') as _writer:
-            _writer.write(txt_content)
+        with open(out_path, mode='w', encoding='UTF-8') as tl_writer:
+            tl_writer.write(txt_content)
         self.logger.info("[%s] harvested %d lines from %d ocr files to %s",
                          self.process_identifier, len(txt_lines),
                          len(self.ocr_files), out_path)
@@ -424,13 +436,31 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def postprocess_mets(self):
         """wrap work related to processing METS/MODS"""
 
-        postprocess_mets(self.mets_file_path, self.configuration)
+        try:
+            odem_mets.postprocess_mets(self.mets_file_path, self.configuration)
+        except PermissionError:
+            self.logger.error("[%s] permission error: can't alter mets in %s",
+                              self.process_identifier, self.mets_file_path)
+
+    def postprocess_review_derivans_agents(self):
+        """Wrap work related to changed derivans
+        METS-agent entries
+        """
+        try:
+            odem_mets.process_mets_derivans_agents(self.mets_file_path, self.configuration)
+        except PermissionError:
+            self.logger.error("[%s] permission error: can't alter derivans' mets:agents in %s",
+                              self.process_identifier, self.mets_file_path)
 
     def validate_metadata(self):
         """Forward (optional) validation concerning
         METS/MODS XML-schema and/or current DDB-schematron
         validation for 'digitalisierte medien'
         """
+
+        if not self.configuration.getboolean('mets', 'prevalidate', fallback=True):
+            self.logger.warning("[%s] skipping any pre-validation",
+                                self.process_identifier)
         if self.configuration.has_option('mets', 'validate'):
             ignore_ddb = []
             if self.configuration.has_option('mets', 'ddb_validation_ignore'):
@@ -439,8 +469,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             ddb_min_level = 'fatal'
             if self.configuration.has_option('mets', 'ddb_min_level'):
                 ddb_min_level = self.configuration.get('mets', 'ddb_min_level')
-            return validate(self.mets_file_path, ddb_ignores=ignore_ddb,
-                            ddb_min_level=ddb_min_level)
+            return odem_mets.validate_mets(self.mets_file_path, ddb_ignores=ignore_ddb,
+                                      ddb_min_level=ddb_min_level)
 
     def export_data(self):
         """re-do metadata and transform into output format"""

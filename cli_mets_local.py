@@ -106,9 +106,8 @@ if __name__ == "__main__":
         process_resource_monitor.check_vmem()
         process_resource_monitor.monit_disk_space(odem_process.load)
         odem_process.inspect_metadata()
-        if CFG.getboolean('mets', 'prevalidate', fallback=True):
-            odem_process.validate_metadata()
-        odem_process.clear_existing_entries()
+        odem_process.validate_metadata()
+        odem_process.modify_mets_groups()
         odem_process.language_modelconfig()
         odem_process.set_local_images()
         odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)

@@ -42,14 +42,17 @@ class ExportFormat(str, Enum):
 # ODEM configuration keys
 CFG_SEC_WORKFLOW = 'workflow'
 CFG_SEC_WORKFLOW_OPT_URL = 'oai_base_url'
+CFG_SEC_WORKFLOW_REM_RES = 'remove_resources'
 CFG_SEC_MONITOR = 'monitoring'
 CFG_SEC_OCR = 'ocr'
 CFG_SEC_OCR_OPT_EXECS = 'n_executors'
 CFG_SEC_OCR_OPT_RES_VOL = "ocrd_resources_volumes"
 CFG_SEC_OCR_OPT_MODEL_COMBINABLE = "model_combinable"
+CFG_SEC_OCR_TMP_DIR = 'ocr_subdir'
 CFG_SEC_METS = 'mets'
 CFG_SEC_METS_OPT_AGENTS = 'agents'
 CFG_SEC_METS_OPT_ENRICH = 'enrich_fulltext'
+CFG_SEC_METS_OPT_CLEAN = 'post_clean'
 CFG_SEC_XPR = 'export'
 CFG_SEC_XPR_OPT_CREATE_TL = 'create_textline_asset'
 CFG_SEC_XPT_OPT_DEL_SDIRS = 'delete_subdirs_before_export'

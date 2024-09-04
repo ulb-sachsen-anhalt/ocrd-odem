@@ -50,7 +50,7 @@ class ODEMWorkflowRunner:
             the_outcomes = self.run_parallel(input_data)
         else:
             the_outcomes = self.run_sequential(input_data)
-        self.odem_workflow.foster_outputs()
+        self.odem_workflow.postprocess_outputs()
         self.logger.info("[%s] created %d ocr files for %d images",
                          self.process_identifier,
                          len(the_outcomes), len(input_data))
@@ -123,7 +123,7 @@ class ODEMWorkflow:
     def run(self, _: typing.List):
         """Run actual implemented Workflow"""
 
-    def foster_outputs(self):
+    def postprocess_outputs(self):
         """Work to do after pipeline has been run successfully
         like additional format transformations or sanitizings
         """
@@ -295,7 +295,7 @@ class OCRDPageParallel(ODEMWorkflow):
             shutil.copy(renamed, target_path)
         return target_path
 
-    def foster_outputs(self):
+    def postprocess_outputs(self):
         """In this case:
         * move files from dir PAGE to FULLTEXT
         * convert OCR format PAGE => ALTO
@@ -375,8 +375,14 @@ class ODEMTesseract(ODEMWorkflow):
             self.pipeline_configuration = pipe_cfg
         return self.pipeline_configuration
 
-    def foster_outputs(self):
-        list_from_dir = Path(self.odem_process.work_dir_root) / odem_c.FILEGROUP_FULLTEXT
+    def postprocess_outputs(self):
+        """Apply some postprocessing to the generated OCR output"""
+        odem_root = Path(self.odem_process.work_dir_root)
+        if self.config.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_TMP_DIR):
+            estm_ocr_dir = self.config.get(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_TMP_DIR)
+        else:
+            estm_ocr_dir = Path(self.odem_process.ocr_candidates[0][0]).parent
+        list_from_dir = odem_root / estm_ocr_dir
         self.ocr_files = odem_c.list_files(list_from_dir)
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
         for _ocr_file in self.ocr_files:

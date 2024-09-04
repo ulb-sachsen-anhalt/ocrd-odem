@@ -11,7 +11,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 import lib.odem as odem
-import lib.odem.processing.mets as o3o_pm
+import lib.odem.processing.mets as odem_pm
 
 from .conftest import (
     TEST_RES,
@@ -22,16 +22,15 @@ from .conftest import (
 # please linter for lxml.etree contains no-member message
 # pylint:disable=I1101
 
-
 @pytest.fixture(name="inspecteur_44046", scope='module')
 def _fixture_1981185920_44046():
     """Initial ODEM fixture before doing any OCR"""
 
     # arrange
-    _ident = '1981185920_44046'
+    an_ident = '1981185920_44046'
     file = TEST_RES / '1981185920_44046.xml'
     inspc = odem.ODEMMetadataInspecteur(file,
-                                        process_identifier=_ident,
+                                        process_identifier=an_ident,
                                         cfg=fixture_configuration())
     yield inspc
 
@@ -48,9 +47,6 @@ def test_odem_process_catalog_identifier(inspecteur_44046: odem.ODEMMetadataInsp
     which will be used finally to name the export SAF
     """
 
-    # act
-    # init_odem.inspect_metadata()
-
     # assert
     assert inspecteur_44046.mods_record_identifier == '265982944'
 
@@ -58,26 +54,36 @@ def test_odem_process_catalog_identifier(inspecteur_44046: odem.ODEMMetadataInsp
 @pytest.fixture(name='post_mets', scope='module')
 def _fixture_postprocessing_mets(tmp_path_factory):
     """Fixture for checking postprocessing"""
-    _workdir = tmp_path_factory.mktemp('workdir')
+    the_workdir = tmp_path_factory.mktemp('workdir')
     orig_file = TEST_RES / '198114125_part_mets.xml'
-    trgt_mets = _workdir / 'test.xml'
-    shutil.copyfile(orig_file, trgt_mets)
+    dst_mets = the_workdir / 'test.xml'
+    shutil.copyfile(orig_file, dst_mets)
     odem_cfg = fixture_configuration()
-    odem.postprocess_mets(trgt_mets, odem_cfg)
-    _root = ET.parse(trgt_mets).getroot()
-    yield _root
+    odem_cfg.set(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_CLEAN, 'True')
+    odem_cfg.set(odem.CFG_SEC_METS, odem.CFG_SEC_METS_OPT_AGENTS,
+                 'DFG-OCRD3-ODEM_ocrd/all:2022-08-15')
+    odem.postprocess_mets(dst_mets, odem_cfg)
+    odem_pm.process_mets_derivans_agents(dst_mets, odem_cfg)
+    the_root = ET.parse(dst_mets).getroot()
+    yield the_root
 
 
 def test_postprocess_mets_agent_entries_number_fits(post_mets):
-    """Ensure METS metadata agents has expected number"""
+    """Ensure METS metadata agents has expected number
+    """
 
     assert len(post_mets.xpath('//mets:agent', namespaces=df.XMLNS)) == 4
 
 
 def test_postprocess_mets_agent_odem_fits(post_mets):
-    """Ensure METS agent odem wrote OCR-D baseimage note"""
+    """Ensure METS agent odem wrote OCR-D baseimage note
 
-    agent_odem = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[3]
+    changed 2024-09-04
+        because division of post_processing now OCR agent
+        is inserted as last element [-1]
+    """
+
+    agent_odem = post_mets.xpath('//mets:agent', namespaces=df.XMLNS)[-1]
     xp_note = 'mets:note/text()'
     xp_name = 'mets:name/text()'
     curr_image = fixture_configuration().get(odem.CFG_SEC_OCR, 'ocrd_baseimage')
@@ -113,17 +119,17 @@ def test_opendata_record_no_images_for_ocr():
     """
 
     orig_file = TEST_RES / '1981185920_74357.xml'
-    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/74357'
+    oai_urn = 'oai:opendata.uni-halle.de:1981185920/74357'
     cfg = fixture_configuration()
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     with pytest.raises(odem.ODEMNoImagesForOCRException) as odem_exc:
         inspc.metadata_report()
 
     # assert
-    _alert = "oai:opendata.uni-halle.de:1981185920/74357 contains no images for OCR (total: 15)!"
-    assert _alert == odem_exc.value.args[0]
+    an_alert = "oai:opendata.uni-halle.de:1981185920/74357 contains no images for OCR (total: 15)!"
+    assert an_alert == odem_exc.value.args[0]
 
 
 def test_opendata_record_no_printwork():
@@ -131,17 +137,17 @@ def test_opendata_record_no_printwork():
     struct (c-stage) without any pages/images
     """
 
-    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/79080'
+    oai_urn = 'oai:opendata.uni-halle.de:1981185920/79080'
     orig_file = TEST_RES / '1981185920_79080.xml'
     cfg = fixture_configuration()
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     with pytest.raises(odem.ODEMNoTypeForOCRException) as odem_exc:
         inspc.metadata_report()
 
     # assert
-    assert f"{_oai_urn} no PICA type for OCR: Ac" == odem_exc.value.args[0]
+    assert f"{oai_urn} no PICA type for OCR: Ac" == odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present():
@@ -151,10 +157,10 @@ def test_opendata_record_no_granular_urn_present():
     granular urn at all
     """
 
-    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/88132'
+    oai_urn = 'oai:opendata.uni-halle.de:1981185920/88132'
     orig_file = TEST_RES / '1981185920_88132.xml'
     cfg = fixture_configuration()
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     inspc.metadata_report()
@@ -171,10 +177,10 @@ def test_opendata_record_type_error():
     granular urn at all
     """
 
-    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/105290'
+    oai_urn = 'oai:opendata.uni-halle.de:1981185920/105290'
     orig_file = TEST_RES / '1981185920_105290.xml'
     cfg = fixture_configuration()
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     with pytest.raises(odem.ODEMMetadataMetsException) as odem_exc:
@@ -189,17 +195,17 @@ def test_mets_mods_sbb_vol01_with_ulb_defaults():
     OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
     with default ULB configuration settings
     """
-    _oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
+    oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     inspc.metadata_report()
 
     # assert
-    assert inspc.process_identifier == _oai_urn
+    assert inspc.process_identifier == oai_urn
     assert inspc.mods_record_identifier == 'PPN891267093'
 
 
@@ -212,26 +218,26 @@ def test_mets_filter_logical_structs_by_type():
     * "[Colorchecker]"  : PHYS_0021 (already due cover_back)
     => use exact 13 of total 21 pairs
     """
-    _oai_urn = 'oai:opendata.uni-halle.de:1981185920/33908'
+    oai_urn = 'oai:opendata.uni-halle.de:1981185920/33908'
     orig_file = TEST_RES / '1981185920_33908.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     inspc.metadata_report()
 
     # assert
-    assert inspc.process_identifier == _oai_urn
+    assert inspc.process_identifier == oai_urn
     assert inspc.mods_record_identifier == '058134433'
-    _image_page_pairs = inspc.image_pairs
-    assert not any('PHYS_0001' in p[1] for p in _image_page_pairs)
-    assert not any('PHYS_0002' in p[1] for p in _image_page_pairs)
-    assert any('PHYS_0003' in p[1] for p in _image_page_pairs)
-    assert not any('PHYS_0004' in p[1] for p in _image_page_pairs)
-    assert any('PHYS_0016' in p[1] for p in _image_page_pairs)
-    assert not any('PHYS_0017' in p[1] for p in _image_page_pairs)
-    assert len(_image_page_pairs) == 13
+    image_page_pairs = inspc.image_pairs
+    assert not any('PHYS_0001' in p[1] for p in image_page_pairs)
+    assert not any('PHYS_0002' in p[1] for p in image_page_pairs)
+    assert any('PHYS_0003' in p[1] for p in image_page_pairs)
+    assert not any('PHYS_0004' in p[1] for p in image_page_pairs)
+    assert any('PHYS_0016' in p[1] for p in image_page_pairs)
+    assert not any('PHYS_0017' in p[1] for p in image_page_pairs)
+    assert len(image_page_pairs) == 13
 
 
 def test_mets_mods_sbb_vol01_filtering():
@@ -239,19 +245,19 @@ def test_mets_mods_sbb_vol01_filtering():
     OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
     with default ULB configuration settings
     """
-    _oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
+    oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     inspc.metadata_report()
 
     # assert
-    _image_page_pairs = inspc.image_pairs
-    assert not any('PHYS_0001' in p[1] for p in _image_page_pairs)
-    assert len(_image_page_pairs) == 136
+    image_page_pairs = inspc.image_pairs
+    assert not any('PHYS_0001' in p[1] for p in image_page_pairs)
+    assert len(image_page_pairs) == 136
 
 
 def test_mets_mods_sbb_vol01_filtering_custom():
@@ -259,20 +265,20 @@ def test_mets_mods_sbb_vol01_filtering_custom():
     OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
     now also remove logical type 'binding'
     """
-    _oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
+    oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
     cfg.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back,binding')
-    inspc = odem.ODEMMetadataInspecteur(orig_file, _oai_urn, cfg)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
     inspc.metadata_report()
 
     # assert
-    _image_page_pairs = inspc.image_pairs
-    assert not any('PHYS_0001' in p[1] for p in _image_page_pairs)
-    assert len(_image_page_pairs) == 129
+    image_page_pairs = inspc.image_pairs
+    assert not any('PHYS_0001' in p[1] for p in image_page_pairs)
+    assert len(image_page_pairs) == 129
 
 
 def test_validate_mets_105054_schema_fails(tmp_path):
@@ -280,12 +286,12 @@ def test_validate_mets_105054_schema_fails(tmp_path):
     If Schema validation is required, then throw according exception
     in this case: alert invalid order data format
     """
-    _record = df_r.Record('oai:opendata.uni-halle.de:1981185920/105054')
-    _work_dir = tmp_path / '1981185920_105054'
-    _work_dir.mkdir()
-    _orig_mets = TEST_RES / '1981185920_105054.xml'
-    shutil.copyfile(_orig_mets, _work_dir / '1981185920_105054.xml')
-    odem_processor = odem.ODEMProcessImpl(_record, work_dir=_work_dir)
+    record = df_r.Record('oai:opendata.uni-halle.de:1981185920/105054')
+    work_dir = tmp_path / '1981185920_105054'
+    work_dir.mkdir()
+    orig_mets = TEST_RES / '1981185920_105054.xml'
+    shutil.copyfile(orig_mets, work_dir / '1981185920_105054.xml')
+    odem_processor = odem.ODEMProcessImpl(record, work_dir=work_dir)
     odem_processor.configuration = fixture_configuration()
     with pytest.raises(odem.ODEMException) as odem_exec:
         odem_processor.validate_metadata()
@@ -377,7 +383,7 @@ def test_integrate_alto_from_ocr_pipeline(tmp_path):
     assert len(ocr_files) == 4
 
     # actsert
-    assert 4, 0 == o3o_pm.integrate_ocr_file(mets_tree, ocr_files)
+    assert (4, 0) == odem_pm.integrate_ocr_file(mets_tree, ocr_files)
 
 
 def test_extract_text_content_from_alto_file():
@@ -390,7 +396,7 @@ def test_extract_text_content_from_alto_file():
     assert len(ocr_files) == 4
 
     # act
-    text = o3o_pm.extract_text_content(ocr_files)
+    text = odem_pm.extract_text_content(ocr_files)
 
     # assert
     assert text is not None
@@ -406,9 +412,9 @@ def test_extract_identifiers():
 
     # arrange
     mets_file = TEST_RES / '1516514412012_175762.xml'
-    inspecteur = o3o_pm.ODEMMetadataInspecteur(mets_file,
-                                               '1516514412012_175762',
-                                               fixture_configuration())
+    inspecteur = odem_pm.ODEMMetadataInspecteur(mets_file,
+                                                '1516514412012_175762',
+                                                fixture_configuration())
     # act
     report = inspecteur.metadata_report()
 
@@ -426,14 +432,11 @@ def test_process_bad_input_data():
 
     # arrange
     mets_file = TEST_RES / '1516514412012_175762.xml'
-    # inspecteur = o3o_pm.ODEMMetadataInspecteur(mets_file,
-                                            #    '1516514412012_175762',
-                                            #    fixture_configuration())
     ocr_file = TEST_RES / '117470_00000006.lt.xml'
     mets_tree = ET.parse(str(mets_file)).getroot()
 
     # act
-    outcome = o3o_pm.integrate_ocr_file(mets_tree, [str(ocr_file)])
+    outcome = odem_pm.integrate_ocr_file(mets_tree, [str(ocr_file)])
 
     # assert
     assert outcome is not None

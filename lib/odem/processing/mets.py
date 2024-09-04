@@ -256,7 +256,7 @@ def clear_filegroups(xml_file, removals):
     proc.write()
 
 
-def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
+def integrate_ocr_file(xml_tree, ocr_files: typing.List):
     """Enrich given OCR-Files
     Reference / link ALTO files as file pointer in METS/MODS
     fileGrp, if final transformed output contains content and a page element 
@@ -303,12 +303,10 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List) -> int:
             first_page_el = page_elements[0]
             first_page_el.attrib['ID'] = f'p{file_name}'
             mproc.write()
-
             n_linked_ocr += _link_fulltext(new_id, xml_tree)
         except IndexError as idx_exc:
             note = f"{ocr_file}({file_name}):{idx_exc.args[0]}"
             raise ODEMMetadataMetsException(note) from idx_exc
-
     file_sec.append(file_grp_fulltext)
     return n_linked_ocr, n_passed_ocr
 
@@ -349,28 +347,54 @@ def is_in(tokens: typing.List[str], label):
 
 def postprocess_mets(mets_file, odem_config: configparser.ConfigParser):
     """wrap work related to processing METS/MODS
-    Must be called *after* new PDF is enriched because
-    it clears all DErivans agents but the most recent
+    * optional clear some ULB-DSpace entries which will otherwise lead
+      to import artefacts
+    * optional enrich ODEM agent
+       here use schema <agent-label>##<agent-note> to insert both elements
+
+    Please note:
+        If not properly configured, skip executiom
     """
 
-    mproc = df.MetsProcessor(mets_file)
+    if odem_config.getboolean(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_CLEAN,
+                              fallback=False):
+        mproc = df.MetsProcessor(mets_file)
+        xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
+        old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=df.XMLNS)
+        for old_dv in old_dvs:
+            parent = old_dv.getparent()
+            parent.remove(old_dv)
+        mproc.write()
+
     if odem_config.has_option(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_AGENTS):
-        agent_entries = odem_config.get(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_AGENTS).split(',')
-        for agent_entry in agent_entries:
-            if '##' in agent_entry:
-                agent_parts = agent_entry.split('##')
-                agent_name = agent_parts[0]
-                agent_note = agent_parts[1]
-                mproc.enrich_agent(agent_name, agent_note)
-            else:
-                mproc.enrich_agent(agent_entry)
-    _process_derivans_agents(mproc)
-    _clear_provenance_links(mproc)
-    mproc.write()
+        agent_entries = odem_config.get(odem_c.CFG_SEC_METS,
+                                        odem_c.CFG_SEC_METS_OPT_AGENTS).split(',')
+        if len(agent_entries) > 0:
+            mproc = df.MetsProcessor(mets_file)
+            for agent_entry in agent_entries:
+                if '##' in agent_entry:
+                    agent_parts = agent_entry.split('##')
+                    agent_name = agent_parts[0]
+                    agent_note = agent_parts[1]
+                    mproc.enrich_agent(agent_name, agent_note)
+                else:
+                    mproc.enrich_agent(agent_entry)
+            mproc.write()
 
 
-def _process_derivans_agents(mproc):
-    # ensure only very recent derivans agent entry exists
+def process_mets_derivans_agents(mets_file, odem_config: configparser.ConfigParser):
+    """Ensure only very recent derivans agent entry exists
+    by removing probably existing elder Derivans agent marks
+
+    Plese note:
+        Must *only* be called *if* new PDF is enriched because
+        it clears all Derivans agenten entries but this latest
+    """
+
+    if not odem_config.getboolean(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_CLEAN,
+                              fallback=False):
+        return
+    mproc = df.MetsProcessor(mets_file)
     xp_txt_derivans = '//mets:agent[contains(mets:name,"DigitalDerivans")]'
     derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=df.XMLNS)
     if len(derivanses) < 1:
@@ -381,22 +405,25 @@ def _process_derivans_agents(mproc):
     # sort by latest token in agent note ascending
     # note is assumed to be a date
     # like: "PDF FileGroup for PDF_198114125 created at 2022-04-29T12:40:30"
-    _sorts = sorted(derivanses, key=lambda e: e[1].text.split()[-1])
-    _sorts.pop()
-    for i, _retired_agent in enumerate(_sorts):
-        _parent = _retired_agent.getparent()
-        _parent.remove(_sorts[i])
+    sorted_ones = sorted(derivanses, key=lambda e: e[1].text.split()[-1])
+    sorted_ones.pop()
+    drops = 0
+    for i, retired_agent in enumerate(sorted_ones):
+        the_parent = retired_agent.getparent()
+        the_parent.remove(sorted_ones[i])
+        drops +=1
+    if drops > 0:
+        mproc.write()
+
+# def _clear_provenance_links(mproc):
+#     xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
+#     old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=df.XMLNS)
+#     for old_dv in old_dvs:
+#         parent = old_dv.getparent()
+#         parent.remove(old_dv)
 
 
-def _clear_provenance_links(mproc):
-    xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
-    old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=df.XMLNS)
-    for old_dv in old_dvs:
-        parent = old_dv.getparent()
-        parent.remove(old_dv)
-
-
-def validate(mets_file: str, ddb_ignores, ddb_min_level):
+def validate_mets(mets_file: str, ddb_ignores, ddb_min_level):
     """Forward METS-schema validation"""
 
     reporter = dfv.Reporter(mets_file)
@@ -408,7 +435,7 @@ def validate(mets_file: str, ddb_ignores, ddb_min_level):
     return True
 
 
-def extract_text_content(ocr_files: typing.List) -> str:
+def extract_text_content(ocr_files: typing.List) -> typing.List:
     """Extract textual content from ALTO files' String element
     """
     sorted_files = sorted(ocr_files)
@@ -419,6 +446,7 @@ def extract_text_content(ocr_files: typing.List) -> str:
             ns_map = _sanitize_namespaces(ocr_root)
             all_lines = ocr_root.findall('.//alto:TextLine', ns_map)
             for single_line in all_lines:
-                line_strs = [s.attrib['CONTENT'] for s in single_line.findall('.//alto:String', ns_map)]
+                line_strs = [s.attrib['CONTENT'] 
+                             for s in single_line.findall('.//alto:String', ns_map)]
                 txt_contents.append(' '.join(line_strs))
     return txt_contents
