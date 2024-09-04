@@ -461,7 +461,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if not self.configuration.getboolean('mets', 'prevalidate', fallback=True):
             self.logger.warning("[%s] skipping any pre-validation",
                                 self.process_identifier)
-        if self.configuration.has_option('mets', 'validate'):
+        if self.configuration.getboolean('mets', 'validate', fallback=False):
             ignore_ddb = []
             if self.configuration.has_option('mets', 'ddb_validation_ignore'):
                 raw_ignore_str = self.configuration.get('mets', 'ddb_validation_ignore')
