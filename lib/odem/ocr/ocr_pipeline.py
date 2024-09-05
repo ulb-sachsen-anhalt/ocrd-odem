@@ -583,6 +583,10 @@ def run_pipeline(*args):
     step_config: configparser.ConfigParser = args[0][4]
     batch_label = f"{n_curr:04d}/{n_total:04d}"
     next_in = start_path
+    if not df.group_can_read(start_path):
+        raise ODEMException(f'Group cant read {start_path}')
+    if not df.group_can_write(os.path.dirname(start_path)):
+        raise ODEMException(f'Group cant write {os.path.dirname(start_path)}')
     file_name = os.path.basename(start_path)
     outcome = (file_name, MARK_MISSING_ESTM)
 
