@@ -41,7 +41,8 @@ class ExportFormat(str, Enum):
 #
 # ODEM configuration keys
 CFG_SEC_WORKFLOW = 'workflow'
-CFG_SEC_WORKFLOW_OPT_URL = 'oai_base_url'
+CFG_SEC_WORKFLOW_OPT_URL = "base_url"
+CFG_SEC_WORKFLOW_OPT_URL_KWARGS = "base_url_requests_kwargs"
 CFG_SEC_WORKFLOW_REM_RES = 'remove_resources'
 CFG_SEC_MONITOR = 'monitoring'
 CFG_SEC_OCR = 'ocr'

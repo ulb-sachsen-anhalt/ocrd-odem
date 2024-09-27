@@ -21,6 +21,7 @@ import numpy as np
 import digiflow as df
 import digiflow.digiflow_export as dfx
 import digiflow.digiflow_metadata as dfm
+import digiflow.digiflow_io as dfo
 import digiflow.record as df_r
 
 import lib.odem.odem_commons as odem_c
@@ -95,7 +96,14 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         self.logger.debug("[%s] download %s to %s",
                           self.process_identifier, request_identifier, req_dst)
         try:
-            loader = df.OAILoader(req_dst_dir, base_url=oai_base_url, post_oai=dfm.extract_mets)
+            req_kwargs = {}
+            if self.configuration.has_option(odem_c.CFG_SEC_WORKFLOW,
+                                             odem_c.CFG_SEC_WORKFLOW_OPT_URL_KWARGS):
+                kwargs_conf = self.configuration.get(odem_c.CFG_SEC_WORKFLOW,
+                                                    odem_c.CFG_SEC_WORKFLOW_OPT_URL_KWARGS)
+                req_kwargs = {dfo.OAI_KWARG_REQUESTS: kwargs_conf}
+            loader = df.OAILoader(req_dst_dir, base_url=oai_base_url,
+                                  post_oai=dfm.extract_mets, **req_kwargs)
             loader.store = self.store
             loader.load(request_identifier, local_dst=req_dst)
         except df.ClientError as load_err:

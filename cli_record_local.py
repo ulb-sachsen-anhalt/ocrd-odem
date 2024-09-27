@@ -165,16 +165,17 @@ if __name__ == "__main__":
         if odem_process.record.info != 'n.a.':
             try:
                 if isinstance(odem_process.record.info, str):
-                    _info = dict(ast.literal_eval(odem_process.record.info))
-                odem_process.record.info.update(_kwargs)
-                _info = f"{odem_process.record.info}"
+                    the_info = dict(ast.literal_eval(odem_process.record.info))
+                elif isinstance(odem_process.record.info, tuple):
+                    odem_process.record.info[-1].update(_kwargs)
+                    the_info = odem_process.record.info[-1]
             except SyntaxError:
                 odem_process.logger.warning("Can't parse '%s', store info str",
                                             odem_process.record.info)
-                _info = f"{_kwargs}"
+                the_info = f"{_kwargs}"
         else:
-            _info = f"{_kwargs}"
-        handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=_info)
+            the_info = f"{_kwargs}"
+        handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=str(the_info))
         odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
                                  odem_process.statistics['timedelta'], EXECUTORS,
                                  odem_process.statistics)
