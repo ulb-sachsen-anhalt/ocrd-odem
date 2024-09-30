@@ -1,5 +1,6 @@
 """Specification for METS/MODS handling"""
 
+import configparser
 import datetime
 import os
 import shutil
@@ -10,7 +11,8 @@ import lxml.etree as ET
 import digiflow as df
 import digiflow.record as df_r
 
-import lib.odem as odem
+from lib import odem
+import lib.odem.odem_commons as odem_c
 import lib.odem.processing.mets as odem_pm
 
 from .conftest import (
@@ -193,12 +195,14 @@ def test_opendata_record_type_error():
 def test_mets_mods_sbb_vol01_with_ulb_defaults():
     """Check result outcome for SBB digital object from
     OCR-D METS-server https://github.com/kba/ocrd-demo-mets-server
-    with default ULB configuration settings
+    with special configuration settings
     """
     oai_urn = 'oai:digital.staatsbibliothek-berlin.de:PPN891267093'
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
-    cfg = fixture_configuration()
+    cfg: configparser.ConfigParser = fixture_configuration()
+    xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='gbv-ppn']/text()"
+    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
@@ -440,3 +444,43 @@ def test_process_bad_input_data():
 
     # assert
     assert outcome is not None
+
+
+def test_record_identifier_ulb_vd17():
+    """Check result outcome for ULB VD17 from
+    with special configuration settings
+    """
+    oai_urn = "oai:opendata2.uni-halle.de:1516514412012/32294"
+    orig_file = TEST_RES / "1516514412012_32294.xml"
+    assert os.path.isfile(orig_file)
+    cfg: configparser.ConfigParser = fixture_configuration()
+    xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='vd17-ppn']/text()"
+    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+
+    # act
+    inspc.metadata_report()
+
+    # assert
+    assert inspc.process_identifier == oai_urn
+    assert inspc.mods_record_identifier == "004952871"
+
+
+def test_record_identifier_provoke_exception():
+    """Provoke exception if expression provided
+    without match"""
+    
+    oai_urn = "oai:opendata2.uni-halle.de:1516514412012/32294"
+    orig_file = TEST_RES / "1516514412012_32294.xml"
+    assert os.path.isfile(orig_file)
+    cfg: configparser.ConfigParser = fixture_configuration()
+    xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='ulb-ppn']/text()"
+    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+
+    # act
+    with pytest.raises(odem_pm.ODEMMetadataMetsException) as mets_ex:
+        inspc.mods_record_identifier
+
+    # assert
+    assert "Invalid match [] " in mets_ex.value.args[0]

@@ -40,10 +40,12 @@ class ExportFormat(str, Enum):
 
 #
 # ODEM configuration keys
-CFG_SEC_WORKFLOW = 'workflow'
-CFG_SEC_WORKFLOW_OPT_URL = "base_url"
-CFG_SEC_WORKFLOW_OPT_URL_KWARGS = "base_url_requests_kwargs"
-CFG_SEC_WORKFLOW_REM_RES = 'remove_resources'
+CFG_SEC_FLOW = 'workflow'
+CFG_SEC_FLOW_OPT_URL = "base_url"
+CFG_SEC_FLOW_OPT_URL_KWARGS = "base_url_requests_kwargs"
+CFG_SEC_FLOW_OPT_REM_RES = 'remove_resources'
+CFG_SEC_FLOW_OPT_TEXTLINE = "create_textline_asset"
+CFG_SEC_FLOW_OPT_DELETE_DIRS = "delete_before_export"
 CFG_SEC_MONITOR = 'monitoring'
 CFG_SEC_OCR = 'ocr'
 CFG_SEC_OCR_OPT_EXECS = 'n_executors'
@@ -54,9 +56,17 @@ CFG_SEC_METS = 'mets'
 CFG_SEC_METS_OPT_AGENTS = 'agents'
 CFG_SEC_METS_OPT_ENRICH = 'enrich_fulltext'
 CFG_SEC_METS_OPT_CLEAN = 'post_clean'
-CFG_SEC_XPR = 'export'
-CFG_SEC_XPR_OPT_CREATE_TL = 'create_textline_asset'
-CFG_SEC_XPT_OPT_DEL_SDIRS = 'delete_subdirs_before_export'
+CFG_SEC_METS_OPT_ID_XPR = "record_identifier_xpr"
+CFG_SEC_EXP = 'export'
+CFG_SEC_EXP_ENABLED = "export_enabled"
+CFG_SEC_EXP_OPT_DEL_SDIRS = 'delete_subdirs_before_export'
+CFG_SEC_EXP_OPT_PREFIX = "export_prefix"
+CFG_SEC_EXP_OPT_FORMAT = "export_format"
+CFG_SEC_EXP_OPT_DST = "export_dst"
+CFG_SEC_EXP_OPT_TMP = "export_tmp"
+CFG_SEC_EXP_OPT_METS = "export_mets"
+CFG_SEC_EXP_OPT_COLLECTION = "export_collection"
+CFG_SEC_EXP_OPT_MAPPINGS = "export_mappings"
 KEY_LANGUAGES = 'language_model'
 KEY_MODEL_MAP = 'model_mapping'
 KEY_SEQUENTIAL_MODE = 'sequential_mode'

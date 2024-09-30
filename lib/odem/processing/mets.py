@@ -14,11 +14,7 @@ import lib.odem.odem_commons as odem_c
 
 TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
 TYPE_PRINTS_LOGICAL = ['monograph', 'volume', 'issue', 'additional']
-CATALOG_ULB = 'gvk-ppn'
-CATALOG_ULB2 = 'kxp-ppn'  # ULB ZD related
-CATALOG_OTH = 'gbv-ppn'
-CATALOG_SWB = 'swb-ppn'  # SLUB OAI related
-CATALOGUE_IDENTIFIERS = [CATALOG_ULB, CATALOG_ULB2, CATALOG_OTH, CATALOG_SWB]
+PPN_GVK = 'gvk-ppn'
 RECORD_IDENTIFIER = 'recordIdentifier'
 Q_XLINK_HREF = '{http://www.w3.org/1999/xlink}href'
 METS_AGENT_ODEM = 'DFG-OCRD3-ODEM'
@@ -61,8 +57,9 @@ class ODEMMetadataInspecteur:
                  cfg):
         self.process_identifier = process_identifier
         self._data = input_data
-        self._cfg = cfg
+        self._cfg: configparser.ConfigParser = cfg
         self._report = None
+        self._reader: df.MetsReader = None
         self.image_pairs = []
         self.n_images_pages = 0
         self.n_images_ocrable = 0
@@ -70,7 +67,8 @@ class ODEMMetadataInspecteur:
     def _get_report(self):
         if self._report is None:
             try:
-                self._report = df.MetsReader(self._data).report
+                self._reader = df.MetsReader(self._data)
+                self._report = self._reader.report
             except RuntimeError as _err:
                 raise ODEMMetadataMetsException(_err) from _err
         return self._report
@@ -86,16 +84,17 @@ class ODEMMetadataInspecteur:
         if not report.type:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} found no type")
         _type = report.type
-        # PICA types *might* contain trailing 'u' or 'v' = 'Afu'
+        # Attenzione:
+        #   PICA types *might* contain trailing 'u' or 'v' like in 'Afu'
+        #   therefore check the second character
         if len(_type) in range(2, 4) and _type[1] not in TYPE_PRINTS_PICA:
-            raise ODEMNoTypeForOCRException(f"{self.process_identifier} no PICA type for OCR: {report.type}")
+            no_pica_today = f"{self.process_identifier} no PICA type for OCR: {report.type}"
+            raise ODEMNoTypeForOCRException(no_pica_today)
         if len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
         reader = df.MetsReader(self._data)
         reader.check()
         self.inspect_metadata_images()
-        if not any(ident in CATALOGUE_IDENTIFIERS for ident in report.identifiers):
-            raise ODEMMetadataMetsException(f"No {CATALOGUE_IDENTIFIERS} in {self.process_identifier}")
         return report
 
     @property
@@ -106,22 +105,29 @@ class ODEMMetadataInspecteur:
     @property
     def mods_record_identifier(self):
         """Get main MODS recordIdentifier if present
-        guess if more than 1 ppn-like entry exist
+        if dedicated xpr exists, this will preceeded any
+        other heurictics to identify the record
+        otherwise look for commen ones like GVK or GBV
+        of even guess if more than 1 source present
         """
-        idents = dict(self._get_report().identifiers)
-        if 'urn' in idents:
-            del idents['urn']
-        if len(idents) == 1:
-            return list(idents.values())[0]
-        if CATALOG_ULB in idents:
-            return idents[CATALOG_ULB]
-        elif CATALOG_OTH in idents:
-            return idents[CATALOG_OTH]
-        else:
-            _proc_in = self.process_identifier
-            if ':' in _proc_in:
-                return _proc_in.replace(':', '+')
-            return _proc_in
+        # call first to set the reader in place
+        ident_map = dict(self._get_report().identifiers)
+        ident_xpr = self._cfg.get(odem_c.CFG_SEC_METS,
+                                  odem_c.CFG_SEC_METS_OPT_ID_XPR, fallback=None)
+        if ident_xpr is not None:
+            idents = self._reader.xpath(ident_xpr)
+            if len(idents) != 1:
+                the_msg = f"Invalid match {idents} for {ident_xpr} in {self.process_identifier}"
+                raise ODEMMetadataMetsException(the_msg)
+            return idents[0]
+        if PPN_GVK in ident_map:
+            return ident_map[PPN_GVK]
+        if 'urn' in ident_map:
+            del ident_map['urn']
+        if len(ident_map) == 1:
+            return list(ident_map.values())[0]
+        the_msg = f"found no record identifiy in {self.process_identifier}"
+        raise ODEMMetadataMetsException(the_msg)
 
     @property
     def languages(self):

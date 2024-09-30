@@ -62,13 +62,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_log_dir')
+    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
     LOG_FILE_NAME = None
-    if CFG.has_option(odem_c.CFG_SEC_WORKFLOW, 'logfile_name'):
-        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'logfile_name')
+    if CFG.has_option(odem_c.CFG_SEC_FLOW, 'logfile_name'):
+        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_FLOW, 'logfile_name')
     LOGGER = odem.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     METS_FILE: Path = Path(ARGS.mets_file).resolve()

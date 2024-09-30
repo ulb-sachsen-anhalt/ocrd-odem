@@ -28,9 +28,9 @@ def fixture_configuration():
 
     config = odem.get_configparser()
     config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.example.ini'))
-    config.set(odem.CFG_SEC_WORKFLOW, 'data_fields',
+    config.set(odem.CFG_SEC_FLOW, 'data_fields',
                'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
-    config.set(odem.CFG_SEC_WORKFLOW, odem.CFG_SEC_WORKFLOW_OPT_URL,
+    config.set(odem.CFG_SEC_FLOW, odem.CFG_SEC_FLOW_OPT_URL,
                'https://opendata.uni-halle.de/oai/dd')
     config.set(odem.CFG_SEC_METS, 'blacklist_file_groups',
                'DEFAULT, THUMB, THUMBS, MIN, FULLTEXT, DOWNLOAD')

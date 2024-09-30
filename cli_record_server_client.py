@@ -97,11 +97,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_WORK_ROOT = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_work_root')
+    LOCAL_WORK_ROOT = CFG.get(odem_c.CFG_SEC_FLOW, 'local_work_root')
     LOG_FILE_NAME = None
-    if CFG.has_option(odem_c.CFG_SEC_WORKFLOW, 'logfile_name'):
-        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'logfile_name')
-    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_log_dir')
+    if CFG.has_option(odem_c.CFG_SEC_FLOW, 'logfile_name'):
+        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_FLOW, 'logfile_name')
+    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         CFG.set(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS, str(EXECUTOR_ARGS))
     EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS)
     LOGGER.debug("local work_root: '%s', executors:%s", LOCAL_WORK_ROOT, EXECUTORS)
-    DATA_FIELDS = CFG.getlist(odem_c.CFG_SEC_WORKFLOW, 'data_fields')
+    DATA_FIELDS = CFG.getlist(odem_c.CFG_SEC_FLOW, 'data_fields')
     HOST = CFG.get('record-server', 'record_server_url')
     PORT = CFG.getint('record-server', 'record_server_port')
     LOGGER.info("client requests %s:%s/%s for records (state: %s, fmt:%s)",
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
 
-        local_store_root = CFG.get(odem_c.CFG_SEC_WORKFLOW, 'local_store_root', fallback=None)
+        local_store_root = CFG.get(odem_c.CFG_SEC_FLOW, 'local_store_root', fallback=None)
         if local_store_root is not None:
             store_root_dir = os.path.join(local_store_root, local_ident)
             odem_process.store = df.LocalStore(store_root_dir, req_dst_dir)
@@ -211,7 +211,7 @@ if __name__ == "__main__":
                        odem_process.process_identifier, odem_missmatch.args)
         exc_dict = {exc_label: odem_missmatch.args[0]}
         CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **exc_dict)
-        odem_process.clear_mets_resources(remove_all=True)
+        odem_process.clear_mets_resources()
     except odem.ODEMException as _odem_exc:
         # raised if record
         # * contains no PPN (gbv)
@@ -233,7 +233,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
-        odem_process.clear_mets_resources(remove_all=True)
+        odem_process.clear_mets_resources()
     except odem_md.VirtualMemoryExceededException as _vmem_exc:
         exc_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
@@ -242,7 +242,7 @@ if __name__ == "__main__":
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
-        odem_process.clear_mets_resources(remove_all=True)
+        odem_process.clear_mets_resources()
 
     except Exception as exc:
         # pick whole error context, since some exception's args are

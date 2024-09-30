@@ -82,12 +82,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def load(self):
         request_identifier = self.record.identifier
         local_identifier = self.record.local_identifier
-        if not self.configuration.has_option(odem_c.CFG_SEC_WORKFLOW,
-                                             odem_c.CFG_SEC_WORKFLOW_OPT_URL):
+        if not self.configuration.has_option(odem_c.CFG_SEC_FLOW,
+                                             odem_c.CFG_SEC_FLOW_OPT_URL):
             self.logger.info("[%s] no download", self.process_identifier)
             return
-        oai_base_url = self.configuration.get(odem_c.CFG_SEC_WORKFLOW,
-                                              odem_c.CFG_SEC_WORKFLOW_OPT_URL)
+        oai_base_url = self.configuration.get(odem_c.CFG_SEC_FLOW,
+                                              odem_c.CFG_SEC_FLOW_OPT_URL)
         req_dst_dir = os.path.join(
             os.path.dirname(self.work_dir_root), local_identifier)
         if not os.path.exists(req_dst_dir):
@@ -97,10 +97,10 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                           self.process_identifier, request_identifier, req_dst)
         try:
             req_kwargs = {}
-            if self.configuration.has_option(odem_c.CFG_SEC_WORKFLOW,
-                                             odem_c.CFG_SEC_WORKFLOW_OPT_URL_KWARGS):
-                kwargs_conf = self.configuration.get(odem_c.CFG_SEC_WORKFLOW,
-                                                    odem_c.CFG_SEC_WORKFLOW_OPT_URL_KWARGS)
+            if self.configuration.has_option(odem_c.CFG_SEC_FLOW,
+                                             odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS):
+                kwargs_conf = self.configuration.get(odem_c.CFG_SEC_FLOW,
+                                                    odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS)
                 req_kwargs = {dfo.OAI_KWARG_REQUESTS: kwargs_conf}
             loader = df.OAILoader(req_dst_dir, base_url=oai_base_url,
                                   post_oai=dfm.extract_mets, **req_kwargs)
@@ -316,7 +316,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if wf_create_derivates:
             self.create_derivates()
             self.postprocess_review_derivans_agents()
-        if self.configuration.getboolean(odem_c.CFG_SEC_WORKFLOW, odem_c.CFG_SEC_XPR_OPT_CREATE_TL,
+        if self.configuration.getboolean(odem_c.CFG_SEC_FLOW, odem_c.CFG_SEC_FLOW_OPT_TEXTLINE,
                                          fallback=False):
             self.create_text_bundle_data()
         if self.configuration.getboolean(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_CLEAN,
@@ -324,16 +324,18 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             self.postprocess_mets()
         if self.configuration.getboolean(odem_c.CFG_SEC_METS, 'postvalidate', fallback=True):
             self.validate_metadata()
-        if self.configuration.getboolean(odem_c.CFG_SEC_XPR, 'export_enabled', fallback=False):
+        if self.configuration.getboolean(odem_c.CFG_SEC_EXP,
+                                         odem_c.CFG_SEC_EXP_ENABLED, fallback=False):
             self.logger.info("[%s] start export", self.process_identifier)
-            if self.configuration.has_option(odem_c.CFG_SEC_XPR, odem_c.CFG_SEC_XPT_OPT_DEL_SDIRS):
-                del_dirs = self.configuration.get(odem_c.CFG_SEC_XPR,
-                                                  odem_c.CFG_SEC_XPT_OPT_DEL_SDIRS)
+            if self.configuration.has_option(odem_c.CFG_SEC_FLOW,
+                                             odem_c.CFG_SEC_FLOW_OPT_DELETE_DIRS):
+                del_dirs = self.configuration.getlist(odem_c.CFG_SEC_FLOW,
+                                                  odem_c.CFG_SEC_FLOW_OPT_DELETE_DIRS)
                 if len(del_dirs) > 0:
                     self.delete_local_directories(del_dirs)
             self.export_data()
-        if self.configuration.getboolean(odem_c.CFG_SEC_WORKFLOW,
-                                         odem_c.CFG_SEC_WORKFLOW_REM_RES,
+        if self.configuration.getboolean(odem_c.CFG_SEC_FLOW,
+                                         odem_c.CFG_SEC_FLOW_OPT_REM_RES,
                                          fallback=False):
             self.clear_mets_resources()
 
@@ -485,15 +487,22 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def export_data(self):
         """re-do metadata and transform into output format"""
 
-        export_format: str = self.configuration.get(odem_c.CFG_SEC_XPR, 'export_format',
+        export_format: str = self.configuration.get(odem_c.CFG_SEC_EXP,
+                                                    odem_c.CFG_SEC_EXP_OPT_FORMAT,
                                                     fallback=odem_c.ExportFormat.SAF)
-        export_mets: bool = self.configuration.getboolean(odem_c.CFG_SEC_XPR,
-                                                          'export_mets', fallback=True)
+        export_mets: bool = self.configuration.getboolean(odem_c.CFG_SEC_EXP,
+                                                          odem_c.CFG_SEC_EXP_OPT_METS,
+                                                          fallback=True)
 
-        exp_dst = self.configuration.get(odem_c.CFG_SEC_XPR, 'local_export_dir')
-        exp_tmp = self.configuration.get(odem_c.CFG_SEC_XPR, 'local_export_tmp')
-        exp_col = self.configuration.get(odem_c.CFG_SEC_XPR, 'export_collection')
-        exp_map = self.configuration.getdict(odem_c.CFG_SEC_XPR, 'export_mappings')
+        exp_dst = self.configuration.get(odem_c.CFG_SEC_EXP, odem_c.CFG_SEC_EXP_OPT_DST)
+        exp_tmp = self.configuration.get(odem_c.CFG_SEC_EXP, odem_c.CFG_SEC_EXP_OPT_TMP)
+        exp_col = self.configuration.get(odem_c.CFG_SEC_EXP,
+                                         odem_c.CFG_SEC_EXP_OPT_COLLECTION)
+        exp_map = self.configuration.getdict(odem_c.CFG_SEC_EXP,
+                                             odem_c.CFG_SEC_EXP_OPT_MAPPINGS)
+        exp_prefix = self.configuration.get(odem_c.CFG_SEC_EXP,
+                                            odem_c.CFG_SEC_EXP_OPT_PREFIX,
+                                            fallback=None)
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
@@ -501,6 +510,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if export_mets:
             exp_map[os.path.basename(self.mets_file_path)] = 'mets.xml'
         saf_name = self.mods_identifier
+        if exp_prefix is not None:
+            saf_name = f"{exp_prefix}{saf_name}"
         if export_format == odem_c.ExportFormat.SAF:
             export_result = df.export_data_from(
                 self.mets_file_path,

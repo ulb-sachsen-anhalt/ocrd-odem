@@ -241,7 +241,7 @@ class OCRDPageParallel(ODEMWorkflow):
         sub directory identified by adopted local
         identifier (local section of system OAI handle)"""
 
-        _root_log = self.config.get(odem_c.CFG_SEC_WORKFLOW, 'local_log_dir')
+        _root_log = self.config.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
         _local_ident = self.odem_process.process_identifier.replace('/', '_')
         _local_ocr_log = os.path.join(_root_log, _local_ident)
         if not os.path.exists(_local_ocr_log):

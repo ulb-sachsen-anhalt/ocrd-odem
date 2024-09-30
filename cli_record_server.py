@@ -37,7 +37,7 @@ if __name__ == "__main__":
     SCRIPT_CONFIGURATION.read(config_file)
 
     # check loggin pre-conditions
-    LOG_DIR = Path(SCRIPT_CONFIGURATION.get(odem_c.CFG_SEC_WORKFLOW, 'local_log_dir'))
+    LOG_DIR = Path(SCRIPT_CONFIGURATION.get(odem_c.CFG_SEC_FLOW, 'local_log_dir'))
     if not os.access(LOG_DIR, os.F_OK and os.W_OK):
         print(f"cant store log files at directory {LOG_DIR}")
         sys.exit(1)

@@ -423,9 +423,15 @@ def test_export_flat_zip(tmp_path):
                                  path_workdir,
                                  logger=None, log_dir=log_dir, record=record)
     model_dir = prepare_tessdata_dir(tmp_path)
-    oproc.configuration.set('export', 'export_format', odem.ExportFormat.FLAT_ZIP)
-    oproc.configuration.set('export', 'local_export_tmp', str(path_tmp_export_dir))
-    oproc.configuration.set('export', 'local_export_dir', str(path_export_dir))
+    oproc.configuration.set(odem_c.CFG_SEC_EXP,
+                            odem_c.CFG_SEC_EXP_OPT_FORMAT,
+                            odem.ExportFormat.FLAT_ZIP)
+    oproc.configuration.set(odem_c.CFG_SEC_EXP,
+                            odem_c.CFG_SEC_EXP_OPT_TMP,
+                            str(path_tmp_export_dir))
+    oproc.configuration.set(odem_c.CFG_SEC_EXP,
+                            odem_c.CFG_SEC_EXP_OPT_DST,
+                            str(path_export_dir))
     oproc.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,

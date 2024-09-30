@@ -15,7 +15,7 @@ from .ocr.ocrd import (
     get_recognition_level,
 )
 from .processing.mets import (
-    CATALOG_ULB,
+    PPN_GVK,
     ODEMMetadataInspecteur,
     ODEMMetadataMetsException,
     ODEMNoImagesForOCRException,
