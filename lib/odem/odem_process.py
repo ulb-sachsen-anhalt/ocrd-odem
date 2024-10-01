@@ -319,9 +319,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if self.configuration.getboolean(odem_c.CFG_SEC_FLOW, odem_c.CFG_SEC_FLOW_OPT_TEXTLINE,
                                          fallback=False):
             self.create_text_bundle_data()
-        if self.configuration.getboolean(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_CLEAN,
-                                         fallback=False):
-            self.postprocess_mets()
+        # METS postprocessing has own configuration options
+        self.postprocess_mets()
         if self.configuration.getboolean(odem_c.CFG_SEC_METS, 'postvalidate', fallback=True):
             self.validate_metadata()
         if self.configuration.getboolean(odem_c.CFG_SEC_EXP,
