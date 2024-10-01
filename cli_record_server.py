@@ -57,6 +57,8 @@ if __name__ == "__main__":
     SRV_HOST = SCRIPT_CONFIGURATION.get('record-server', 'record_server_url')
     SRV_PORT = SCRIPT_CONFIGURATION.getint('record-server', 'record_server_port')
     SRV_RESOURCE_DIR = SCRIPT_CONFIGURATION.get('record-server', 'record_server_resource_dir')
+    RAW_IPS = SCRIPT_CONFIGURATION.get('record-server', "accepted_ips", fallback="")
+    CLIENT_IPS = [c.strip() for c in RAW_IPS.split(",") if len(c.strip()) > 0]
 
     # foster the record dir path, propably shortened
     if '~' in SRV_RESOURCE_DIR:
@@ -65,6 +67,7 @@ if __name__ == "__main__":
 
     # forward to request handler
     server_info: df_r.HandlerInformation = df_r.HandlerInformation(SRV_RESOURCE_DIR, LOGGER)
+    server_info.client_ips = CLIENT_IPS
     try:
         df_r.run_server(SRV_HOST, SRV_PORT, start_data=server_info)
     except Exception as exc:
