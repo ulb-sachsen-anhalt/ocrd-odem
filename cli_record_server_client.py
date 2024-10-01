@@ -139,8 +139,8 @@ if __name__ == "__main__":
             # if no open data records, lock worker and exit
             LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE_NAME)
             sys.exit(1)
-    except odem.OAIRecordExhaustedException as _rec_ex:
-        exc_dict = _rec_ex.args[0]
+    except (odem.OAIRecordExhaustedException, df_r.RecordsServiceException) as req_exc:
+        exc_dict = req_exc.args[0]
         LOGGER.warning("no data for '%s' from '%s':'%s': %s",
                        OAI_RECORD_FILE_NAME, HOST, PORT, exc_dict)
         _notify('[OCR-D-ODEM] Date done', exc_dict)
