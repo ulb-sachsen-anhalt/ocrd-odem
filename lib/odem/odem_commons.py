@@ -143,7 +143,7 @@ DEFAULT_WORKLFOW = OdemWorkflowProcessType.OCRD_PAGE_PARALLEL
 
 
 @dataclasses.dataclass
-class ODEMOutcome:
+class OCRResult:
     """Describe the outcome of Running a
     OCR-like workflow as a container
     with all desired information for

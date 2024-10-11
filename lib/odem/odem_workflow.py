@@ -50,11 +50,11 @@ class ODEMWorkflowRunner:
             the_outcomes = self.run_parallel(input_data)
         else:
             the_outcomes = self.run_sequential(input_data)
-        self.odem_workflow.postprocess_outputs()
+        self.odem_workflow.postprocess_outputs(the_outcomes)
         self.logger.info("[%s] created %d ocr files for %d images",
                          self.process_identifier,
-                         len(the_outcomes), len(input_data))
-        return the_outcomes
+                         len(self.odem_workflow.ocr_results), len(input_data))
+        return self.odem_workflow.ocr_results
 
     def run_parallel(self, input_data):
         """Run workflow parallel with given executors"""
@@ -63,6 +63,7 @@ class ODEMWorkflowRunner:
         self.logger.info("[%s] %d inputs run_parallel with %d executors",
                          self.process_identifier, n_inputs, self.n_executors)
         try:
+            outcomes = []
             with concurrent.futures.ThreadPoolExecutor(
                     max_workers=self.n_executors,
                     thread_name_prefix='odem.ocrd'
@@ -115,7 +116,7 @@ class ODEMWorkflow:
         self.odem_process = odem_process
         self.config = odem_process.configuration
         self.logger = odem_process.logger
-        self.ocr_files = []
+        self.ocr_results: typing.List[odem_c.OCRResult] = []
 
     def get_inputs(self) -> typing.List:
         """Collect all input data files for processing"""
@@ -123,7 +124,7 @@ class ODEMWorkflow:
     def run(self, _: typing.List):
         """Run actual implemented Workflow"""
 
-    def postprocess_outputs(self):
+    def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
         """Work to do after pipeline has been run successfully
         like additional format transformations or sanitizings
         """
@@ -234,7 +235,7 @@ class OCRDPageParallel(ODEMWorkflow):
         os.chdir(self.odem_process.work_dir_root)
         if self.config.getboolean(odem_c.CFG_SEC_OCR, 'keep_temp_orcd_data', fallback=False) is False:
             shutil.rmtree(page_workdir, ignore_errors=True)
-        return odem_c.ODEMOutcome(stored, images_fsize=filesize_mb, images_mps=mps)
+        return odem_c.OCRResult(stored, images_fsize=filesize_mb, images_mps=mps)
 
     def _preserve_log(self, work_subdir, image_ident):
         """preserve ocrd.log for later analyzis as
@@ -295,7 +296,7 @@ class OCRDPageParallel(ODEMWorkflow):
             shutil.copy(renamed, target_path)
         return target_path
 
-    def postprocess_outputs(self):
+    def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
         """In this case:
         * move files from dir PAGE to FULLTEXT
         * convert OCR format PAGE => ALTO
@@ -303,22 +304,20 @@ class OCRDPageParallel(ODEMWorkflow):
         """
 
         n_candidates = len(self.odem_process.ocr_candidates)
-        list_from_dir = Path(self.odem_process.work_dir_root) / LOCAL_OCRD_RESULT_DIR
-        ocrd_data_files = odem_c.list_files(list_from_dir)
-        if len(ocrd_data_files) == 0 and n_candidates > 0:
+        if len(the_outcomes) == 0 and n_candidates > 0:
             raise odem_c.ODEMException(f"No OCR result for {n_candidates} candidates created!")
         final_fulltext_dir = os.path.join(self.odem_process.work_dir_root,
                                           odem_c.FILEGROUP_FULLTEXT)
         if not os.path.isdir(final_fulltext_dir):
             os.makedirs(final_fulltext_dir, exist_ok=True)
-        self.ocr_files = odem_fmt.convert_to_output_format(ocrd_data_files, final_fulltext_dir)
-        self.logger.info("[%s] converted %d ocr files to alto",
-                         self.odem_process.process_identifier, len(self.ocr_files))
+        self.ocr_results = odem_fmt.convert_to_output_format(the_outcomes, final_fulltext_dir)
+        self.logger.info("[%s] converted %d ocr results to alto",
+                         self.odem_process.process_identifier, len(self.ocr_results))
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
-        for _ocr_file in self.ocr_files:
-            odem_fmt.postprocess_ocr_file(_ocr_file, strip_tags)
+        for a_result in self.ocr_results:
+            odem_fmt.postprocess_ocr_file(a_result.local_path, strip_tags)
         self.logger.info("[%s] postprocessed %d ocr files",
-                         self.odem_process.process_identifier, len(self.ocr_files))
+                         self.odem_process.process_identifier, len(self.ocr_results))
 
 
 class ODEMTesseract(ODEMWorkflow):
@@ -347,7 +346,7 @@ class ODEMTesseract(ODEMWorkflow):
         if filestat:
             filesize_mb = filestat.st_size / 1048576
         (mps, _) = odem_img.get_imageinfo(image_path)
-        return odem_c.ODEMOutcome(local_path=legacy_result[0],
+        return odem_c.OCRResult(local_path=legacy_result[0],
                        images_fsize=filesize_mb, images_mps=mps)
 
     def read_pipeline_config(self, path_config=None) -> configparser.ConfigParser:
@@ -375,15 +374,16 @@ class ODEMTesseract(ODEMWorkflow):
             self.pipeline_configuration = pipe_cfg
         return self.pipeline_configuration
 
-    def postprocess_outputs(self):
+    def postprocess_outputs(self, ocr_results: typing.List[odem_c.OCRResult]):
         """Apply some postprocessing to the generated OCR output"""
-        odem_root = Path(self.odem_process.work_dir_root)
-        if self.config.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
-            estm_ocr_dir = self.config.get(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR)
-        else:
-            estm_ocr_dir = Path(self.odem_process.ocr_candidates[0][0]).parent
-        list_from_dir = odem_root / estm_ocr_dir
-        self.ocr_files = odem_c.list_files(list_from_dir)
+        # odem_root = Path(self.odem_process.work_dir_root)
+        # if self.config.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
+        #     estm_ocr_dir = self.config.get(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR)
+        # else:
+        #     estm_ocr_dir = Path(self.odem_process.ocr_candidates[0][0]).parent
+        # list_from_dir = odem_root / estm_ocr_dir
+        # self.ocr_files = odem_c.list_files(list_from_dir)
+        self.ocr_results = ocr_results
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
-        for _ocr_file in self.ocr_files:
-            odem_fmt.postprocess_ocr_file(_ocr_file, strip_tags)
+        for a_result in self.ocr_results:
+            odem_fmt.postprocess_ocr_file(a_result.local_path, strip_tags)

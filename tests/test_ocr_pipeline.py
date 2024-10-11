@@ -465,11 +465,11 @@ def test_odem_common_ocr_statistics(tmp_path):
                             ('/MAX/00000005.jpg', 'PHYS_05'),
                             ('/MAX/00000006.jpg', 'PHYS_06'),
                             ]
-    ocr_outcomes = [odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
-                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
-                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
-                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000005.xml', 0.6669, 3.893415),
-                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)]
+    ocr_outcomes = [odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
+                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
+                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
+                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000005.xml', 0.6669, 3.893415),
+                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)]
 
     # act
     oproc.calculate_statistics_ocr(ocr_outcomes)
@@ -499,10 +499,10 @@ def test_odem_ocr_statistics_some_loss(tmp_path):
                             ('/MAX/00000005.jpg', 'PHYS_05'),
                             ('/MAX/00000006.jpg', 'PHYS_06'),
                             ]
-    ocr_outcomes = [odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
-                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
-                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
-                    odem_c.ODEMOutcome(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)
+    ocr_outcomes = [odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
+                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
+                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
+                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)
                     ]
 
     # act

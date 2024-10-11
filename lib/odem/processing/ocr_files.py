@@ -11,6 +11,7 @@ import lxml.etree as ET
 import digiflow as df
 import ocrd_page_to_alto.convert as opta_c
 
+import lib.odem.odem_commons as odem_c
 
 # very common separator '⸗'
 DOUBLE_OBLIQUE_HYPHEN = '\u2E17'
@@ -33,6 +34,8 @@ COMBINING_SMALL_E = '\u0364'
 #   * Dashes        \u2012-2017
 #   * Quotations    \u2018-201F
 PUNCTUATIONS = string.punctuation + '\u2012' + '\u2013' + '\u2014' + '\u2015' + '\u2016' + '\u2017' + '\u2018' + '\u2019' + '\u201A' + '\u201B' + '\u201C' + '\u201D' + '\u201E' + '\u201F'
+
+_ALTO_CONTENT = "CONTENT"
 
 DROP_ALTO_ELEMENTS = [
     'alto:Shape',
@@ -88,19 +91,22 @@ def postprocess_ocr_file(ocr_file, strip_tags):
     xml_proc.write()
 
 
-def convert_to_output_format(ocrd_results: typing.List, dst_dir):
+def convert_to_output_format(ocr_results: typing.List[odem_c.OCRResult], dst_dir):
     """Convert created OCR-Files to required presentation
     format (i.e. ALTO)
     """
 
     converted_files = []
-    for _file in ocrd_results:
-        the_id = os.path.basename(_file)
+    for a_result in ocr_results:
+        the_id = os.path.basename(a_result.local_path)
         output_file = os.path.join(dst_dir, the_id)
-        converted = opta_c.OcrdPageAltoConverter(page_filename=_file).convert()
+        converted = opta_c.OcrdPageAltoConverter(page_filename=a_result.local_path).convert()
+        conv_str = str(converted)
+        if conv_str.count(_ALTO_CONTENT) == 0:
+            continue # file contains no content, skip it
         with open(output_file, 'w', encoding='utf-8') as output:
-            output.write(str(converted))
-        converted_files.append(output_file)
+            output.write(conv_str)
+        converted_files.append(a_result)
     return converted_files
 
 

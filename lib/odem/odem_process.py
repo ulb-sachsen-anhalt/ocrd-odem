@@ -297,7 +297,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             images_of_interest.append((the_file, urn))
         self.ocr_candidates = images_of_interest
 
-    def postprocess(self, ocr_results: typing.List[odem_c.ODEMOutcome]):
+    def postprocess(self, ocr_results: typing.List[odem_c.OCRResult]):
         """Encapsulate after-OCR workflow"""
         if ocr_results is None or len(ocr_results) == 0:
             raise odem_c.ODEMException(f"process run error: {self.record.identifier}")
@@ -338,7 +338,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                                          fallback=False):
             self.clear_mets_resources()
 
-    def calculate_statistics_ocr(self, outcomes: typing.List[odem_c.ODEMOutcome]):
+    def calculate_statistics_ocr(self, outcomes: typing.List[odem_c.OCRResult]):
         """Calculate stats from given ODEMOutcomes"""
 
         n_ocr_created = len(outcomes)
@@ -353,7 +353,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         self.process_statistics[odem_c.STATS_KEY_N_OCR] = n_ocr_created
         self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
         self.process_statistics[odem_c.STATS_KEY_MPS] = mps
-        n_ocr_cands = self.ocr_candidates
+        n_ocr_cands = len(self.ocr_candidates)
         if n_ocr_created != n_ocr_cands:
             self.logger.warning("[%s] %d ocr candidates != %d ocr results",
                                 self.process_identifier, n_ocr_cands,
