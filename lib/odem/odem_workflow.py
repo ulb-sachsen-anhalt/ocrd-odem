@@ -51,7 +51,8 @@ class ODEMWorkflowRunner:
         n_processed = len(raw_returned)
         self.logger.info("[%s] processed %d candidates",
                          self.process_identifier, n_processed)
-        filter_set = [r for r in raw_returned if r[0] != odem_c.UNSET]
+        filter_set = [r for r in raw_returned 
+                      if r.local_path != odem_c.UNSET]
         the_unsets = n_processed - len(filter_set)
         self.logger.info("[%s] from %d candidates filtered %d unset",
                          self.process_identifier, the_unsets)
@@ -126,8 +127,9 @@ class ODEMWorkflow:
     def get_inputs(self) -> typing.List:
         """Collect all input data files for processing"""
 
-    def run(self, _: typing.List):
-        """Run actual implemented Workflow"""
+    def run(self, _: typing.List) -> odem_c.OCRResult:
+        """Run actual implemented Workflow to generate
+        single OCR Result"""
 
     def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
         """Work to do after pipeline has been run successfully
