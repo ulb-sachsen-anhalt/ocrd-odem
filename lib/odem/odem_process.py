@@ -341,24 +341,30 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def calculate_statistics_ocr(self, outcomes: typing.List[odem_c.ODEMOutcome]):
         """Calculate stats from given ODEMOutcomes"""
 
+        n_ocr_created = len(outcomes)
         self.logger.info("[%s] calculate statistics for %d results",
                          self.process_identifier,
-                         len(outcomes))
+                         n_ocr_created)
         total_mps = [round(o.images_mps, 1) for o in outcomes]
         mod_val_counts = np.unique(total_mps, return_counts=True)
         mps_np = list(zip(*mod_val_counts))
         mps = [(float(pair[0]), int(pair[1])) for pair in mps_np]  # since numpy 2.x
         total_mb = sum([o.images_fsize for o in outcomes], 0)
-        self.process_statistics[odem_c.STATS_KEY_N_OCR] = len(outcomes)
+        self.process_statistics[odem_c.STATS_KEY_N_OCR] = n_ocr_created
         self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
         self.process_statistics[odem_c.STATS_KEY_MPS] = mps
-        img_candidate_names = [Path(pair[0]).stem
-                               for pair in self.ocr_candidates
-                               if isinstance(pair, tuple)]
-        ocr_names = [Path(o.local_path).stem for o in outcomes]
-        data_loss = set(img_candidate_names) ^ set(ocr_names)
-        if len(data_loss) > 0:
-            self.process_statistics[odem_c.STATS_KEY_OCR_LOSS] = data_loss
+        n_ocr_cands = self.ocr_candidates
+        if n_ocr_created != n_ocr_cands:
+            self.logger.warning("[%s] %d ocr candidates != %d ocr results",
+                                self.process_identifier, n_ocr_cands,
+                                n_ocr_created)
+            img_candidate_names = [Path(pair[0]).stem
+                                for pair in self.ocr_candidates
+                                if isinstance(pair, tuple)]
+            ocr_names = [Path(o.local_path).stem for o in outcomes]
+            data_loss = set(img_candidate_names) ^ set(ocr_names)
+            if len(data_loss) > 0:
+                self.process_statistics[odem_c.STATS_KEY_OCR_LOSS] = list(data_loss)
 
     def link_ocr_files(self) -> int:
         """Prepare and link OCR-data"""

@@ -506,5 +506,5 @@ def test_odem_ocr_statistics_some_loss(tmp_path):
     # assert
     assert oproc.statistics.get(odem.STATS_KEY_N_OCR) == 4
     assert odem.STATS_KEY_OCR_LOSS in oproc.statistics
-    assert oproc.statistics.get(odem.STATS_KEY_OCR_LOSS) == {'00000005'}
+    assert oproc.statistics.get(odem.STATS_KEY_OCR_LOSS) == ['00000005']
     assert oproc.statistics.get(odem.STATS_KEY_MPS) == [(3.9, 4)]
