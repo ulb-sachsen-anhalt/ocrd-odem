@@ -12,8 +12,6 @@ import sys
 import time
 import typing
 
-from pathlib import Path
-
 import lib.odem.odem_commons as odem_c
 import lib.odem.ocr.ocrd as odem_ocrd
 import lib.odem.ocr.ocr_pipeline as odem_tess
@@ -47,10 +45,17 @@ class ODEMWorkflowRunner:
         self.logger.info("[%s] run %d images with %d executors",
                          self.process_identifier, len(input_data), self.n_executors)
         if self.n_executors > 1:
-            the_outcomes = self.run_parallel(input_data)
+            raw_returned = self.run_parallel(input_data)
         else:
-            the_outcomes = self.run_sequential(input_data)
-        self.odem_workflow.postprocess_outputs(the_outcomes)
+            raw_returned = self.run_sequential(input_data)
+        n_processed = len(raw_returned)
+        self.logger.info("[%s] processed %d candidates",
+                         self.process_identifier, n_processed)
+        filter_set = [r for r in raw_returned if r[0] != odem_c.UNSET]
+        the_unsets = n_processed - len(filter_set)
+        self.logger.info("[%s] from %d candidates filtered %d unset",
+                         self.process_identifier, the_unsets)
+        self.odem_workflow.postprocess_outputs(filter_set)
         self.logger.info("[%s] created %d ocr files for %d images",
                          self.process_identifier,
                          len(self.odem_workflow.ocr_results), len(input_data))
