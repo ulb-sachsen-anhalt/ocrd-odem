@@ -25,7 +25,6 @@ from lib.odem import (
     MARK_OCR_FAIL,
     ODEMProcessImpl,
     ODEMException,
-    get_configparser,
     get_logger,
 )
 
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     # MUST_LOCK = ARGS.lock_mode
     EXECUTOR_ARGS = ARGS.executors
 
-    CFG = get_configparser()
+    CFG = odem.get_configparser()
     configurations_read = CFG.read(CONF_FILE)
     if not configurations_read:
         print(f"unable to read config from '{CONF_FILE}! exit!")
@@ -169,6 +168,8 @@ if __name__ == "__main__":
                 elif isinstance(odem_process.record.info, tuple):
                     odem_process.record.info[-1].update(_kwargs)
                     the_info = odem_process.record.info[-1]
+                elif isinstance(odem_process.record.info, dict):
+                    the_info = odem_process.record.info
             except SyntaxError:
                 odem_process.logger.warning("Can't parse '%s', store info str",
                                             odem_process.record.info)

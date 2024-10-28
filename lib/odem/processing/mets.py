@@ -152,28 +152,31 @@ class ODEMMetadataInspecteur:
 
         blacklist_log = self._cfg.getlist('mets', 'blacklist_logical_containers')
         blacklist_lab = self._cfg.getlist('mets', 'blacklist_physical_container_labels')
+        use_fgroup = self._cfg.get(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, 
+                                   fallback=odem_c.DEFAULT_FGROUP)
         mets_root = ET.parse(self._data).getroot()
-        _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_ULB}"]/mets:file', df.XMLNS)
-        _n_image_res = len(_image_res)
-        if _n_image_res == 0:
-            _image_res = mets_root.findall(f'.//mets:fileGrp[@USE="{IMAGE_GROUP_DEFAULT}"]/mets:file', df.XMLNS)
-            _n_image_res = len(_image_res)
-        if _n_image_res < 1:
-            _msg = f"{self.process_identifier} contains absolutly no images for OCR!"
-            raise ODEMNoImagesForOCRException(_msg)
+        image_files = mets_root.findall(f'.//mets:fileGrp[@USE="{use_fgroup}"]/mets:file', df.XMLNS)
+        n_images = len(image_files)
+        if n_images < 1:
+            the_msg = f"{self.process_identifier} contains absolutly no images for OCR!"
+            raise ODEMNoImagesForOCRException(the_msg)
         # gather present images via generator
-        pairs_img_id = fname_ident_pairs_from_metadata(mets_root, _image_res, blacklist_log, blacklist_lab)
+        use_id = self._cfg.getboolean(odem_c.CFG_SEC_FLOW, odem_c.CFG_SEC_FLOW_USE_FILEID,
+                                      fallback=False)
+        pairs_img_id = fname_ident_pairs_from_metadata(mets_root, image_files, blacklist_log,
+                                                       blacklist_lab, use_file_id=use_id)
         n_images_ocrable = len(pairs_img_id)
         if n_images_ocrable < 1:
-            _msg = f"{self.process_identifier} contains no images for OCR (total: {_n_image_res})!"
-            raise ODEMNoImagesForOCRException(_msg)
+            the_msg = f"{self.process_identifier} contains no images for OCR (total: {n_images})!"
+            raise ODEMNoImagesForOCRException(the_msg)
         # else, journey onwards with image name only
         self.image_pairs = pairs_img_id
-        self.n_images_pages = _n_image_res
+        self.n_images_pages = n_images
         self.n_images_ocrable = len(self.image_pairs)
 
 
-def fname_ident_pairs_from_metadata(mets_root, image_res, blacklist_structs, blacklist_page_labels):
+def fname_ident_pairs_from_metadata(mets_root, images, blacklist_structs,
+                                    blacklist_page_labels, use_file_id):
     """Generate pairs of image label and URN
     that respect defined blacklisted physical
     and logical structures.
@@ -184,27 +187,31 @@ def fname_ident_pairs_from_metadata(mets_root, image_res, blacklist_structs, bla
       from file location => physical container => structMap
       => logical structure
     """
-    _pairs = []
-    _problems = []
-    _phys_conts = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', df.XMLNS)
-    _structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', df.XMLNS)
-    _log_conts = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', df.XMLNS)
-    for img_cnt in image_res:
-        _local_file_name = img_cnt[0].get(Q_XLINK_HREF).split('/')[-1]
-        _file_id = img_cnt.get('ID')
-        _phys_dict = _phys_container_for_id(_phys_conts, _file_id)
+    the_pairs = []
+    problems = []
+    phys_structs = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', df.XMLNS)
+    structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', df.XMLNS)
+    log_structs = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', df.XMLNS)
+    for img_cnt in images:
+        file_id = img_cnt.get('ID')
+        final_res_name = img_cnt[0].get(Q_XLINK_HREF).split('/')[-1]
+        if use_file_id:
+            final_res_name = file_id
+        if not final_res_name.endswith(".jpg"):
+            final_res_name += ".jpg"
+        phys_cnt = _phys_container_for_id(phys_structs, file_id)
         try:
-            log_types = _log_types_for_page(_phys_dict['ID'], _structmap_links, _log_conts)
+            log_types = _log_types_for_page(phys_cnt['ID'], structmap_links, log_structs)
         except ODEMMetadataMetsException as ome:
-            _problems.append(ome.args[0])
+            problems.append(ome.args[0])
         if not is_in(blacklist_structs, log_types):
-            if not is_in(blacklist_page_labels, _phys_dict['LABEL']):
-                _pairs.append((_local_file_name, _phys_dict['ID']))
+            if not is_in(blacklist_page_labels, phys_cnt['LABEL']):
+                the_pairs.append((final_res_name, phys_cnt['ID']))
     # re-raise on error
-    if len(_problems) > 0:
-        _n_probs = len(_problems)
-        raise ODEMMetadataMetsException(f"{_n_probs}x: {','.join(_problems)}")
-    return _pairs
+    if len(problems) > 0:
+        n_probs = len(problems)
+        raise ODEMMetadataMetsException(f"{n_probs}x: {','.join(problems)}")
+    return the_pairs
 
 
 def _phys_container_for_id(_phys_conts, _id):

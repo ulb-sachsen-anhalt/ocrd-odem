@@ -51,11 +51,12 @@ class ODEMWorkflowRunner:
         n_processed = len(raw_returned)
         self.logger.info("[%s] processed %d candidates",
                          self.process_identifier, n_processed)
-        filter_set = [r for r in raw_returned 
+        filter_set = [r for r in raw_returned
                       if r.local_path != odem_c.UNSET]
         the_unsets = n_processed - len(filter_set)
         self.logger.info("[%s] from %d candidates filtered %d unset",
-                         self.process_identifier, the_unsets)
+                         self.process_identifier, len(raw_returned),
+                         the_unsets)
         self.odem_workflow.postprocess_outputs(filter_set)
         self.logger.info("[%s] created %d ocr files for %d images",
                          self.process_identifier,

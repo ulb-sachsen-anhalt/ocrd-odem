@@ -31,9 +31,6 @@ import lib.odem.processing.mets as odem_mets
 
 # python process-wrapper limit
 os.environ['OMP_THREAD_LIMIT'] = '1'
-# default language fallback
-# (only when processing local images)
-DEFAULT_LANG = 'ger'
 
 
 class ODEMModelMissingException(odem_c.ODEMException):
@@ -99,13 +96,20 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             req_kwargs = {}
             if self.configuration.has_option(odem_c.CFG_SEC_FLOW,
                                              odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS):
-                kwargs_conf = self.configuration.get(odem_c.CFG_SEC_FLOW,
+                requests_kwargs = self.configuration.get(odem_c.CFG_SEC_FLOW,
                                                     odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS)
-                req_kwargs = {dfo.OAI_KWARG_REQUESTS: kwargs_conf}
+                req_kwargs = {dfo.OAI_KWARG_REQUESTS: requests_kwargs}
+            load_fgroup = self.configuration.get(odem_c.CFG_SEC_METS,
+                                            odem_c.CFG_SEC_METS_FGROUP,
+                                            fallback=odem_c.DEFAULT_FGROUP)
+            req_kwargs[dfo.OAI_KWARG_FGROUP_IMG] = load_fgroup
             loader = df.OAILoader(req_dst_dir, base_url=oai_base_url,
                                   post_oai=dfm.extract_mets, **req_kwargs)
             loader.store = self.store
-            loader.load(request_identifier, local_dst=req_dst)
+            use_file_id = self.configuration.getboolean(odem_c.CFG_SEC_FLOW,
+                                          odem_c.CFG_SEC_FLOW_USE_FILEID,
+                                          fallback=False)
+            loader.load(request_identifier, local_dst=req_dst, use_file_id=use_file_id)
         except df.ClientError as load_err:
             raise odem_c.ODEMException(load_err.args[0]) from load_err
         except RuntimeError as _err:
@@ -212,7 +216,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         #3: inspect metadata
         """
 
-        file_lang_suffixes = DEFAULT_LANG
+        file_lang_suffixes = odem_c.DEFAULT_LANG
         # inspect language arg
         if self.configuration.has_option(odem_c.CFG_SEC_OCR, odem_c.KEY_LANGUAGES):
             file_lang_suffixes = self.configuration.get(odem_c.CFG_SEC_OCR,
@@ -228,7 +232,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             except odem_c.ODEMException as oxc:
                 self.logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
                                     self.process_identifier, oxc.args[0],
-                                    image_path, DEFAULT_LANG)
+                                    image_path, odem_c.DEFAULT_LANG)
             return self.language_modelconfig(file_lang_suffixes)
         # inspect language information from MODS metadata
         return self.language_modelconfig()
@@ -286,7 +290,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         images_of_interest = []
         images_dir = 'MAX'
         if self.configuration.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
-            images_dir = self.configuration.get('ocr', 'image_subpath')
+            images_dir = self.configuration.get(odem_c.CFG_SEC_OCR,
+                                                odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR)
         local_img_dir = os.path.join(self.work_dir_root, images_dir)
         self.logger.debug("[%s] inspect local image dir %s",
                           self.process_identifier, local_img_dir)
@@ -427,6 +432,9 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             path_mvn_project=path_prj,
             path_logging=path_logging,
         )
+        if self.configuration.has_option(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_FGROUP):
+            the_fgroup = self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_FGROUP)
+            derivans.images = the_fgroup
         derivans.init()
         # be cautious
         try:
@@ -476,18 +484,22 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         """
 
         if not self.configuration.getboolean('mets', 'prevalidate', fallback=True):
-            self.logger.warning("[%s] skipping any pre-validation",
+            self.logger.warning("[%s] skipping pre-validation",
                                 self.process_identifier)
-        if self.configuration.getboolean('mets', 'validate', fallback=False):
-            ignore_ddb = []
-            if self.configuration.has_option('mets', 'ddb_validation_ignore'):
-                raw_ignore_str = self.configuration.get('mets', 'ddb_validation_ignore')
-                ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
-            ddb_min_level = 'fatal'
-            if self.configuration.has_option('mets', 'ddb_min_level'):
-                ddb_min_level = self.configuration.get('mets', 'ddb_min_level')
-            return odem_mets.validate_mets(self.mets_file_path, ddb_ignores=ignore_ddb,
-                                      ddb_min_level=ddb_min_level)
+            return
+        if not self.configuration.getboolean('mets', 'postvalidate', fallback=False):
+            self.logger.warning("[%s] skipping post-validation",
+                                self.process_identifier)
+            return
+        ignore_ddb = []
+        if self.configuration.has_option('mets', 'ddb_validation_ignore'):
+            raw_ignore_str = self.configuration.get('mets', 'ddb_validation_ignore')
+            ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
+        ddb_min_level = 'fatal'
+        if self.configuration.has_option('mets', 'ddb_min_level'):
+            ddb_min_level = self.configuration.get('mets', 'ddb_min_level')
+        return odem_mets.validate_mets(self.mets_file_path, ddb_ignores=ignore_ddb,
+                                    ddb_min_level=ddb_min_level)
 
     def export_data(self):
         """re-do metadata and transform into output format"""

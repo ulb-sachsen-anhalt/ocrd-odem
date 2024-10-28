@@ -203,9 +203,10 @@ def test_mets_mods_sbb_vol01_with_ulb_defaults():
     cfg: configparser.ConfigParser = fixture_configuration()
     xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='gbv-ppn']/text()"
     cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
-    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, "DEFAULT")
 
     # act
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
     inspc.metadata_report()
 
     # assert
@@ -253,6 +254,7 @@ def test_mets_mods_sbb_vol01_filtering():
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
+    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, "DEFAULT")
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
@@ -274,6 +276,7 @@ def test_mets_mods_sbb_vol01_filtering_custom():
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
     cfg.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back,binding')
+    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, "DEFAULT")
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act

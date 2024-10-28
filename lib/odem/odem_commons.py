@@ -46,6 +46,7 @@ CFG_SEC_FLOW_OPT_URL_KWARGS = "base_url_requests_kwargs"
 CFG_SEC_FLOW_OPT_REM_RES = 'remove_resources'
 CFG_SEC_FLOW_OPT_TEXTLINE = "create_textline_asset"
 CFG_SEC_FLOW_OPT_DELETE_DIRS = "delete_before_export"
+CFG_SEC_FLOW_USE_FILEID = "use_file_id"
 CFG_SEC_MONITOR = 'monitoring'
 CFG_SEC_OCR = 'ocr'
 CFG_SEC_OCR_OPT_EXECS = 'n_executors'
@@ -57,6 +58,9 @@ CFG_SEC_METS_OPT_AGENTS = 'agents'
 CFG_SEC_METS_OPT_ENRICH = 'enrich_fulltext'
 CFG_SEC_METS_OPT_CLEAN = 'post_clean'
 CFG_SEC_METS_OPT_ID_XPR = "record_identifier_xpr"
+CFG_SEC_METS_FGROUP = "use_fgroup"
+CFG_SEC_DERIVANS = "derivans"
+CFG_SEC_DERIVANS_FGROUP = "image_fgroup"
 CFG_SEC_EXP = 'export'
 CFG_SEC_EXP_ENABLED = "export_enabled"
 CFG_SEC_EXP_OPT_DEL_SDIRS = 'delete_subdirs_before_export'
@@ -70,6 +74,7 @@ CFG_SEC_EXP_OPT_MAPPINGS = "export_mappings"
 KEY_LANGUAGES = 'language_model'
 KEY_MODEL_MAP = 'model_mapping'
 KEY_SEQUENTIAL_MODE = 'sequential_mode'
+
 #
 # ODEM arguments
 # = shortform, longform
@@ -116,6 +121,7 @@ STATS_KEY_MPS = 'mps'
 # default language for fallback
 # when processing local images
 DEFAULT_LANG = 'ger'
+DEFAULT_FGROUP = FILEGROUP_IMG
 # recognition level for tesserocr
 # must switch otherwise glyphs are reverted
 # for each word
