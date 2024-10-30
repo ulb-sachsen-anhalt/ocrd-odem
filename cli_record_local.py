@@ -160,22 +160,23 @@ if __name__ == "__main__":
                         local_ident, EXECUTORS)
             ocr_results = odem_runner.run()
         odem_process.postprocess(ocr_results)
-        _kwargs = odem_process.statistics
-        if odem_process.record.info != 'n.a.':
+        stats_kwargs = odem_process.statistics
+        if odem_process.record.info != odem_c.UNSET:
             try:
                 if isinstance(odem_process.record.info, str):
                     the_info = dict(ast.literal_eval(odem_process.record.info))
                 elif isinstance(odem_process.record.info, tuple):
-                    odem_process.record.info[-1].update(_kwargs)
+                    odem_process.record.info[-1].update(stats_kwargs)
                     the_info = odem_process.record.info[-1]
                 elif isinstance(odem_process.record.info, dict):
+                    odem_process.record.info.update(stats_kwargs)
                     the_info = odem_process.record.info
             except SyntaxError:
                 odem_process.logger.warning("Can't parse '%s', store info str",
                                             odem_process.record.info)
-                the_info = f"{_kwargs}"
+                the_info = f"{stats_kwargs}"
         else:
-            the_info = f"{_kwargs}"
+            the_info = f"{stats_kwargs}"
         handler.save_record_state(record.identifier, MARK_OCR_DONE, INFO=str(the_info))
         odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
                                  odem_process.statistics['timedelta'], EXECUTORS,
