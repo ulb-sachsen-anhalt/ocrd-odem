@@ -152,7 +152,7 @@ class ODEMMetadataInspecteur:
 
         blacklist_log = self._cfg.getlist('mets', 'blacklist_logical_containers')
         blacklist_lab = self._cfg.getlist('mets', 'blacklist_physical_container_labels')
-        use_fgroup = self._cfg.get(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, 
+        use_fgroup = self._cfg.get(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP,
                                    fallback=odem_c.DEFAULT_FGROUP)
         mets_root = ET.parse(self._data).getroot()
         image_files = mets_root.findall(f'.//mets:fileGrp[@USE="{use_fgroup}"]/mets:file', df.XMLNS)
@@ -459,7 +459,7 @@ def extract_text_content(ocr_files: typing.List) -> typing.List:
             ns_map = _sanitize_namespaces(ocr_root)
             all_lines = ocr_root.findall('.//alto:TextLine', ns_map)
             for single_line in all_lines:
-                line_strs = [s.attrib['CONTENT'] 
+                line_strs = [s.attrib['CONTENT']
                              for s in single_line.findall('.//alto:String', ns_map)]
                 txt_contents.append(' '.join(line_strs))
     return txt_contents

@@ -382,7 +382,7 @@ class ODEMTesseract(ODEMWorkflow):
             self.pipeline_configuration = pipe_cfg
         return self.pipeline_configuration
 
-    def postprocess_outputs(self, ocr_results: typing.List[odem_c.OCRResult]):
+    def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
         """Apply some postprocessing to the generated OCR output"""
         # odem_root = Path(self.odem_process.work_dir_root)
         # if self.config.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
@@ -391,7 +391,7 @@ class ODEMTesseract(ODEMWorkflow):
         #     estm_ocr_dir = Path(self.odem_process.ocr_candidates[0][0]).parent
         # list_from_dir = odem_root / estm_ocr_dir
         # self.ocr_files = odem_c.list_files(list_from_dir)
-        self.ocr_results = ocr_results
+        self.ocr_results = the_outcomes
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
         for a_result in self.ocr_results:
             odem_fmt.postprocess_ocr_file(a_result.local_path, strip_tags)
