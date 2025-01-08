@@ -2,17 +2,19 @@
 
 set -eu
 
-this_script="${BASH_SOURCE[0]}"
-this_script_dir="$(dirname "$this_script")"
+THE_SCRIPT="${BASH_SOURCE[0]}"
+THE_DIR="$(dirname "${THE_SCRIPT}")"
+THE_PYTHON=python3.10
 
 
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
+if [ -d "venv" ]; then
+    rm -vr venv
 fi
+${THE_PYTHON} -m venv venv
 
 # cf. https://www.shellcheck.net/wiki/SC1091
 # shellcheck source=/dev/null
 source ./venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install --upgrade digiflow
-python -m pip install -r "$this_script_dir"/requirements.txt
+python -m pip install -r "${THE_DIR}"/requirements.txt
