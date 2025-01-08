@@ -304,6 +304,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
     def postprocess(self, ocr_results: typing.List[odem_c.OCRResult]):
         """Encapsulate after-OCR workflow"""
+
         if ocr_results is None or len(ocr_results) == 0:
             raise odem_c.ODEMException(f"process run error: {self.record.identifier}")
         self.calculate_statistics_ocr(ocr_results)

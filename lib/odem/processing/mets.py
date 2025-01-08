@@ -439,13 +439,18 @@ def process_mets_derivans_agents(mets_file, odem_config: configparser.ConfigPars
 def validate_mets(mets_file: str, ddb_ignores, ddb_min_level):
     """Forward METS-schema validation"""
 
-    reporter = dfv.Reporter(mets_file)
-    report: dfv.Report = reporter.get(ignore_ddb_rule_ids=ddb_ignores, min_ddb_level=ddb_min_level)
-    if report.alert(min_ddb_role_label=ddb_min_level):
-        xsd_msg = report.xsd_errors if report.xsd_errors else ''
-        ddb_msg = report.read()
-        raise odem_c.ODEMException(f"{xsd_msg}{ddb_msg}")
-    return True
+    try:
+        reporter = dfv.Reporter(mets_file)
+        report: dfv.Report = reporter.get(ignore_ddb_rule_ids=ddb_ignores,
+                                          min_ddb_level=ddb_min_level)
+        if report.alert(min_ddb_role_label=ddb_min_level):
+            xsd_msg = report.xsd_errors if report.xsd_errors else ''
+            ddb_msg = report.read()
+            raise odem_c.ODEMException(f"{xsd_msg}{ddb_msg}")
+        return True
+    except ET.XMLSchemaError as lxml_err:
+        msg = f"fail to parse {mets_file}: {lxml_err.args}"
+        raise odem_c.ODEMDataException(msg) from lxml_err
 
 
 def extract_text_content(ocr_files: typing.List) -> typing.List:

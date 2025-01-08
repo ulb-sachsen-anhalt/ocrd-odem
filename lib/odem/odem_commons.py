@@ -132,15 +132,21 @@ DEFAULT_LOG_CONFIG = os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
 
 
 class ODEMException(Exception):
-    """Mark custom ODEM Workflow Exceptions"""
+    """Basic ODEM Exception"""
+
+
+class ODEMDataException(ODEMException):
+    """Mark problems related to data, not to
+    general workflow or external factors"""
 
 
 class OAIRecordExhaustedException(Exception):
-    """Mark that given file contains no open records"""
+    """Mark given resource contains no open records"""
 
 
 class OdemWorkflowProcessType(str, Enum):
     """Accepted values for process types"""
+
     OCRD_PAGE_PARALLEL = "OCRD_PAGE_PARALLEL"
     ODEM_TESSERACT = "ODEM_TESSERACT"
 
