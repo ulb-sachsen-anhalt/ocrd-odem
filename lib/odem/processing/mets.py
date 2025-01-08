@@ -453,7 +453,7 @@ def validate_mets(mets_file: str, ddb_ignores, ddb_min_level):
         raise odem_c.ODEMDataException(msg) from lxml_err
     except df.DigiflowTransformException as df_err:
         msg = f"fail to process {mets_file}: {df_err.args}"
-        raise odem_c.ODEMDataException(msg) from lxml_err
+        raise odem_c.ODEMDataException(msg) from df_err
 
 
 def extract_text_content(ocr_files: typing.List) -> typing.List:
