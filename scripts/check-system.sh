@@ -28,10 +28,16 @@ if [[ "${ROLE}" == "worker" ]]; then
   fi 
 fi
 
-if ! [ "$(which zip)" ]
+THE_ZIP=zip
+if ! [ "$(which ${THE_ZIP})" ]
 then
-  echo zip not installed
-  errors["zip"]="missing"
+  errors["${THE_ZIP}"]="missing ${THE_ZIP}"
+fi 
+
+THE_PYTHON=python3.10
+if ! [ "$(which ${THE_PYTHON})" ]
+then
+  errors["${THE_PYTHON}"]="missing ${THE_PYTHON}"
 fi 
 
 # only for virtual machines relevant
