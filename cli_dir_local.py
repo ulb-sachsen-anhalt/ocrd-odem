@@ -82,7 +82,7 @@ if __name__ == "__main__":
     LOGGER.info("merged '%s' config entries with args", MERGED)
     EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_EXECS)
     RUN_SEQUENTIAL = ARGS.sequential_mode
-    LOGGER.info("process data in '%s' with %s executors in mode %s",
+    LOGGER.info("process data in '%s' with %s executors (seq: %s)",
                 LOCAL_WORK_ROOT, EXECUTORS, RUN_SEQUENTIAL)
 
     REQ_IDENT = odem.UNSET
@@ -101,12 +101,7 @@ if __name__ == "__main__":
         odem_process.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
         odem_process.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        # Type and Value change!!!
-        # ODEMProcess.single_ocr() needs Tuple[str,str], in non-local
-        # this is assigned to "PROCESS.images_4_ocr" in ODEMProcess.filter_images()
-        # thats why we have to manually fit that requirement
-        candidate_tuples = list(zip(odem_process.ocr_candidates,
-                                    [pathlib.Path(i).stem for i in odem_process.ocr_candidates]))
+        candidate_tuples = list(zip(local_images, [pathlib.Path(i).stem for i in local_images]))
         odem_process.ocr_candidates = candidate_tuples
         odem_runner.run()
         odem_process.logger.info("[%s] duration: %s (%s)", REQ_IDENT,
