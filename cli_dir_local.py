@@ -19,15 +19,14 @@ import lib.odem.odem_commons as odem_c
 ########
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(
-        description="generate ocr-data for OAI-Record")
+        description="generate ocr-data from local directory")
     PARSER.add_argument(
         "path",
-        help="root path to images that will be used to create OCR")
+        help="root path to image directory to be used")
     PARSER.add_argument(
         "-c",
         "--config",
         required=False,
-        default="resources/odem.ini",
         help="path to configuration file")
     PARSER.add_argument(
         f"-{odem.ARG_S_EXECS}",
@@ -35,14 +34,7 @@ if __name__ == "__main__":
         required=False,
         default=odem.DEFAULT_EXECUTORS,
         type=int,
-        help="Number of parallel OCR-D Executors")
-    PARSER.add_argument(
-        f"-{odem.ARG_S_SEQUENTIAL_MODE}",
-        f"--{odem.ARG_L_SEQUENTIAL_MODE}",
-        required=False,
-        default=False,
-        action="store_true",
-        help="Disable parallel workflow and run each image sequential")
+        help="Number of parallel Executors. Setting to '1' implies sequential execution.")
     PARSER.add_argument(
         f"-{odem.ARG_S_LANGUAGES}",
         f"--{odem.ARG_L_LANGUAGES}",
@@ -51,12 +43,14 @@ if __name__ == "__main__":
     PARSER.add_argument(
         f"-{odem.ARG_S_MODEL_MAP}",
         f"--{odem.ARG_L_MODEL_MAP}",
-        help="List of comma-separated pairs <ISO 639-3 language code>: <ocr-model> (default:unset)")
-    ARGS = PARSER.parse_args()
+        help="""Map ISO 639-3 language code to local ocr model configuration label.\n
+        For example "deu": "frk.traineddata".
+        May include multiple, comma-separated mappings (default:unset)""")
+    ARGS = vars(PARSER.parse_args())
 
     # check some pre-conditions
     # inspect configuration settings
-    CONF_FILE = os.path.abspath(ARGS.config)
+    CONF_FILE = os.path.abspath(ARGS["config"])
     if not os.path.exists(CONF_FILE):
         print(f"[ERROR] no config at '{CONF_FILE}'! Halt execution!")
         sys.exit(1)
@@ -77,13 +71,12 @@ if __name__ == "__main__":
 
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set
-    ROOT_PATH = ARGS.path
+    ROOT_PATH = ARGS["path"]
     MERGED = odem.merge_args(CFG, ARGS)
-    LOGGER.info("merged '%s' config entries with args", MERGED)
+    LOGGER.info("merged '%s' args with config entries", MERGED)
     EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_EXECS)
-    RUN_SEQUENTIAL = ARGS.sequential_mode
-    LOGGER.info("process data in '%s' with %s executors (seq: %s)",
-                LOCAL_WORK_ROOT, EXECUTORS, RUN_SEQUENTIAL)
+    LOGGER.info("process data in '%s' with %s executors",
+                LOCAL_WORK_ROOT, EXECUTORS)
 
     REQ_IDENT = odem.UNSET
     try:
@@ -99,9 +92,9 @@ if __name__ == "__main__":
         odem_process.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
         odem_process.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        if hasattr(ARGS, odem.ARG_L_LANGUAGES):
-            languages = getattr(ARGS, odem.ARG_L_LANGUAGES).split(",")
-            odem_process.language_modelconfig(languages)
+        if odem.ARG_L_LANGUAGES in ARGS:
+            languages = ARGS[odem.ARG_L_LANGUAGES].split(",")
+            odem_process.resolve_language_modelconfig(languages)
         candidate_tuples = list(zip(local_images, [pathlib.Path(i).stem for i in local_images]))
         odem_process.ocr_candidates = candidate_tuples
         the_workflow: odem.ODEMWorkflow = odem.ODEMWorkflow.create(proc_type, odem_process)

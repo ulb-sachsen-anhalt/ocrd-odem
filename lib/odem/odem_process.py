@@ -167,7 +167,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             self.logger.error("[%s] permission denied %s", self.process_identifier,
                               self.mets_file_path)
 
-    def language_modelconfig(self, languages=None) -> str:
+    def resolve_language_modelconfig(self, languages=None) -> str:
         """resolve model configuration from
         * provided "languages" parameter
         * else use metadata language entries.
@@ -197,7 +197,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if self.configuration.getboolean(odem_c.CFG_SEC_OCR, "model_combinable",
                                          fallback=True):
             model_cfg = '+'.join(models)
-        self.process_statistics[odem_c.STATS_KEY_MODELS] = model_cfg
+        self.process_statistics[odem_c.KEY_LANGUAGES] = model_cfg
         self.logger.info("[%s] mapped languages '%s' => '%s'",
                          self.process_identifier, languages, model_cfg)
         return model_cfg
@@ -221,7 +221,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if self.configuration.has_option(odem_c.CFG_SEC_OCR, odem_c.KEY_LANGUAGES):
             file_lang_suffixes = self.configuration.get(odem_c.CFG_SEC_OCR,
                                                         odem_c.KEY_LANGUAGES).split('+')
-            return self.language_modelconfig(file_lang_suffixes)
+            return self.resolve_language_modelconfig(file_lang_suffixes)
         # inspect final '_' segment of local file names
         if self.local_mode:
             try:
@@ -233,9 +233,9 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 self.logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
                                     self.process_identifier, oxc.args[0],
                                     image_path, odem_c.DEFAULT_LANG)
-            return self.language_modelconfig(file_lang_suffixes)
+            return self.resolve_language_modelconfig(file_lang_suffixes)
         # inspect language information from MODS metadata
-        return self.language_modelconfig()
+        return self.resolve_language_modelconfig()
 
     def _is_model_available(self, model) -> bool:
         """Determine whether model is available at execting

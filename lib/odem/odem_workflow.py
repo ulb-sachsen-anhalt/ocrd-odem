@@ -13,6 +13,7 @@ import time
 import typing
 
 import lib.odem.odem_commons as odem_c
+import lib.odem.odem_process as odem_p
 import lib.odem.ocr.ocrd as odem_ocrd
 import lib.odem.ocr.ocr_pipeline as odem_tess
 import lib.odem.processing.image as odem_img
@@ -112,14 +113,14 @@ class ODEMWorkflow:
     @staticmethod
     def create(
             workflow_type: odem_c.OdemWorkflowProcessType | str,
-            odem: odem_c.ODEMProcess,
+            odem: odem_p.ODEMProcessImpl,
     ) -> ODEMWorkflow:
         """Create actual instance"""
         if workflow_type == odem_c.OdemWorkflowProcessType.ODEM_TESSERACT:
             return ODEMTesseract(odem)
         return OCRDPageParallel(odem)
 
-    def __init__(self, odem_process: odem_c.ODEMProcess):
+    def __init__(self, odem_process: odem_p.ODEMProcessImpl):
         self.odem_process = odem_process
         self.config = odem_process.configuration
         self.logger = odem_process.logger
@@ -372,11 +373,12 @@ class ODEMTesseract(ODEMWorkflow):
             pipe_cfg.read(path_config)
             self.logger.debug("use config '%s'", path_config)
             for sect in pipe_cfg.sections():
-                if self.odem_process.process_statistics.get(odem_c.ARG_L_LANGUAGES):
-                    model_cfg = self.odem_process.process_statistics.get(odem_c.ARG_L_LANGUAGES)
-                    model_files = self.odem_process.language_modelconfig(model_cfg)
-                    models = model_files.replace('.traineddata', '')
-                    pipe_cfg.set(sect, 'model_configs', models)
+                if pipe_cfg.has_option(sect, "model_configs"):
+                    lang_models = self.odem_process.process_statistics.get(odem_c.KEY_LANGUAGES)
+                    if ".traineddata" not in lang_models:
+                        lang_models = self.odem_process.resolve_language_modelconfig(lang_models)
+                    lang_models = lang_models.replace('.traineddata', '')
+                    pipe_cfg.set(sect, 'model_configs', lang_models)
                 if pipe_cfg.has_option(sect, odem_tess.STEP_MOVE_PATH_TARGET):
                     move_target = f'{self.odem_process.work_dir_root}/FULLTEXT'
                     pipe_cfg.set(sect, odem_tess.STEP_MOVE_PATH_TARGET, move_target)

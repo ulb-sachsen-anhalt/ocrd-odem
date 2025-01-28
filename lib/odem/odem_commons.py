@@ -283,22 +283,26 @@ def merge_args(the_configuration: configparser.ConfigParser, the_args) -> typing
     communication the replaced options
     """
 
-    _repls = []
+    repls_tracked = []
     if not isinstance(the_args, dict):
         the_args = vars(the_args)
     if CFG_SEC_OCR_OPT_EXECS in the_args and int(the_args[CFG_SEC_OCR_OPT_EXECS]) > 0:
-        _upd01 = (CFG_SEC_OCR, CFG_SEC_OCR_OPT_EXECS, str(the_args[CFG_SEC_OCR_OPT_EXECS]))
-        the_configuration.set(*_upd01)
-        _repls.append(_upd01)
+        upd01 = (CFG_SEC_OCR, CFG_SEC_OCR_OPT_EXECS, str(the_args[CFG_SEC_OCR_OPT_EXECS]))
+        the_configuration.set(*upd01)
+        repls_tracked.append(upd01)
     if KEY_LANGUAGES in the_args and the_args[KEY_LANGUAGES] is not None:
-        _upd02 = (CFG_SEC_OCR, KEY_LANGUAGES, the_args[KEY_LANGUAGES])
-        the_configuration.set(*_upd02)
-        _repls.append(_upd02)
+        upd02 = (CFG_SEC_OCR, KEY_LANGUAGES, the_args[KEY_LANGUAGES])
+        the_configuration.set(*upd02)
+        repls_tracked.append(upd02)
     if KEY_MODEL_MAP in the_args and the_args[KEY_MODEL_MAP] is not None:
-        _upd03 = (CFG_SEC_OCR, KEY_MODEL_MAP, the_args[KEY_MODEL_MAP])
-        the_configuration.set(*_upd03)
-        _repls.append(_upd03)
-    return _repls
+        upd03 = (CFG_SEC_OCR, KEY_MODEL_MAP, the_args[KEY_MODEL_MAP])
+        the_configuration.set(*upd03)
+        repls_tracked.append(upd03)
+    if ARG_L_EXECS in the_args:
+        upd_04 = (CFG_SEC_OCR, CFG_SEC_OCR_OPT_EXECS, str(the_args[ARG_L_EXECS]))
+        the_configuration.set(*upd_04)
+        repls_tracked.append(upd_04)
+    return repls_tracked
 
 
 def list_files(the_directory, file_ext='.xml') -> typing.List:

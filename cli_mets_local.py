@@ -108,7 +108,7 @@ if __name__ == "__main__":
         odem_process.inspect_metadata()
         odem_process.validate_metadata()
         odem_process.modify_mets_groups()
-        odem_process.language_modelconfig()
+        odem_process.resolve_language_modelconfig()
         odem_process.set_local_images()
         odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
         odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)

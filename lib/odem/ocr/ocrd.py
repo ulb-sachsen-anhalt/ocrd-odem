@@ -94,7 +94,6 @@ def run_ocr_page(*args):
     }
     ocrd_process_list: typing.List = [f'"{p.format(**ocrd_process_args)}"' for p in ocrd_process_list]
     ocrd_process_str: str = " ".join(ocrd_process_list)
-
     cmd: str = f"docker run --rm -u {container_user_id}"
     cmd += f" --name {container_name}"
     if container_memory_limit is not None:

@@ -388,7 +388,7 @@ def test_record_with_unknown_language(tmp_path):
 
     # act
     with pytest.raises(odem.ODEMModelMissingException) as odem_exc:
-        oproc.language_modelconfig(langs)
+        oproc.resolve_language_modelconfig(langs)
 
     # assert
     assert "'gmh' mapping not found (languages: ['lat', 'ger', 'gmh'])!" == odem_exc.value.args[0]
