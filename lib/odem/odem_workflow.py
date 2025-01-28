@@ -346,15 +346,15 @@ class ODEMTesseract(ODEMWorkflow):
     def run(self, input_data):
 
         image_path = input_data[0][0]
-        legacy_result = odem_tess.run_pipeline(input_data)
-        self.logger.debug("run_pipeline: '%s'", legacy_result)
+        a_result: odem_tess.PipelineResult = odem_tess.run_pipeline(input_data)
+        self.logger.debug("run_pipeline: '%s'", a_result)
         mps = 0
         filesize_mb = 0
         filestat = os.stat(image_path)
         if filestat:
             filesize_mb = filestat.st_size / 1048576
         (mps, _) = odem_img.get_imageinfo(image_path)
-        return odem_c.OCRResult(local_path=legacy_result[0],
+        return odem_c.OCRResult(local_path=a_result.result_path,
                        images_fsize=filesize_mb, images_mps=mps)
 
     def read_pipeline_config(self, path_config=None) -> configparser.ConfigParser:
@@ -363,17 +363,18 @@ class ODEMTesseract(ODEMWorkflow):
 
         if self.pipeline_configuration is None:
             if path_config is None:
-                if self.config.has_option(odem_c.CFG_SEC_OCR, 'ocr_pipeline_config'):
-                    path_config = os.path.abspath(self.config.get(odem_c.CFG_SEC_OCR, 'ocr_pipeline_config'))
+                if self.config.has_option(odem_c.CFG_SEC_OCR, "ocr_pipeline_config"):
+                    path_config = os.path.abspath(self.config.get(odem_c.CFG_SEC_OCR, 
+                                                                  "ocr_pipeline_config"))
             if not os.path.isfile(path_config):
                 raise odem_c.ODEMException(f"no ocr-pipeline conf {path_config} !")
             pipe_cfg = configparser.ConfigParser()
             pipe_cfg.read(path_config)
             self.logger.debug("use config '%s'", path_config)
             for sect in pipe_cfg.sections():
-                if pipe_cfg.has_option(sect, 'model_configs'):
-                    known_langs = self.odem_process.process_statistics.get(odem_c.STATS_KEY_LANGS)
-                    model_files = self.odem_process.language_modelconfig(known_langs)
+                if self.odem_process.process_statistics.get(odem_c.ARG_L_LANGUAGES):
+                    model_cfg = self.odem_process.process_statistics.get(odem_c.ARG_L_LANGUAGES)
+                    model_files = self.odem_process.language_modelconfig(model_cfg)
                     models = model_files.replace('.traineddata', '')
                     pipe_cfg.set(sect, 'model_configs', models)
                 if pipe_cfg.has_option(sect, odem_tess.STEP_MOVE_PATH_TARGET):
@@ -384,14 +385,11 @@ class ODEMTesseract(ODEMWorkflow):
 
     def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
         """Apply some postprocessing to the generated OCR output"""
-        # odem_root = Path(self.odem_process.work_dir_root)
-        # if self.config.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
-        #     estm_ocr_dir = self.config.get(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR)
-        # else:
-        #     estm_ocr_dir = Path(self.odem_process.ocr_candidates[0][0]).parent
-        # list_from_dir = odem_root / estm_ocr_dir
-        # self.ocr_files = odem_c.list_files(list_from_dir)
+
         self.ocr_results = the_outcomes
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
         for a_result in self.ocr_results:
-            odem_fmt.postprocess_ocr_file(a_result.local_path, strip_tags)
+            if a_result.local_path.exists():
+                odem_fmt.postprocess_ocr_file(a_result.local_path, strip_tags)
+            else:
+                self.logger.warning("missing %s", a_result.local_path)

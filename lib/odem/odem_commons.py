@@ -81,11 +81,11 @@ KEY_SEQUENTIAL_MODE = 'sequential_mode'
 #   where keyform is also used as
 #   pythonic configuration key
 ARG_S_SEQUENTIAL_MODE = 's'
-ARG_L_SEQUENTIAL_MODE = 'sequential-mode'
+ARG_L_SEQUENTIAL_MODE = 'sequential_mode'
 ARG_S_LANGUAGES = 'l'
-ARG_L_LANGUAGES = 'language-model'
+ARG_L_LANGUAGES = 'language_model'
 ARG_S_MODEL_MAP = 'm'
-ARG_L_MODEL_MAP = 'model-mapping'
+ARG_L_MODEL_MAP = 'model_mapping'
 ARG_S_EXECS = 'e'
 ARG_L_EXECS = 'executors'
 

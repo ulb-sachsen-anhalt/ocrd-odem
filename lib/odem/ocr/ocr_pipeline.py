@@ -3,6 +3,7 @@
 import abc
 import collections
 import configparser
+import dataclasses
 import logging
 import os
 import re
@@ -377,14 +378,10 @@ class StepEstimateOCR(StepI):
 
     def postprocess_response(self, response_data):
         """Collect error information"""
-
+        total_matches = []
         if 'matches' in response_data:
             total_matches = response_data['matches']
-
-        typo_errors = len(total_matches)
-        if typo_errors > self.n_words:
-            typo_errors = self.n_words
-
+        typo_errors = min(len(total_matches), self.n_words)
         self.n_errs = typo_errors
         if self.n_words <= typo_errors:
             ratio = 0
@@ -572,7 +569,15 @@ def profile(func):
     return f"{label} run {func_delta:.2f}s"
 
 
-def run_pipeline(*args):
+@dataclasses.dataclass
+class PipelineResult:
+    """Wrap pipeline outcome"""
+    result_path: Path
+    estimation = MARK_MISSING_ESTM
+    statistics = {}
+
+
+def run_pipeline(*args) -> PipelineResult:
     """Wrap run ocr-pipeline"""
     start_path = args[0][0]
     if isinstance(start_path, typing.Tuple):
@@ -587,10 +592,10 @@ def run_pipeline(*args):
         raise ODEMException(f'Group cant read {start_path}')
     if not df.group_can_write(os.path.dirname(start_path)):
         raise ODEMException(f'Group cant write {os.path.dirname(start_path)}')
-    file_name = os.path.basename(start_path)
-    outcome = (file_name, MARK_MISSING_ESTM)
-
+    file_path = Path(start_path)
+    p_result = PipelineResult(file_path)
     try:
+        file_name = file_path.name
         the_steps = init_steps(step_config)
         the_logger.info("[%s] [%s] start pipeline with %d steps",
                      file_name, batch_label, len(the_steps))
@@ -602,7 +607,7 @@ def run_pipeline(*args):
             profile_result = profile(step.execute)
             if hasattr(step, 'statistics'):
                 if profile_result and isinstance(step, StepEstimateOCR):
-                    outcome = (file_name,) + step.statistics
+                    p_result.statistics = step.statistics
                 the_logger.info("[%s] %s, statistics: %s",
                              file_name, profile_result,
                              step.statistics)
@@ -612,10 +617,11 @@ def run_pipeline(*args):
                 the_logger.debug("[%s] step.path_next: %s",
                               file_name, step.path_next)
                 next_in = step.path_next
+                p_result.result_path = step.path_next
 
         the_logger.info("[%s] [%s] done pipeline with %d steps",
                      file_name, batch_label, len(the_steps))
-        return outcome
+        return p_result
 
     # if a single step-based images crashes, we will go on anyway
     except (StepException) as exc:

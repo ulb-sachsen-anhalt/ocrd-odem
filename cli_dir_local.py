@@ -96,13 +96,16 @@ if __name__ == "__main__":
         odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, ROOT_PATH, logger=LOGGER,
                                                                  log_dir=log_dir)
         local_images = odem_process.get_local_image_paths(image_local_dir=ROOT_PATH)
-        the_workflow: odem.ODEMWorkflow = odem.ODEMWorkflow.create(proc_type, odem_process)
-        odem_runner = odem.ODEMWorkflowRunner(REQ_IDENT, EXECUTORS, LOGGER, the_workflow)
         odem_process.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
         odem_process.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
+        if hasattr(ARGS, odem.ARG_L_LANGUAGES):
+            languages = getattr(ARGS, odem.ARG_L_LANGUAGES).split(",")
+            odem_process.language_modelconfig(languages)
         candidate_tuples = list(zip(local_images, [pathlib.Path(i).stem for i in local_images]))
         odem_process.ocr_candidates = candidate_tuples
+        the_workflow: odem.ODEMWorkflow = odem.ODEMWorkflow.create(proc_type, odem_process)
+        odem_runner = odem.ODEMWorkflowRunner(REQ_IDENT, EXECUTORS, LOGGER, the_workflow)
         odem_runner.run()
         odem_process.logger.info("[%s] duration: %s (%s)", REQ_IDENT,
                                 odem_process.statistics['timedelta'], odem_process.statistics)

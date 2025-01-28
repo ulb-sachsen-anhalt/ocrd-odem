@@ -85,7 +85,7 @@ def _fixture_default_pipeline(a_workspace: Path):
     _record = df_r.Record('oai:urn:mwe')
     odem_process = odem.ODEMProcessImpl(_record, a_workspace)
     odem_process.configuration = ODEM_CFG
-    odem_process.process_statistics['languages'] = ['ger']
+    odem_process.process_statistics[odem.ARG_L_LANGUAGES] = ['ger']
     odem_process.logger = odem.get_logger(a_workspace / 'log')
     odem_tess = odem.ODEMTesseract(odem_process)
     return odem_tess
@@ -122,7 +122,7 @@ def _fixture_custom_config_pipeline(a_workspace):
     assert os.path.isfile(conf_file)
     odem_process = odem.ODEMProcessImpl(df_r.Record('oai:urn_custom'), a_workspace)
     odem_process.configuration = ODEM_CFG
-    odem_process.process_statistics['languages'] = ['ger', 'lat']
+    odem_process.process_statistics[odem.ARG_L_LANGUAGES] = ['ger', 'lat']
     odem_process.logger = odem.get_logger(a_workspace / 'log')
     odem_tess = odem.ODEMTesseract(odem_process)
     odem_tess.read_pipeline_config(conf_file)
