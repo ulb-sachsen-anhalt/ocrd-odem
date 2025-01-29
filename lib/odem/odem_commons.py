@@ -228,12 +228,12 @@ def get_configparser():
     def _parse_dict(row):
         """
         Custom config converter to create a dictionary represented as string
-        lambda s: {e[0]:e[1] for p in s.split(',') for e in zip(*p.strip().split(':'))}
         """
         a_dict = {}
-        for pairs in row.split(','):
-            pair = pairs.split(':')
-            a_dict[pair[0].strip()] = pair[1].strip()
+        pairs: typing.List[str] = [ps.strip() for ps in row.split(",") if len(ps) > 3]
+        for pair in pairs:
+            pars = pair.split(":", maxsplit=1)
+            a_dict[pars[0].strip()] = pars[1].strip()
         return a_dict
 
     return configparser.ConfigParser(
