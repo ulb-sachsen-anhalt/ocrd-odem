@@ -105,4 +105,4 @@ if __name__ == "__main__":
     except Exception as exc:
         LOGGER.error("odem fails for '%s' after %s with: '%s'",
                      REQ_IDENT, odem_process.statistics['timedelta'], str(exc))
-        sys.exit(0)
+        sys.exit(1)
