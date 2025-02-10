@@ -6,7 +6,6 @@ import configparser
 import logging.config
 import os
 import sys
-import time
 
 from pathlib import Path
 
@@ -46,12 +45,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # initialize server side logging
-    _today = time.strftime('%Y-%m-%d', time.localtime())
-    _logfile_name = Path(LOG_DIR, f"odem_oai_service_{_today}.log")
-    _conf_logname = {'logname': str(_logfile_name)}
-    logging.config.fileConfig(str(_ODEM_LOG_CONFIG_FILE), defaults=_conf_logname)
+    _logfile_name = LOG_DIR / "odem_oai_service.log"
+    CFG_DICT = {'logname': str(_logfile_name)}
+    logging.config.fileConfig(str(_ODEM_LOG_CONFIG_FILE), defaults=CFG_DICT)
     LOGGER = logging.getLogger(_ODEM_LOG_NAME)
-    LOGGER.info("logging initialized - store log entry in %s", _logfile_name)
+    LOGGER.info("logging initialized - store entries in %s", _logfile_name)
 
     # evaluate configured server data
     SRV_HOST = SCRIPT_CONFIGURATION.get('record-server', 'record_server_url')
