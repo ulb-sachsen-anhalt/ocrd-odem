@@ -32,28 +32,36 @@ def get_imageinfo(path_img_dir):
     return mps, dpi
 
 
-def sanitize_image(image_file_path, work_dir_sub):
+def ensure_image_format(image_file_path, work_dir_sub):
     """Preprocess image data
+    * sanitize types
+    * sanitze file extension if missing due download
     * store from source dir into future OCR-D workspace
     * sanitize DPI metadata
-    * convert into PNG format
+    * write as PNG format into specific directory
     """
 
-    # sanitize file extension only if missing
-    if not Path(image_file_path).suffix:
-        image_file_path = f"{image_file_path}{EXT_JPG}"
-
+    # sanitize
+    if not isinstance(image_file_path, Path):
+        image_file_path = Path(image_file_path)
+    if not image_file_path.suffix:
+        image_file_path = image_file_path.with_suffix(EXT_JPG)
+    if not isinstance(work_dir_sub, Path):
+        work_dir_sub = Path(work_dir_sub)
+    # enforce image format png with DPI set in both dimensions
     input_image = Image.open(image_file_path)
-    file_name = os.path.basename(image_file_path)
-    # store image one level inside the workspace
-    image_max_dir = os.path.join(work_dir_sub, 'MAX')
-    if not os.path.isdir(image_max_dir):
-        os.mkdir(image_max_dir)
-    output_path = os.path.join(image_max_dir, file_name).replace(EXT_JPG, EXT_PNG)
     res_dpi = DEFAULT_DPI
     if 'dpi' in input_image.info:
         res_dpi = input_image.info['dpi']
-    # store resolution for PNG image in both x,y dimensions
+    # store image one level inside down in workspace
+    image_max_dir = work_dir_sub / "MAX"
+    if not image_max_dir.is_dir():
+        image_max_dir.mkdir()
+    output_path = image_max_dir / image_file_path.name
+    if image_file_path.suffix != ".png":
+        file_name = image_file_path.stem
+        output_path = image_max_dir / f"{file_name}{EXT_PNG}"
+    # store sanitized image as png
     input_image.save(output_path, format='png', dpi=res_dpi)
     return output_path
 

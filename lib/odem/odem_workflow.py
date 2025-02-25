@@ -43,8 +43,9 @@ class ODEMWorkflowRunner:
     def run(self):
         """Actual run wrapper"""
         input_data = self.odem_workflow.get_inputs()
-        self.logger.info("[%s] run %d images with %d executors",
-                         self.process_identifier, len(input_data), self.n_executors)
+        self.logger.info("[%s] run %d images with %d executors (%s)",
+                         self.process_identifier, len(input_data), self.n_executors,
+                         self.odem_workflow.__class__.__name__)
         if self.n_executors > 1:
             raw_returned = self.run_parallel(input_data)
         else:
@@ -163,7 +164,7 @@ class OCRDPageParallel(ODEMWorkflow):
         os.chdir(page_workdir)
 
         # move and convert image data at once
-        processed_image_path = odem_img.sanitize_image(image_path, page_workdir)
+        processed_image_path = odem_img.ensure_image_format(image_path, page_workdir)
 
         # init ocr-d workspace
         odem_ocrd.ocrd_workspace_setup(page_workdir, processed_image_path)

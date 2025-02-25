@@ -5,8 +5,13 @@ import configparser
 import os
 import pathlib
 import shutil
+import typing
 
 from pathlib import Path
+
+import PIL.Image
+import PIL.TiffImagePlugin as pil_tif
+import numpy as np
 
 import pytest
 
@@ -95,3 +100,17 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     n_integrated = odem_proc.link_ocr_files()
     assert n_integrated == 4
     yield odem_proc
+
+
+def create_test_tif(path_image: Path, widht=60, height=100):
+    """Create random image with proper metadata"""
+
+    arr = np.random.randint(0, 256, (height, widht), np.uint8)
+    the_img: PIL.Image = PIL.Image.fromarray(arr)
+    tiff_tags: typing.Dict = {
+        pil_tif.RESOLUTION_UNIT: 2,
+        pil_tif.SAMPLESPERPIXEL: 1,
+        pil_tif.X_RESOLUTION: 300,
+        pil_tif.Y_RESOLUTION: 300,
+    }
+    the_img.save(path_image, tiffinfo=tiff_tags)
