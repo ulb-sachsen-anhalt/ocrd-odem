@@ -380,7 +380,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if not self.ocr_files:
             return 0
         proc = df.MetsProcessor(self.mets_file_path)
-        n_linked_ocr, n_dropped = odem_mets.integrate_ocr_file(proc.tree, self.ocr_files)
+        n_linked_ocr, n_dropped = odem_mets.integrate_ocr_file(proc.root, self.ocr_files)
         if n_dropped > 0:
             self.logger.warning("[%s] failed to link %d ocr files",
                                 self.process_identifier, n_dropped)

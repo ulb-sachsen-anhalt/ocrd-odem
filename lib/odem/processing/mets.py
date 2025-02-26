@@ -73,7 +73,7 @@ class ODEMMetadataInspecteur:
                 raise ODEMMetadataMetsException(_err) from _err
         return self._report
 
-    def metadata_report(self) -> df.MetsReaderReport:
+    def metadata_report(self) -> df.MetsReport:
         """Gather knowledge about digital object's.
         First, try to determin what kind of retro-digit
         we are handling by inspecting it's final PICA mark
@@ -93,14 +93,14 @@ class ODEMMetadataInspecteur:
         if len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
         reader = df.MetsReader(self._data)
-        reader.check()
+        reader.inspect_logical_struct_links()
         self.inspect_metadata_images()
         return report
 
     @property
     def identifiers(self):
         """Get *all* identifiers"""
-        return self._get_report().identifiers
+        return self._get_report().prime_report.identifiers
 
     @property
     def mods_record_identifier(self):
@@ -111,7 +111,7 @@ class ODEMMetadataInspecteur:
         of even guess if more than 1 source present
         """
         # call first to set the reader in place
-        ident_map = dict(self._get_report().identifiers)
+        ident_map = dict(self._get_report().prime_report.identifiers)
         ident_xpr = self._cfg.get(odem_c.CFG_SEC_METS,
                                   odem_c.CFG_SEC_METS_OPT_ID_XPR, fallback=None)
         if ident_xpr is not None:
@@ -132,7 +132,7 @@ class ODEMMetadataInspecteur:
     @property
     def languages(self):
         """Get language information"""
-        return self._get_report().languages
+        return self._get_report().prime_report.languages
 
     @property
     def type(self):
@@ -291,11 +291,11 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List):
         try:
             file_name = Path(ocr_file).stem
             mproc = df.MetsProcessor(ocr_file)
-            ns_map = _sanitize_namespaces(mproc.tree)
+            ns_map = _sanitize_namespaces(mproc.root)
             xpr_file_name = '//alto:sourceImageInformation/alto:fileName'
-            src_info = mproc.tree.xpath(xpr_file_name, namespaces=ns_map)[0]
+            src_info = mproc.root.xpath(xpr_file_name, namespaces=ns_map)[0]
             src_info.text = f'{file_name}.jpg'
-            page_elements = mproc.tree.xpath('//alto:Page', namespaces=ns_map)
+            page_elements = mproc.root.xpath('//alto:Page', namespaces=ns_map)
             if len(page_elements) == 0:
                 n_passed_ocr += 1
                 continue
@@ -373,7 +373,7 @@ def postprocess_mets(mets_file, odem_config: configparser.ConfigParser):
                               fallback=False):
         mproc = df.MetsProcessor(mets_file)
         xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
-        old_dvs = mproc.tree.xpath(xp_dv_iif_or_sru, namespaces=df.XMLNS)
+        old_dvs = mproc.root.xpath(xp_dv_iif_or_sru, namespaces=df.XMLNS)
         for old_dv in old_dvs:
             parent = old_dv.getparent()
             parent.remove(old_dv)
@@ -409,7 +409,7 @@ def process_mets_derivans_agents(mets_file, odem_config: configparser.ConfigPars
         return
     mproc = df.MetsProcessor(mets_file)
     xp_txt_derivans = '//mets:agent[contains(mets:name,"DigitalDerivans")]'
-    derivanses = mproc.tree.xpath(xp_txt_derivans, namespaces=df.XMLNS)
+    derivanses = mproc.root.xpath(xp_txt_derivans, namespaces=df.XMLNS)
     if len(derivanses) < 1:
         # no previous derivans agent can happen
         # for data from other institutions

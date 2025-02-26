@@ -65,14 +65,14 @@ def postprocess_ocr_file(ocr_file, strip_tags):
         xml_proc.remove(strip_tags)
 
     # inspect transformation artifacts
-    _all_text_blocks = xml_proc.tree.xpath('//alto:TextBlock', namespaces=df.XMLNS)
+    _all_text_blocks = xml_proc.root.xpath('//alto:TextBlock', namespaces=df.XMLNS)
     for _block in _all_text_blocks:
         if 'IDNEXT' in _block.attrib:
             del _block.attrib['IDNEXT']
 
     # inspect textual content
     # _all_strings = mproc.tree.xpath('//alto:String', namespaces=XMLNS)
-    _all_strings = xml_proc.tree.findall('.//alto:String', df.XMLNS)
+    _all_strings = xml_proc.root.findall('.//alto:String', df.XMLNS)
     for _string_el in _all_strings:
         _content = _string_el.attrib['CONTENT'].strip()
         if _is_completely_punctuated(_content):

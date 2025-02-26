@@ -149,7 +149,7 @@ def test_opendata_record_no_printwork():
         inspc.metadata_report()
 
     # assert
-    assert f"{oai_urn} no PICA type for OCR: Ac" == odem_exc.value.args[0]
+    assert f"{oai_urn} unknown type: multivolume_work" == odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present():
