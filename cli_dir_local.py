@@ -92,7 +92,7 @@ if __name__ == "__main__":
         odem_process.process_statistics[odem.STATS_KEY_N_PAGES] = len(local_images)
         odem_process.process_statistics[odem.STATS_KEY_N_OCRABLE] = 0
         odem_process.process_statistics[odem.STATS_KEY_N_EXECS] = EXECUTORS
-        if odem.ARG_L_LANGUAGES in ARGS:
+        if ARGS[odem.ARG_L_LANGUAGES] is not None and len(ARGS[odem.ARG_L_LANGUAGES].strip()) > 0:
             languages = ARGS[odem.ARG_L_LANGUAGES].split(",")
             odem_process.resolve_language_modelconfig(languages)
         candidate_tuples = list(zip(local_images, [pathlib.Path(i).stem for i in local_images]))
