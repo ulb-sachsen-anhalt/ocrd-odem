@@ -176,7 +176,13 @@ class ODEMProcess:
                  log_dir=None,
                  record: df_r.Record = None):
         self.configuration = configuration
-        self.work_dir_root = work_dir
+        if not isinstance(work_dir, Path):
+            work_dir = Path(work_dir)
+        if not work_dir.is_absolute():
+            work_dir = work_dir.resolve()
+        self.work_dir_root: Path = work_dir
+        if not self.work_dir_root.is_dir():
+            raise ODEMException(f"Invalid work_dir {self.work_dir_root}!")
         self.record = record
         self.process_identifier = None
         self.process_statistics = {}
