@@ -436,11 +436,11 @@ def process_mets_derivans_agents(mets_file, odem_config: configparser.ConfigPars
 #         parent.remove(old_dv)
 
 
-def validate_mets(mets_file: str, ddb_ignores, ddb_min_level):
+def validate_mets(mets_file: str, digi_type, ddb_ignores, ddb_min_level):
     """Forward METS-schema validation"""
 
     try:
-        reporter = dfv.Reporter(mets_file)
+        reporter = dfv.Reporter(mets_file, digi_type=digi_type)
         report: dfv.Report = reporter.get(ignore_ddb_rule_ids=ddb_ignores,
                                           min_ddb_level=ddb_min_level)
         if report.alert(min_ddb_role_label=ddb_min_level):

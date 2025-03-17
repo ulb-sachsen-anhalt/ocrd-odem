@@ -56,6 +56,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         Args:
             record (OAIRecord): OAI Record dataset
             work_dir (_type_): required local work path
+                resolved to be an absolute Path
             executors (int, optional): Process pooling when running parallel.
                 Defaults to 2.
             log_dir (_type_, optional): Path to store log file.
@@ -67,8 +68,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         self.digi_type = None
         self.mods_identifier = None
         self.local_mode = record is None
-        if self.local_mode:
-            self.process_identifier = os.path.basename(work_dir)
+        self.process_identifier = self.work_dir_root.name
         if record is not None and record.local_identifier is not None:
             self.process_identifier = record.local_identifier
         self.export_dir = None
@@ -97,18 +97,18 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             if self.configuration.has_option(odem_c.CFG_SEC_FLOW,
                                              odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS):
                 requests_kwargs = self.configuration.get(odem_c.CFG_SEC_FLOW,
-                                                    odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS)
+                                                         odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS)
                 req_kwargs = {dfo.OAI_KWARG_REQUESTS: requests_kwargs}
             load_fgroup = self.configuration.get(odem_c.CFG_SEC_METS,
-                                            odem_c.CFG_SEC_METS_FGROUP,
-                                            fallback=odem_c.DEFAULT_FGROUP)
+                                                 odem_c.CFG_SEC_METS_FGROUP,
+                                                 fallback=odem_c.DEFAULT_FGROUP)
             req_kwargs[dfo.OAI_KWARG_FGROUP_IMG] = load_fgroup
             loader = df.OAILoader(req_dst_dir, base_url=oai_base_url,
                                   post_oai=dfm.extract_mets, **req_kwargs)
             loader.store = self.store
             use_file_id = self.configuration.getboolean(odem_c.CFG_SEC_FLOW,
-                                          odem_c.CFG_SEC_FLOW_USE_FILEID,
-                                          fallback=False)
+                                                        odem_c.CFG_SEC_FLOW_USE_FILEID,
+                                                        fallback=False)
             loader.load(request_identifier, local_dst=req_dst, use_file_id=use_file_id)
         except df.ClientError as load_err:
             raise odem_c.ODEMException(load_err.args[0]) from load_err
@@ -144,7 +144,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         self.process_statistics['n_images_pages'] = insp.n_images_pages
         self.process_statistics['n_images_ocrable'] = insp.n_images_ocrable
         ocrable_ratio = insp.n_images_ocrable / insp.n_images_pages * 100
-        self.logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
+        if self.logger is not None:
+            self.logger.info("[%s] %04d (%.2f%%) images used for OCR (total: %04d)",
                          self.process_identifier, insp.n_images_ocrable, ocrable_ratio,
                          insp.n_images_pages)
         self.process_statistics['host'] = socket.gethostname()
@@ -262,7 +263,9 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
         image_dir = os.path.join(self.work_dir_root, 'MAX')
         if image_local_dir:
-            if not os.path.isdir(image_local_dir):
+            if not isinstance(image_local_dir, Path):
+                image_local_dir = Path(image_local_dir).resolve()
+            if not image_local_dir.is_dir():
                 raise RuntimeError(f"invalid path: {image_local_dir}!")
             image_dir = image_local_dir
 
@@ -335,7 +338,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             if self.configuration.has_option(odem_c.CFG_SEC_FLOW,
                                              odem_c.CFG_SEC_FLOW_OPT_DELETE_DIRS):
                 del_dirs = self.configuration.getlist(odem_c.CFG_SEC_FLOW,
-                                                  odem_c.CFG_SEC_FLOW_OPT_DELETE_DIRS)
+                                                      odem_c.CFG_SEC_FLOW_OPT_DELETE_DIRS)
                 if len(del_dirs) > 0:
                     self.delete_local_directories(del_dirs)
             self.export_data()
@@ -365,8 +368,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                                 self.process_identifier, n_ocr_cands,
                                 n_ocr_created)
             img_candidate_names = [Path(pair[0]).stem
-                                for pair in self.ocr_candidates
-                                if isinstance(pair, tuple)]
+                                   for pair in self.ocr_candidates
+                                   if isinstance(pair, tuple)]
             ocr_names = [Path(o.local_path).stem for o in outcomes]
             data_loss = set(img_candidate_names) ^ set(ocr_names)
             if len(data_loss) > 0:
@@ -499,8 +502,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         ddb_min_level = 'fatal'
         if self.configuration.has_option('mets', 'ddb_min_level'):
             ddb_min_level = self.configuration.get('mets', 'ddb_min_level')
-        return odem_mets.validate_mets(self.mets_file_path, ddb_ignores=ignore_ddb,
-                                    ddb_min_level=ddb_min_level)
+        if self.logger is not None:
+            self.logger.info("[%s] validate type %s ddb_ignore: %s", self.process_identifier,
+                             self.digi_type, ignore_ddb)
+        return odem_mets.validate_mets(self.mets_file_path, digi_type=self.digi_type,
+                                       ddb_ignores=ignore_ddb,
+                                       ddb_min_level=ddb_min_level)
 
     def export_data(self):
         """re-do metadata and transform into output format"""
