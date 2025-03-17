@@ -504,7 +504,10 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         if self.logger is not None:
             self.logger.info("[%s] validate type %s ddb_ignore: %s", self.process_identifier,
                              self.digi_type, ignore_ddb)
-        return odem_mets.validate_mets(self.mets_file_path, digi_type=self.digi_type,
+        the_type = self.digi_type
+        if self.record is not None and "pica" in self.record.info:
+            the_type = self.record.info["pica"]
+        return odem_mets.validate_mets(self.mets_file_path, digi_type=the_type,
                                        ddb_ignores=ignore_ddb,
                                        ddb_min_level=ddb_min_level)
 
