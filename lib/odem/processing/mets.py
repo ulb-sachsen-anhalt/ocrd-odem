@@ -126,7 +126,7 @@ class ODEMMetadataInspecteur:
             del ident_map['urn']
         if len(ident_map) == 1:
             return list(ident_map.values())[0]
-        the_msg = f"found no record identifiy in {self.process_identifier}"
+        the_msg = f"found no record identifier in {self.process_identifier}"
         raise ODEMMetadataMetsException(the_msg)
 
     @property

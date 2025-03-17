@@ -67,7 +67,6 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                          logger=logger, log_dir=log_dir, record=record)
         self.digi_type = None
         self.mods_identifier = None
-        self.local_mode = record is None
         self.process_identifier = self.work_dir_root.name
         if record is not None and record.local_identifier is not None:
             self.process_identifier = record.local_identifier
@@ -81,7 +80,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         local_identifier = self.record.local_identifier
         if not self.configuration.has_option(odem_c.CFG_SEC_FLOW,
                                              odem_c.CFG_SEC_FLOW_OPT_URL):
-            self.logger.info("[%s] no download", self.process_identifier)
+            self.logger.info("[%s] no download basis provided", self.process_identifier)
             return
         oai_base_url = self.configuration.get(odem_c.CFG_SEC_FLOW,
                                               odem_c.CFG_SEC_FLOW_OPT_URL)

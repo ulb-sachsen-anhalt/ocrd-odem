@@ -2,9 +2,13 @@
 
 import os
 
-import lib.odem as odem
+import pytest
 
-from .conftest import PROJECT_ROOT_DIR
+import digiflow.record as df_r
+
+from lib import odem
+
+from .conftest import PROJECT_ROOT_DIR, fixture_configuration
 
 
 # silence linter warning for custum converter
@@ -78,3 +82,48 @@ def test_merge_model_mappings_with_subsequent_calls():
 
     # assert
     assert _conf_parser.get(odem.CFG_SEC_OCR, odem.KEY_MODEL_MAP) == 'fas: ulb-fas-123'
+
+
+def test_work_dir_mode_local(tmp_path):
+    """Behavior with workflow mode set to local"""
+
+    # arrange
+    some_dir = tmp_path / "some_dir"
+    some_dir.mkdir()
+    the_cfg = fixture_configuration()
+
+    # act
+    proc = odem.ODEMProcessImpl(configuration=the_cfg, work_dir=some_dir, record=None)
+
+    # assert
+    assert proc.local_mode
+
+
+def test_work_dir_mode_local_alerta():
+    """Behavior with workflow mode set to local"""
+
+    # arrange
+    the_cfg = fixture_configuration()
+
+    # act
+    with pytest.raises(odem.ODEMException) as odem_alarma:
+        odem.ODEMProcessImpl(configuration=the_cfg, work_dir="some_dir", record=None)
+
+    # assert
+    assert "Invalid work_dir" in odem_alarma.value.args[0]
+
+
+def test_work_dir_record_input(tmp_path):
+    """Behavior with workflow mode set to local"""
+
+    # arrange
+    some_dir = tmp_path / "some_dir"
+    some_dir.mkdir()
+    the_cfg = fixture_configuration()
+    the_rec = df_r.Record('oai:opendata.uni-halle.de:1981185920/37167')
+
+    # act
+    proc = odem.ODEMProcessImpl(configuration=the_cfg, work_dir=some_dir, record=the_rec)
+
+    # assert
+    assert proc.local_mode is False
