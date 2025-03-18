@@ -369,8 +369,9 @@ class ODEMTesseract(ODEMWorkflow):
 
         if self.pipeline_configuration is None:
             if path_config is None:
-                if self.config.has_option(odem_c.CFG_SEC_OCR, "ocr_pipeline_config"):
-                    path_config = os.path.abspath(self.config.get(odem_c.CFG_SEC_OCR,
+                if not self.config.has_option(odem_c.CFG_SEC_OCR, "ocr_pipeline_config"):
+                    raise odem_c.ODEMException("missing ocr_pipeline_config option!")    
+                path_config = os.path.abspath(self.config.get(odem_c.CFG_SEC_OCR,
                                                                   "ocr_pipeline_config"))
             if not os.path.isfile(path_config):
                 raise odem_c.ODEMException(f"no ocr-pipeline conf {path_config} !")
