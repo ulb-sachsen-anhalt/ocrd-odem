@@ -65,17 +65,13 @@ def run_ocr_page(*args):
     """
 
     ocr_dir = args[0]
-    base_image = args[1]
-
+    container_image = args[1]
     container_memory_limit: str = args[2]
     container_timeout: int = args[3]
     container_name = args[4]
     container_user_id = args[5]
-
     ocrd_process_list: typing.List = args[6]
-
     model_config = args[7]
-
     ocrd_resources_volumes = args[8]
     tesseract_model_rtl = args[9]
 
@@ -102,6 +98,6 @@ def run_ocr_page(*args):
     cmd += f" -w /data -v {ocr_dir}:/data"
     for host_dir, cntr_dir in ocrd_resources_volumes.items():
         cmd += f" -v {host_dir}:{cntr_dir}"
-    cmd += f" {base_image}"
+    cmd += f" {container_image}"
     cmd += f" ocrd process {ocrd_process_str}"
     subprocess.run(cmd, shell=True, check=True, timeout=container_timeout)

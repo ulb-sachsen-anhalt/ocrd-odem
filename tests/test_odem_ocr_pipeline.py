@@ -17,6 +17,7 @@ import digiflow.record as df_r
 
 from lib import odem
 import lib.odem.ocr.ocr_pipeline as o3o_pop
+import lib.odem.ocr.ocr_model as o3o_mod
 
 from .conftest import TEST_RES, PROD_RES
 
@@ -598,7 +599,7 @@ def test_step_estimateocr_textline_conversions():
 
     # pylint: disable=protected-access
     xml_data = ET.parse(test_data)
-    lines = o3o_pop.get_lines(xml_data)
+    lines = o3o_mod.get_lines(xml_data)
     (_, n_lines, _, _, n_lines_out) = o3o_pop.textlines2data(lines)
 
     assert n_lines == 360

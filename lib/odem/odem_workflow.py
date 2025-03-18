@@ -14,7 +14,7 @@ import typing
 
 import lib.odem.odem_commons as odem_c
 import lib.odem.odem_process as odem_p
-import lib.odem.ocr.ocrd as odem_ocrd
+import lib.odem.ocr.ocr_d as odem_ocrd
 import lib.odem.ocr.ocr_pipeline as odem_tess
 import lib.odem.processing.image as odem_img
 import lib.odem.processing.ocr_files as odem_fmt
@@ -59,7 +59,7 @@ class ODEMWorkflowRunner:
         self.logger.info("[%s] from %d candidates filtered %d unset",
                          self.process_identifier, len(raw_returned),
                          the_unsets)
-        self.odem_workflow.postprocess_outputs(filter_set)
+        self.odem_workflow.process_outputs(filter_set)
         self.logger.info("[%s] created %d ocr files for %d images",
                          self.process_identifier,
                          len(self.odem_workflow.ocr_results), len(input_data))
@@ -128,13 +128,13 @@ class ODEMWorkflow:
         self.ocr_results: typing.List[odem_c.OCRResult] = []
 
     def get_inputs(self) -> typing.List:
-        """Collect all input data files for processing"""
+        """Collect all input data files to run for ocr-ing"""
 
     def run(self, _: typing.List) -> odem_c.OCRResult:
         """Run actual implemented Workflow to generate
         single OCR Result"""
 
-    def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
+    def process_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
         """Work to do after pipeline has been run successfully
         like additional format transformations or sanitizings
         """
@@ -245,7 +245,10 @@ class OCRDPageParallel(ODEMWorkflow):
         os.chdir(self.odem_process.work_dir_root)
         if self.config.getboolean(odem_c.CFG_SEC_OCR, 'keep_temp_orcd_data', fallback=False) is False:
             shutil.rmtree(page_workdir, ignore_errors=True)
-        return odem_c.OCRResult(stored, images_fsize=filesize_mb, images_mps=mps)
+        result = odem_c.OCRResult(stored)
+        result.images_fsize = filesize_mb
+        result.images_mps = mps
+        return result
 
     def _preserve_log(self, work_subdir, image_ident):
         """preserve ocrd.log for later analyzis as
@@ -279,7 +282,7 @@ class OCRDPageParallel(ODEMWorkflow):
         if not os.path.isdir(ocr_result_dir):
             self.logger.info("[%s] no ocr results for '%s'",
                              self.odem_process.process_identifier, ocr_result_dir)
-            return ''
+            return ""
         ocrs = [os.path.join(ocr_result_dir, ocr)
                 for ocr in os.listdir(ocr_result_dir)
                 if str(ocr).endswith('.xml')]
@@ -306,7 +309,7 @@ class OCRDPageParallel(ODEMWorkflow):
             shutil.copy(renamed, target_path)
         return target_path
 
-    def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
+    def process_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
         """In this case:
         * move files from dir PAGE to FULLTEXT
         * convert OCR format PAGE => ALTO
@@ -348,7 +351,7 @@ class ODEMTesseract(ODEMWorkflow):
     def run(self, input_data):
 
         image_path = input_data[0][0]
-        a_result: odem_tess.PipelineResult = odem_tess.run_pipeline(input_data)
+        a_result: odem_c.OCRResult = odem_tess.run_pipeline(input_data)
         self.logger.debug("run_pipeline: '%s'", a_result)
         mps = 0
         filesize_mb = 0
@@ -356,8 +359,9 @@ class ODEMTesseract(ODEMWorkflow):
         if filestat:
             filesize_mb = filestat.st_size / 1048576
         (mps, _) = odem_img.get_imageinfo(image_path)
-        return odem_c.OCRResult(local_path=a_result.result_path,
-                       images_fsize=filesize_mb, images_mps=mps)
+        a_result.images_fsize = filesize_mb
+        a_result.images_mps = mps
+        return a_result
 
     def read_pipeline_config(self, path_config=None) -> configparser.ConfigParser:
         """Read pipeline configuration and replace
@@ -366,7 +370,7 @@ class ODEMTesseract(ODEMWorkflow):
         if self.pipeline_configuration is None:
             if path_config is None:
                 if self.config.has_option(odem_c.CFG_SEC_OCR, "ocr_pipeline_config"):
-                    path_config = os.path.abspath(self.config.get(odem_c.CFG_SEC_OCR, 
+                    path_config = os.path.abspath(self.config.get(odem_c.CFG_SEC_OCR,
                                                                   "ocr_pipeline_config"))
             if not os.path.isfile(path_config):
                 raise odem_c.ODEMException(f"no ocr-pipeline conf {path_config} !")
@@ -386,8 +390,8 @@ class ODEMTesseract(ODEMWorkflow):
             self.pipeline_configuration = pipe_cfg
         return self.pipeline_configuration
 
-    def postprocess_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
-        """Apply some postprocessing to the generated OCR output"""
+    def process_outputs(self, the_outcomes: typing.List[odem_c.OCRResult]):
+        """Additional processing to OCR results"""
 
         self.ocr_results = the_outcomes
         strip_tags = self.config.getlist(odem_c.CFG_SEC_OCR, 'strip_tags')
@@ -396,3 +400,10 @@ class ODEMTesseract(ODEMWorkflow):
                 odem_fmt.postprocess_ocr_file(a_result.local_path, strip_tags)
             else:
                 self.logger.warning("missing %s", a_result.local_path)
+        if self.config.has_option(odem_c.CFG_SEC_OCR, "fulltext_subdir"):
+            sub_dir = self.config.get(odem_c.CFG_SEC_OCR, "fulltext_subdir")
+            final_dir = self.odem_process.work_dir_root / sub_dir
+            if not final_dir.is_dir():
+                final_dir.mkdir()
+            for result in self.ocr_results:
+                result.local_path = result.move(final_dir)

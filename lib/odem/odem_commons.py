@@ -25,6 +25,9 @@ MARK_OCR_FAIL = 'ocr_fail'
 MARK_OCR_DONE = 'ocr_done'
 MARK_OCR_SKIP = 'ocr_skip'
 
+# when no Pipeline quality estm available
+UNSET_NUMBER = -1
+
 MARK_DATA_EXHAUSTED_PREFIX = 'no open records'
 MARK_DATA_EXHAUSTED = MARK_DATA_EXHAUSTED_PREFIX + ' in {}, please inspect resource'
 
@@ -156,14 +159,39 @@ DEFAULT_WORKLFOW = OdemWorkflowProcessType.OCRD_PAGE_PARALLEL
 
 @dataclasses.dataclass
 class OCRResult:
-    """Describe the outcome of Running a
-    OCR-like workflow as a container
-    with all desired information for
-    later statistical processing"""
+    """Describe outcome of OCR workflow as a container
+    with information for later and depending on actual
+    used workflow (i.e. OCR-D or Tesseract)
+    """
 
     local_path: Path
-    images_fsize: int
-    images_mps: float
+    images_fsize = UNSET_NUMBER
+    images_mps = UNSET_NUMBER
+    estimation = UNSET_NUMBER
+    statistics = {}
+
+    def __init__(self, local_path,
+                 images_fsize=UNSET_NUMBER, images_mps=UNSET_NUMBER):
+        self.local_path = local_path
+        self.images_fsize = images_fsize
+        self.images_mps = images_mps
+
+    def move(self, new_path: Path) -> Path:
+        """Move created OCR resource from
+        current location to another
+        If directory given, use as target.
+        """
+        if not isinstance(new_path, Path):
+            new_path = Path(new_path)
+        if new_path.is_dir():
+            res_dst = new_path / self.local_path.name
+            if res_dst.is_file():
+                raise ODEMDataException(f"OCRResult {res_dst} already exists!")
+            return self.local_path.rename(res_dst)
+        else:
+            if new_path.exists():
+                raise ODEMDataException(f"OCRResult {new_path} already exists!")
+            return self.local_path.rename(new_path)
 
 
 class ODEMProcess:

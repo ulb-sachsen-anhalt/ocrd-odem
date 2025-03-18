@@ -11,7 +11,7 @@ from .odem_workflow import (
     OCRDPageParallel,
     ODEMTesseract,
 )
-from .ocr.ocrd import (
+from .ocr.ocr_d import (
     get_recognition_level,
 )
 from .processing.mets import (

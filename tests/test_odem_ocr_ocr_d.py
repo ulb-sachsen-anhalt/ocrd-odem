@@ -3,7 +3,7 @@
 import pytest
 
 import lib.odem as odem
-import lib.odem.ocr.ocrd as o3o_ocrd
+import lib.odem.ocr.ocr_d as o3o_ocrd
 
 
 @pytest.mark.parametrize("model_configuration,recognotion_level",

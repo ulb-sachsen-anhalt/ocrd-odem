@@ -3,7 +3,6 @@
 import abc
 import collections
 import configparser
-import dataclasses
 import logging
 import os
 import re
@@ -20,8 +19,8 @@ import requests
 import digiflow as df
 import lxml.etree as ET
 
-from lib.odem.odem_commons import ODEMException
-from lib.odem.ocr.ocr_model import TextLine, get_lines
+import lib.odem.odem_commons as odem_c
+import lib.odem.ocr.ocr_model as ocr_m
 
 NAMESPACES = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}
 
@@ -34,8 +33,6 @@ STEP_MOVE_PATH_TARGET = 'path_target'
 
 # python process-wrapper
 os.environ['OMP_THREAD_LIMIT'] = '1'
-
-MARK_MISSING_ESTM = -1
 
 
 class StepException(Exception):
@@ -345,7 +342,7 @@ class StepEstimateOCR(StepI):
 
     def execute(self):
         xml_data = ET.parse(self.path_in)
-        self.lines = get_lines(xml_data)
+        self.lines = ocr_m.get_lines(xml_data)
         if len(self.lines) > 0:
             try:
                 (word_string, n_lines, n_normed, n_sparse,
@@ -402,7 +399,7 @@ class StepEstimateOCR(StepI):
                 self.n_lines_out)
 
 
-def textlines2data(lines: typing.List[TextLine], minlen: int = 2) -> typing.Tuple:
+def textlines2data(lines: typing.List[ocr_m.TextLine], minlen: int = 2) -> typing.Tuple:
     """Transform text lines after preprocessing into data set"""
 
     non_empty_lines = [l.get_textline_content()
@@ -569,16 +566,8 @@ def profile(func):
     return f"{label} run {func_delta:.2f}s"
 
 
-@dataclasses.dataclass
-class PipelineResult:
-    """Wrap pipeline outcome"""
-    result_path: Path
-    estimation = MARK_MISSING_ESTM
-    statistics = {}
-
-
-def run_pipeline(*args) -> PipelineResult:
-    """Wrap run ocr-pipeline"""
+def run_pipeline(*args) -> odem_c.OCRResult:
+    """Wrap Tesseract execution"""
     start_path = args[0][0]
     if isinstance(start_path, typing.Tuple):
         start_path = start_path[0]
@@ -589,11 +578,11 @@ def run_pipeline(*args) -> PipelineResult:
     batch_label = f"{n_curr:04d}/{n_total:04d}"
     next_in = start_path
     if not df.group_can_read(start_path):
-        raise ODEMException(f'Group cant read {start_path}')
+        raise odem_c.ODEMException(f'Group cant read {start_path}')
     if not df.group_can_write(os.path.dirname(start_path)):
-        raise ODEMException(f'Group cant write {os.path.dirname(start_path)}')
+        raise odem_c.ODEMException(f'Group cant write {os.path.dirname(start_path)}')
     file_path = Path(start_path)
-    p_result = PipelineResult(file_path)
+    p_result = odem_c.OCRResult(file_path)
     try:
         file_name = file_path.name
         the_steps = init_steps(step_config)
@@ -617,7 +606,7 @@ def run_pipeline(*args) -> PipelineResult:
                 the_logger.debug("[%s] step.path_next: %s",
                               file_name, step.path_next)
                 next_in = step.path_next
-                p_result.result_path = step.path_next
+                p_result.local_path = step.path_next
 
         the_logger.info("[%s] [%s] done pipeline with %d steps",
                      file_name, batch_label, len(the_steps))
@@ -627,7 +616,7 @@ def run_pipeline(*args) -> PipelineResult:
     except (StepException) as exc:
         the_logger.error(
             "[%s] %s: %s", start_path, step, exc.args)
-        raise ODEMException(exc) from exc
+        raise odem_c.ODEMException(exc) from exc
         # OSError means something really severe, like
         # non-existing resources/connections that will harm
         # all images in pipeline, therefore signal halt
