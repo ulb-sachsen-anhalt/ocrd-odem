@@ -12,7 +12,9 @@ import digiflow.validate as dfv
 import lib.odem.odem_commons as odem_c
 
 
-TYPE_PRINTS_PICA = ['a', 'f', 'F', 'Z', 'B']
+# contains PICA types like
+# Aa, AZ, AF ...
+PICA_PRINT_MARKS = ['a', 'f', 'F', 'Z', 'B']
 TYPE_PRINTS_LOGICAL = ['monograph', 'volume', 'issue', 'additional']
 PPN_GVK = 'gvk-ppn'
 RECORD_IDENTIFIER = 'recordIdentifier'
@@ -64,7 +66,7 @@ class ODEMMetadataInspecteur:
         self.n_images_pages = 0
         self.n_images_ocrable = 0
 
-    def _get_report(self):
+    def _get_reader(self):
         if self._report is None:
             try:
                 self._reader = df.MetsReader(self._data)
@@ -73,34 +75,44 @@ class ODEMMetadataInspecteur:
                 raise ODEMMetadataMetsException(_err) from _err
         return self._report
 
-    def metadata_report(self) -> df.MetsReport:
+    def read(self) -> df.MetsReport:
         """Gather knowledge about digital object's.
         First, try to determin what kind of retro-digit
         we are handling by inspecting it's final PICA mark
         actual metadata from METS/MODS
         Stop if data corrupt, ill or bad
         """
-        report = self._get_report()
-        if not report.type:
-            raise ODEMNoTypeForOCRException(f"{self.process_identifier} found no type")
-        _type = report.type
-        # Attenzione:
-        #   PICA types *might* contain trailing 'u' or 'v' like in 'Afu'
-        #   therefore check the second character
-        if len(_type) in range(2, 4) and _type[1] not in TYPE_PRINTS_PICA:
-            no_pica_today = f"{self.process_identifier} no PICA type for OCR: {report.type}"
-            raise ODEMNoTypeForOCRException(no_pica_today)
-        if len(_type) > 4 and _type not in TYPE_PRINTS_LOGICAL:
-            raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown type: {_type}")
+        self._get_reader()
+        if not self._report.type:
+            raise ODEMNoTypeForOCRException(f"{self.process_identifier} found no logical type")
+        if not self.__is_relevant():
+            raise ODEMNoTypeForOCRException(f"{self.process_identifier} not relevant")
         reader = df.MetsReader(self._data)
         reader.inspect_logical_struct_links()
         self.inspect_metadata_images()
-        return report
+        return self._report
+
+    def __is_relevant(self) -> bool:
+        """Determine whether this digital object shall be processed by
+        inspect PICA type: considered to have length between 2-4 chars
+        which  *might* contain trailing chars 'u' or 'v' ('Afu')
+        with 2nd char being most important && respect logical 
+        DFG-structset type annotation
+        """
+        prime_type = self.types[1]
+        if prime_type is not None and len(prime_type) in range(2, 4) \
+            and prime_type[1] not in PICA_PRINT_MARKS:
+            no_pica_today = f"{self.process_identifier} no PICA type for OCR: {prime_type}"
+            raise ODEMNoTypeForOCRException(no_pica_today)
+        mets_type = self.types[0]
+        if mets_type is None or mets_type not in TYPE_PRINTS_LOGICAL:
+            raise ODEMNoTypeForOCRException(f"{self.process_identifier} unknown: {prime_type}")
+        return True
 
     @property
     def identifiers(self):
         """Get *all* identifiers"""
-        return self._get_report().prime_report.identifiers
+        return self._get_reader().prime_report.identifiers
 
     @property
     def mods_record_identifier(self):
@@ -111,7 +123,7 @@ class ODEMMetadataInspecteur:
         of even guess if more than 1 source present
         """
         # call first to set the reader in place
-        ident_map = dict(self._get_report().prime_report.identifiers)
+        ident_map = dict(self._get_reader().prime_report.identifiers)
         ident_xpr = self._cfg.get(odem_c.CFG_SEC_METS,
                                   odem_c.CFG_SEC_METS_OPT_ID_XPR, fallback=None)
         if ident_xpr is not None:
@@ -132,12 +144,14 @@ class ODEMMetadataInspecteur:
     @property
     def languages(self):
         """Get language information"""
-        return self._get_report().prime_report.languages
+        return self._get_reader().prime_report.languages
 
     @property
-    def type(self):
+    def types(self):
         """Get type information"""
-        return self._get_report().type
+        log_type = self._get_reader().type
+        prime_type = self._get_reader().prime_report.type
+        return (log_type, prime_type)
 
     def inspect_metadata_images(self):
         """Reduce amount of Images passed on to

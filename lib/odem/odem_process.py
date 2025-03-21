@@ -65,7 +65,6 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
         super().__init__(configuration, work_dir=work_dir,
                          logger=logger, log_dir=log_dir, record=record)
-        self.digi_type = None
         self.mods_identifier = None
         self.process_identifier = self.work_dir_root.name
         if record is not None and record.local_identifier is not None:
@@ -130,15 +129,17 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                                                 self.record.identifier,
                                                 cfg=self.configuration)
         try:
-            the_report = insp.metadata_report()
-            self.digi_type = the_report.type
+            insp.read()
+            (mets, pica) = insp.types
+            self.record.info["mets"] = mets
+            self.record.info["pica"] = pica
             self.ocr_candidates = insp.image_pairs
         except RuntimeError as mde:
             raise odem_c.ODEMException(f"{mde.args[0]}") from mde
         self.mods_identifier = insp.mods_record_identifier
         for t, ident in insp.identifiers.items():
             self.process_statistics[t] = ident
-        self.process_statistics['type'] = insp.type
+        self.process_statistics['type'] = insp.types
         self.process_statistics[odem_c.STATS_KEY_LANGS] = insp.languages
         self.process_statistics['n_images_pages'] = insp.n_images_pages
         self.process_statistics['n_images_ocrable'] = insp.n_images_ocrable
@@ -501,12 +502,15 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         ddb_min_level = 'fatal'
         if self.configuration.has_option('mets', 'ddb_min_level'):
             ddb_min_level = self.configuration.get('mets', 'ddb_min_level')
+        the_type = self.record.info["pica"]
+        if the_type is None:
+            the_type = "Ac"
+            if self.logger is not None:
+                self.logger.warning("[%s] no prime_mods pica type present, fallbabk to Ac",
+                                    self.process_identifier)
         if self.logger is not None:
             self.logger.info("[%s] validate type %s ddb_ignore: %s", self.process_identifier,
-                             self.digi_type, ignore_ddb)
-        the_type = self.digi_type
-        if self.record is not None and "pica" in self.record.info:
-            the_type = self.record.info["pica"]
+                             the_type, ignore_ddb)
         return odem_mets.validate_mets(self.mets_file_path, digi_type=the_type,
                                        ddb_ignores=ignore_ddb,
                                        ddb_min_level=ddb_min_level)

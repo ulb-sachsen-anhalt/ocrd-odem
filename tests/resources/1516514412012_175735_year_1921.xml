@@ -1,0 +1,969 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="static/style.xsl"?><OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2025-03-21T06:26:26Z</responseDate><request verb="GetRecord" identifier="oai:opendata2.uni-halle.de:1516514412012/175907" metadataPrefix="mets">https://opendata2.uni-halle.de/oai/dd</request><GetRecord><record><header><identifier>oai:opendata2.uni-halle.de:1516514412012/175907</identifier><datestamp>2024-02-08T14:42:46Z</datestamp><setSpec>com_1516514412012_34477</setSpec><setSpec>com_1516514412012_1</setSpec><setSpec>col_1516514412012_175735</setSpec><setSpec>digi_inhouse</setSpec></header><metadata><mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:dv="http://dfg-viewer.de/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:b="https://bibliothek.uni-halle.de" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns" xmlns:a="https:/zvdd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:doc="http://www.lyncode.com/xoai" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/mods.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd">
+   <mets:metsHdr xmlns:ulb="https://bibliothek.uni-halle.de" CREATEDATE="2022-03-01T09:36:13.148+01:00" LASTMODDATE="2024-02-08T14:42:45Z">
+      <mets:metsDocumentID>6974</mets:metsDocumentID>
+  </mets:metsHdr>
+   <mets:dmdSec xmlns:ulb="https://bibliothek.uni-halle.de" ID="uuid-9cbd2b20-93b7-36ae-962d-603718375d7c">
+      <mets:mdWrap MDTYPE="MODS">
+         <mets:xmlData>
+            <mods:mods>
+               <mods:originInfo eventType="publication">
+                  <mods:place>
+                     <mods:placeTerm type="text">Halle</mods:placeTerm>
+                  </mods:place>
+                  <mods:dateIssued encoding="iso8601">1921</mods:dateIssued>
+               </mods:originInfo>
+               <mods:originInfo eventType="digitization">
+                  <mods:publisher>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:publisher>
+                  <mods:place>
+                     <mods:placeTerm type="text">Halle (Saale)</mods:placeTerm>
+                  </mods:place>
+                  <mods:dateCaptured encoding="iso8601">2024</mods:dateCaptured>
+               </mods:originInfo>
+               <mods:identifier type="urn">urn:nbn:de:gbv:3:3-171133730-1669156101921-5</mods:identifier>
+               <mods:recordInfo>
+                  <mods:recordIdentifier source="kxp-ppn">1669156101921</mods:recordIdentifier>
+                  <mods:recordCreationDate encoding="marc">29-10-94</mods:recordCreationDate>
+                  <mods:recordChangeDate encoding="marc">04-09-22</mods:recordChangeDate>
+               </mods:recordInfo>
+               <mods:titleInfo>
+                  <mods:title>Klassenkampf</mods:title>
+               </mods:titleInfo>
+               <mods:relatedItem type="host">
+                  <mods:recordInfo>
+                     <mods:recordIdentifier source="kxp-ppn">1774602105</mods:recordIdentifier>
+                  </mods:recordInfo>
+                  <mods:identifier type="zdb">3098062-8</mods:identifier>
+                  <mods:relatedItem type="original">
+                     <mods:identifier type="zdb">347407-0</mods:identifier>
+                     <mods:recordInfo>
+                        <mods:recordIdentifier source="kxp-ppn">166915610</mods:recordIdentifier>
+                     </mods:recordInfo>
+                  </mods:relatedItem>
+                  <mods:titleInfo>
+                     <mods:title>Klassenkampf</mods:title>
+                  </mods:titleInfo>
+               </mods:relatedItem>
+               <mods:language>
+                  <mods:languageTerm type="code" authority="iso639-2b">ger</mods:languageTerm>
+               </mods:language>
+               <mods:extension>
+                  <ulb:externalType recordSyntax="pica">Az</ulb:externalType>
+                  <ulb:collection>1516514412012/175735</ulb:collection>
+               </mods:extension>
+               <mods:location>
+                  <mods:physicalLocation>Universitäts- und Landesbibliothek Sachsen-Anhalt</mods:physicalLocation>
+                  <mods:shelfLocator>Fi 17 R</mods:shelfLocator>
+               </mods:location>
+               <mods:classification authority="ddc">090</mods:classification>
+               <mods:part order="1921">
+                  <mods:detail type="volume">
+                     <mods:number>1. Jahrgang</mods:number>
+                  </mods:detail>
+               </mods:part>
+               <mods:accessCondition type="use and reproduction" xlink:href="https://creativecommons.org/publicdomain/mark/1.0/">Public Domain Mark 1.0</mods:accessCondition>
+            </mods:mods>
+         </mets:xmlData>
+      </mets:mdWrap>
+   </mets:dmdSec>
+   <mets:amdSec xmlns:ulb="https://bibliothek.uni-halle.de" ID="admd1">
+      <mets:rightsMD ID="uuid-8b7473d3-69de-3e89-8e65-f8302a34142b">
+         <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVRIGHTS">
+            <mets:xmlData>
+               <dv:rights>
+                  <dv:owner>Universitäts- und Landesbibliothek Sachsen-Anhalt</dv:owner>
+                  <dv:ownerLogo>https://opendata2.uni-halle.de/image/mets_viewerLogo.gif</dv:ownerLogo>
+                  <dv:ownerSiteURL>http://www.bibliothek.uni-halle.de</dv:ownerSiteURL>
+                  <dv:ownerContact>mailto:auskunft@bibliothek.uni-halle.de</dv:ownerContact>
+                  <dv:license>https://creativecommons.org/publicdomain/mark/1.0/</dv:license>
+               </dv:rights>
+            </mets:xmlData>
+         </mets:mdWrap>
+      </mets:rightsMD>
+      <mets:digiprovMD ID="uuid-87348391-7ea9-3e43-8ec7-6679d3a8e832">
+         <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVLINKS">
+            <mets:xmlData>
+               <dv:links>
+                  <dv:reference>https://opac.lbs-halle.gbv.de/DB=1/XMLPRS=N/PPN?PPN=166915610</dv:reference>
+                  <dv:presentation>https://opendata2.uni-halle.de//handle/1516514412012/175907</dv:presentation>
+                  <dv:iiif>https://opendata2.uni-halle.de//json/iiif/1516514412012/175907/b79c2bc5-23c6-4ed4-93ee-65c3ce28c2f1/manifest</dv:iiif>
+               </dv:links>
+            </mets:xmlData>
+         </mets:mdWrap>
+      </mets:digiprovMD>
+   </mets:amdSec>
+   <mets:structMap xmlns:ulb="https://bibliothek.uni-halle.de" TYPE="PHYSICAL">
+      <mets:div TYPE="physSequence" ID="uuid-83a5090a-c48a-46eb-bb4b-8489b6ae86f7" />
+   </mets:structMap>
+   <mets:structMap xmlns:ulb="https://bibliothek.uni-halle.de" TYPE="LOGICAL">
+      <mets:div ID="uuid-5862d89b-a855-468f-ad68-c0644dbf9b07" TYPE="newspaper">
+         <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175908" LOCTYPE="URL" />
+         <mets:div ADMID="uuid-87348391-7ea9-3e43-8ec7-6679d3a8e832 uuid-8b7473d3-69de-3e89-8e65-f8302a34142b" ID="uuid-ab07c805-1a9e-4236-8ae1-cf6848bf7a2d" DMDID="uuid-9cbd2b20-93b7-36ae-962d-603718375d7c" TYPE="year" ORDERLABEL="1921" LABEL="1921">
+            <mets:div ID="uuid-67eb2b5f-d5c7-4641-9710-95658d4b711c" TYPE="month" ORDER="1" ORDERLABEL="1921-01">
+               <mets:div ID="uuid-8bf2aa4e-4dda-46b7-8301-964360a25c9b" TYPE="day" ORDER="1" ORDERLABEL="1921-01-03">
+                  <mets:div ADMID="admd1" ID="uuid-da7c5f32-3682-4c14-8740-31a3799c7a38" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175739" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-0fa4f60a-2378-4857-8717-4bb2b66a1d77" TYPE="day" ORDER="2" ORDERLABEL="1921-01-04">
+                  <mets:div ADMID="admd1" ID="uuid-bcabec50-9795-498b-ae3d-0c1e65011420" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175848" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-5636f6ef-bda9-4fb9-8147-b7877b9f68c2" TYPE="day" ORDER="3" ORDERLABEL="1921-01-05">
+                  <mets:div ADMID="admd1" ID="uuid-54e7a7bd-c2d9-4658-a091-002f580d19e7" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175740" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-447ec2cc-c0d4-42f3-b778-c6bfae3ac848" TYPE="day" ORDER="4" ORDERLABEL="1921-01-06">
+                  <mets:div ADMID="admd1" ID="uuid-45619347-5a7c-4902-a693-be8d236023a8" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175741" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f65e8de2-ef64-44a3-b7e0-657aff9a1c27" TYPE="day" ORDER="5" ORDERLABEL="1921-01-07">
+                  <mets:div ADMID="admd1" ID="uuid-7ceba794-6efd-4930-8368-35788def7fca" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175742" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-fd675138-ca28-4aef-8fcd-61eb4cbd7835" TYPE="day" ORDER="6" ORDERLABEL="1921-01-08">
+                  <mets:div ADMID="admd1" ID="uuid-b4f29871-a77a-4508-8ab4-fd898277ced6" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175743" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-a07944ae-356b-425c-8a7e-41b71094166c" TYPE="day" ORDER="7" ORDERLABEL="1921-01-10">
+                  <mets:div ADMID="admd1" ID="uuid-07d5684c-07ba-4868-be64-f44f4c005b36" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175744" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-5599557d-d715-461c-8b63-4419d8c09852" TYPE="day" ORDER="8" ORDERLABEL="1921-01-11">
+                  <mets:div ADMID="admd1" ID="uuid-56fce2c0-c83b-4b08-b76e-5ad2388efce9" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175745" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c05584d6-4bff-43ae-aae2-8b736f19d2f7" TYPE="day" ORDER="9" ORDERLABEL="1921-01-12">
+                  <mets:div ADMID="admd1" ID="uuid-19076200-050d-4f43-821d-6b0d63a0ceb6" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175746" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-4dbef97a-5428-4567-bbb3-c65b5b8f04d1" TYPE="day" ORDER="10" ORDERLABEL="1921-01-13">
+                  <mets:div ADMID="admd1" ID="uuid-0ab23132-c951-4714-ba98-bd582438b4b7" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175747" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-25f570a5-f8fb-4cf5-95db-9024e2f4a07c" TYPE="day" ORDER="11" ORDERLABEL="1921-01-14">
+                  <mets:div ADMID="admd1" ID="uuid-97082520-506a-446c-b470-3c45818af7b4" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175748" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cedb5417-683f-4aab-9394-6e7a6501ea0b" TYPE="day" ORDER="12" ORDERLABEL="1921-01-15">
+                  <mets:div ADMID="admd1" ID="uuid-53129943-cab3-40f4-a241-2fac09f1fdd3" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175749" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-8c4ffde1-f0c5-4f23-a7d8-6bf4f719dfd9" TYPE="day" ORDER="13" ORDERLABEL="1921-01-17">
+                  <mets:div ADMID="admd1" ID="uuid-84c345fc-e302-423c-822b-2a0b23881e25" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175750" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-36ad08d7-3233-46e5-80a8-e79e2c63a560" TYPE="day" ORDER="14" ORDERLABEL="1921-01-18">
+                  <mets:div ADMID="admd1" ID="uuid-1fbef700-6208-40b9-91e5-9df03f646ae4" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175751" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-5d4ed0d0-9770-49bd-bc9a-f56d48b8f430" TYPE="day" ORDER="15" ORDERLABEL="1921-01-19">
+                  <mets:div ADMID="admd1" ID="uuid-7ebe0d26-9603-47a2-ae6d-da4ac98ac2ce" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175752" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-b6bd7bac-2c67-4291-b101-8e7d3611e5bd" TYPE="day" ORDER="16" ORDERLABEL="1921-01-20">
+                  <mets:div ADMID="admd1" ID="uuid-6438e2f7-ac42-4247-aca7-bd36f9994bf2" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175753" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c2e178c9-e125-4488-8b3a-a5fd2c5b8865" TYPE="day" ORDER="17" ORDERLABEL="1921-01-21">
+                  <mets:div ADMID="admd1" ID="uuid-0769bc3e-1ae7-404f-b7e7-b3ab353d1787" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175754" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-a5cf359a-af03-40d8-8b56-90091aea4b61" TYPE="day" ORDER="18" ORDERLABEL="1921-01-22">
+                  <mets:div ADMID="admd1" ID="uuid-670f4a14-d835-4e56-a6ac-6c7d6ec61d92" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175755" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9740993b-714c-4ff6-ae32-bf54907ca0d6" TYPE="day" ORDER="19" ORDERLABEL="1921-01-24">
+                  <mets:div ADMID="admd1" ID="uuid-abb1a153-63ee-436f-a272-76b62e380219" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175756" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-5a40184c-b8f0-4db0-b66e-26576977f7ed" TYPE="day" ORDER="20" ORDERLABEL="1921-01-25">
+                  <mets:div ADMID="admd1" ID="uuid-a0a290f9-2de4-4203-a2ac-a60bbf2ad99a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175757" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-976cf210-dd29-4b2f-98d9-a04c09f36ed8" TYPE="day" ORDER="21" ORDERLABEL="1921-01-26">
+                  <mets:div ADMID="admd1" ID="uuid-3ebaa4e2-f4e0-4dc5-82d8-ae325b4579e7" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175758" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-5ba6eadd-1eba-4507-8a30-2f4d1c430ef8" TYPE="day" ORDER="22" ORDERLABEL="1921-01-27">
+                  <mets:div ADMID="admd1" ID="uuid-b2e9f58d-09b8-4447-9066-8871c5cf9636" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175759" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-094a1f01-6d59-41ef-95ca-c9d5f28172d3" TYPE="day" ORDER="23" ORDERLABEL="1921-01-28">
+                  <mets:div ADMID="admd1" ID="uuid-e919cd7e-2bfd-4b93-a6cb-2a013ddfec59" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175760" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-52d2b8d6-a151-4b8f-8394-d572d8295edb" TYPE="day" ORDER="24" ORDERLABEL="1921-01-29">
+                  <mets:div ADMID="admd1" ID="uuid-5b0070e9-4f3b-43cd-95e2-54438dbceaad" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175761" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-d64c5b73-0641-48ac-9878-5e13c40964ca" TYPE="day" ORDER="25" ORDERLABEL="1921-01-31">
+                  <mets:div ADMID="admd1" ID="uuid-d5e6c99c-d089-4574-930c-cc07b433bc7a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175762" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+            </mets:div>
+            <mets:div ID="uuid-244c09cb-b627-49aa-9332-565050c12c3b" TYPE="month" ORDER="2" ORDERLABEL="1921-02">
+               <mets:div ID="uuid-fe9bc7bd-a326-4432-86c5-8171e49110c7" TYPE="day" ORDER="1" ORDERLABEL="1921-02-01">
+                  <mets:div ADMID="admd1" ID="uuid-0630c9d7-9723-46d5-b410-819d9c46b44f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175763" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f2c5b4c0-11f0-4dab-bc2b-16aac502941d" TYPE="day" ORDER="2" ORDERLABEL="1921-02-02">
+                  <mets:div ADMID="admd1" ID="uuid-0356a0e7-921c-4c3b-a3f3-a2b94145b366" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175764" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c172d359-fb91-40e8-801e-2d18b45d2eaf" TYPE="day" ORDER="3" ORDERLABEL="1921-02-03">
+                  <mets:div ADMID="admd1" ID="uuid-40683cd5-5d79-4aca-ba12-f5d70cb0657a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175765" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-8a3642d0-5ffe-48b2-80ef-b7d821a411ea" TYPE="day" ORDER="4" ORDERLABEL="1921-02-04">
+                  <mets:div ADMID="admd1" ID="uuid-96330121-ab69-4835-bc7a-38a60f39102a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175766" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-2fd79027-dc97-45aa-aecc-39920c17f822" TYPE="day" ORDER="5" ORDERLABEL="1921-02-05">
+                  <mets:div ADMID="admd1" ID="uuid-9d4ffaf7-9a53-423b-98d6-d7618aa5618b" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175767" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-a515241f-bc82-4f24-a681-bba2ef67e8f0" TYPE="day" ORDER="6" ORDERLABEL="1921-02-07">
+                  <mets:div ADMID="admd1" ID="uuid-fae42cfd-29c1-4456-85f3-18011bca55e1" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175768" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-110b244a-91a6-4c3e-a1e7-c383fe56de80" TYPE="day" ORDER="7" ORDERLABEL="1921-02-08">
+                  <mets:div ADMID="admd1" ID="uuid-c8b2f29b-dc2c-4974-b429-d365bc04e0c8" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175769" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-73af61de-f605-42b6-b431-8cbabb84adae" TYPE="day" ORDER="8" ORDERLABEL="1921-02-09">
+                  <mets:div ADMID="admd1" ID="uuid-4ca4c9c4-3678-4758-b2b3-9b42f195809f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175770" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-8548b3ba-ed31-4e99-8e8b-626ca04924ca" TYPE="day" ORDER="9" ORDERLABEL="1921-02-10">
+                  <mets:div ADMID="admd1" ID="uuid-5b9e6cdb-c7ea-4534-8947-004ddae655fc" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175771" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-1ce6be3f-4e3e-4d7a-b54b-f02fe20e34e1" TYPE="day" ORDER="10" ORDERLABEL="1921-02-11">
+                  <mets:div ADMID="admd1" ID="uuid-30225ab6-d4b6-4366-aa19-8f31f67ed707" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175772" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-86ceaae9-385b-4b8f-a70e-c089a3b58a5a" TYPE="day" ORDER="11" ORDERLABEL="1921-02-12">
+                  <mets:div ADMID="admd1" ID="uuid-0537c9ef-1b9f-4372-83f5-e9ae3808bb1f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175773" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-b5c648d3-acc5-4bad-89ee-b42442aab63e" TYPE="day" ORDER="12" ORDERLABEL="1921-02-14">
+                  <mets:div ADMID="admd1" ID="uuid-0722b084-7289-44e5-8ea6-bd27194ba8ba" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175774" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-28b99a42-baaf-452a-9f1e-f34511ae5f2f" TYPE="day" ORDER="13" ORDERLABEL="1921-02-15">
+                  <mets:div ADMID="admd1" ID="uuid-587656c2-deb4-465f-8564-047205cd66fe" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175775" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9311cc00-8646-4572-ba9c-d6ceb22c00ee" TYPE="day" ORDER="14" ORDERLABEL="1921-02-16">
+                  <mets:div ADMID="admd1" ID="uuid-c048c98f-546a-4136-a416-cbadbb0ea23a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175776" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-33496166-795f-4ab4-bddb-5ba5214e9e55" TYPE="day" ORDER="15" ORDERLABEL="1921-02-17">
+                  <mets:div ADMID="admd1" ID="uuid-7491d0fe-5010-420d-8c97-f24346bc8b91" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175777" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f744f94a-0681-4fc4-9bfb-99530f3f6c3e" TYPE="day" ORDER="16" ORDERLABEL="1921-02-18">
+                  <mets:div ADMID="admd1" ID="uuid-582c8945-805b-4c2e-8f1e-9d0434c9db44" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175778" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-941c0d4d-6a55-4b6c-9cb3-c36342be0ab0" TYPE="day" ORDER="17" ORDERLABEL="1921-02-19">
+                  <mets:div ADMID="admd1" ID="uuid-6994fc37-78a9-4149-bc70-fdd7b3fd1823" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175779" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-14ae5805-7356-4ebb-8879-105b1635ea95" TYPE="day" ORDER="18" ORDERLABEL="1921-02-21">
+                  <mets:div ADMID="admd1" ID="uuid-3967ecf7-0b4d-4136-bcc7-2f3ab8b96a5c" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175780" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c70dcc5f-5160-41de-be3c-aa62b34d0e90" TYPE="day" ORDER="19" ORDERLABEL="1921-02-22">
+                  <mets:div ADMID="admd1" ID="uuid-808a1594-1729-4efc-ac59-cea9dc3cc070" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175781" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-febcfcbf-4c6a-41a5-ac86-577ffe1948d3" TYPE="day" ORDER="20" ORDERLABEL="1921-02-23">
+                  <mets:div ADMID="admd1" ID="uuid-009be67f-8238-4201-8269-22e3e8634064" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175782" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cee9f1f1-a314-499c-ab06-60e91943459c" TYPE="day" ORDER="21" ORDERLABEL="1921-02-24">
+                  <mets:div ADMID="admd1" ID="uuid-d7197599-3de7-4650-9904-f1c9b6ae5306" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175783" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-d62cafcc-c3d5-42c2-9a18-ae005c307126" TYPE="day" ORDER="22" ORDERLABEL="1921-02-25">
+                  <mets:div ADMID="admd1" ID="uuid-e4aa67ec-199d-4eab-b4df-f1c39ff1bdea" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175784" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-d67c3f9b-e400-4ed8-94a3-895728bd8995" TYPE="day" ORDER="23" ORDERLABEL="1921-02-26">
+                  <mets:div ADMID="admd1" ID="uuid-d51b7476-ea22-430e-ae62-4bbcaeb3caa4" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175785" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-85633795-4859-49cd-8c03-ee3be2d58fca" TYPE="day" ORDER="24" ORDERLABEL="1921-02-28">
+                  <mets:div ADMID="admd1" ID="uuid-bd3b9793-9737-4e02-bc69-ffb40293de62" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175786" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+            </mets:div>
+            <mets:div ID="uuid-6274e51f-ab15-43b1-90d4-0018bfb4812f" TYPE="month" ORDER="3" ORDERLABEL="1921-03">
+               <mets:div ID="uuid-873c54cb-67ba-40df-a585-08880fab44d0" TYPE="day" ORDER="1" ORDERLABEL="1921-03-01">
+                  <mets:div ADMID="admd1" ID="uuid-36ea98f2-5fb0-4482-96f5-d42a5c15fcee" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175787" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-23747575-9f50-44a1-b6ae-6e5f52ff8724" TYPE="day" ORDER="2" ORDERLABEL="1921-03-02">
+                  <mets:div ADMID="admd1" ID="uuid-ebc7182c-d1fa-43ef-8aa8-3facc5fe7051" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175788" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-91af5cb0-4229-4026-9a3e-244f045c22f7" TYPE="day" ORDER="3" ORDERLABEL="1921-03-03">
+                  <mets:div ADMID="admd1" ID="uuid-577e9735-c9e4-4f0e-a2ca-e002a2f1bf9c" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175789" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-b5042e62-2875-4845-b685-93e890a12cef" TYPE="day" ORDER="4" ORDERLABEL="1921-03-04">
+                  <mets:div ADMID="admd1" ID="uuid-1e3a920c-0dc1-4f01-9207-7a42aea2d56a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175790" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e6b52412-35f1-41f5-9491-34431ac27f73" TYPE="day" ORDER="5" ORDERLABEL="1921-03-05">
+                  <mets:div ADMID="admd1" ID="uuid-91a562ab-276e-4924-b641-f2317952784d" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175791" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c7e5203c-a7f6-4eb5-a7be-a9667e2ca2ef" TYPE="day" ORDER="6" ORDERLABEL="1921-03-07">
+                  <mets:div ADMID="admd1" ID="uuid-ee46e8d6-ef1b-47de-ae86-3558919bbbad" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175792" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e8523b6b-e333-40d3-a619-87ee25f1345a" TYPE="day" ORDER="7" ORDERLABEL="1921-03-08">
+                  <mets:div ADMID="admd1" ID="uuid-68804a2d-fd45-4510-bb45-0880075621cd" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175793" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-6499b7ba-19e6-4215-b2a3-974d75f6062d" TYPE="day" ORDER="8" ORDERLABEL="1921-03-09">
+                  <mets:div ADMID="admd1" ID="uuid-345e937b-a884-4a1f-a366-da48afa2ddd0" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175794" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c52c4660-a68c-4191-828c-0ea073f0069c" TYPE="day" ORDER="9" ORDERLABEL="1921-03-10">
+                  <mets:div ADMID="admd1" ID="uuid-53500bbb-42d2-4b85-bd64-13b343914e15" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175795" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-8b022e8b-a4d6-46e2-a6c4-38ce6200d1ed" TYPE="day" ORDER="10" ORDERLABEL="1921-03-11">
+                  <mets:div ADMID="admd1" ID="uuid-ae84bedc-8345-4e78-ae1e-d47d6a825301" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175796" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-21db268b-19c7-4aae-a373-fd4f488f765a" TYPE="day" ORDER="11" ORDERLABEL="1921-03-12">
+                  <mets:div ADMID="admd1" ID="uuid-6ff617f4-e3b6-4ca5-924b-7c0574c30abd" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175797" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-72e26af8-5669-4b80-bbee-aa22bdf5959d" TYPE="day" ORDER="12" ORDERLABEL="1921-03-14">
+                  <mets:div ADMID="admd1" ID="uuid-8afc70b9-6798-4fae-a155-7b8f454eeba1" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175798" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cc373387-f82b-4c41-95af-22197731b19d" TYPE="day" ORDER="13" ORDERLABEL="1921-03-15">
+                  <mets:div ADMID="admd1" ID="uuid-0fc31f77-f8d6-4cd4-b19d-82199e7b01d6" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175799" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-df632e36-0247-4631-8d95-6175a9f26891" TYPE="day" ORDER="14" ORDERLABEL="1921-03-16">
+                  <mets:div ADMID="admd1" ID="uuid-319c1a4d-096d-491b-a379-1252fc662db7" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175800" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-3f05c71b-ca2d-4312-84c6-29bd361f0a74" TYPE="day" ORDER="15" ORDERLABEL="1921-03-17">
+                  <mets:div ADMID="admd1" ID="uuid-f58d9973-929b-40b8-9328-a3202b933bba" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175801" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c52e1afb-2521-40d6-8a6f-c23dc25e84fe" TYPE="day" ORDER="16" ORDERLABEL="1921-03-18">
+                  <mets:div ADMID="admd1" ID="uuid-212efdd0-716f-477a-bbb0-313d221d38e9" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175802" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9c65233f-09c5-4398-a24a-9745481aea56" TYPE="day" ORDER="17" ORDERLABEL="1921-03-19">
+                  <mets:div ADMID="admd1" ID="uuid-59a3e250-be34-49cd-a644-d7f9fbf7a861" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175803" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-7af80e3f-a986-4b49-b382-c9ad3eea7e93" TYPE="day" ORDER="18" ORDERLABEL="1921-03-21">
+                  <mets:div ADMID="admd1" ID="uuid-8296e86c-d95e-4d74-aa5c-575a3fc51b35" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175804" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-a58dba96-962e-47df-a31a-75e98ba658cb" TYPE="day" ORDER="19" ORDERLABEL="1921-03-22">
+                  <mets:div ADMID="admd1" ID="uuid-4ad6d415-1019-4e51-919e-7b799514aa90" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175805" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-4767b21b-76a0-4a69-9a5f-3560406cd977" TYPE="day" ORDER="20" ORDERLABEL="1921-03-23">
+                  <mets:div ADMID="admd1" ID="uuid-120ad77b-3c16-4961-b2cd-a87ea58e396b" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175806" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-0bb8b956-ac3c-4004-9aad-60f1ed55d3e0" TYPE="day" ORDER="21" ORDERLABEL="1921-03-24">
+                  <mets:div ADMID="admd1" ID="uuid-f99ffd5d-fabb-4916-81d4-01b882d5ca10" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175807" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+            </mets:div>
+            <mets:div ID="uuid-d5165db8-2a7d-4597-b43b-b7e0748c77ea" TYPE="month" ORDER="4" ORDERLABEL="1921-09">
+               <mets:div ID="uuid-bc6f5ce8-5deb-4415-ac75-ef6100cb133e" TYPE="day" ORDER="1" ORDERLABEL="1921-09-03">
+                  <mets:div ADMID="admd1" ID="uuid-b6db60cc-8a03-4c99-8e82-63b15dc0b1d3" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175808" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-7a7b7305-5813-4ea5-9255-8500cc015177" TYPE="day" ORDER="2" ORDERLABEL="1921-09-05">
+                  <mets:div ADMID="admd1" ID="uuid-d736fcd8-c8a4-43a8-ba53-7385bc283397" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175809" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-76e536bc-c719-4b1f-9e17-f16cacac702c" TYPE="day" ORDER="3" ORDERLABEL="1921-09-06">
+                  <mets:div ADMID="admd1" ID="uuid-131495a2-896b-4c0a-9f42-3f4e8854d93c" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175810" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-26276b54-ebfe-4f3e-a439-0a4b878557fb" TYPE="day" ORDER="4" ORDERLABEL="1921-09-07">
+                  <mets:div ADMID="admd1" ID="uuid-db6b52bf-343f-4820-8398-92b6007cb979" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175811" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c42b36e9-c056-4af4-9fe7-6542ac9f1d57" TYPE="day" ORDER="5" ORDERLABEL="1921-09-08">
+                  <mets:div ADMID="admd1" ID="uuid-be743f9f-d81a-4577-b8fb-adc7ce94349f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175812" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f49304f7-49b4-4066-8053-4bee5fac577d" TYPE="day" ORDER="6" ORDERLABEL="1921-09-09">
+                  <mets:div ADMID="admd1" ID="uuid-685e70c8-0e84-4273-934d-34c71261e867" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175813" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-7bc7f7ec-bc0b-4e1f-9352-3dea3ea2482e" TYPE="day" ORDER="7" ORDERLABEL="1921-09-10">
+                  <mets:div ADMID="admd1" ID="uuid-a3410480-258f-43ce-a0ab-092f5abc77ec" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175814" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-377ddccc-a485-4bb8-aba3-4a5de3cafa84" TYPE="day" ORDER="8" ORDERLABEL="1921-09-12">
+                  <mets:div ADMID="admd1" ID="uuid-c79823d5-d685-48e6-9fc4-76e5cb6d167c" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175815" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e8ee44f5-031c-4491-bc1b-8531d57f9f8b" TYPE="day" ORDER="9" ORDERLABEL="1921-09-13">
+                  <mets:div ADMID="admd1" ID="uuid-304f678b-3dfd-442c-997a-f64b4f46af03" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175816" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-8a63d250-db3e-4a24-b3ad-fef97a4802b5" TYPE="day" ORDER="10" ORDERLABEL="1921-09-14">
+                  <mets:div ADMID="admd1" ID="uuid-0a10ffc9-5c24-4e94-94a4-a6712b79ad71" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175817" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cf53e2b4-aec3-4604-886a-2058a787b4f5" TYPE="day" ORDER="11" ORDERLABEL="1921-09-15">
+                  <mets:div ADMID="admd1" ID="uuid-74b28fd5-fa79-4b36-8e97-2cc9ff0fb6ce" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175818" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9b32221d-f36e-453a-aea5-1d747b37914b" TYPE="day" ORDER="12" ORDERLABEL="1921-09-16">
+                  <mets:div ADMID="admd1" ID="uuid-3378ba18-c7ab-47ce-85b1-a0207b6e29dc" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175819" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-1b6cec34-f17a-43db-a7c4-403734665c74" TYPE="day" ORDER="13" ORDERLABEL="1921-09-17">
+                  <mets:div ADMID="admd1" ID="uuid-0fc54a8d-d02f-4cda-806a-1dde25e5ede1" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175820" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-266d0211-edad-4524-9ef1-10f05aad6aec" TYPE="day" ORDER="14" ORDERLABEL="1921-09-19">
+                  <mets:div ADMID="admd1" ID="uuid-edfda2cb-e381-4dfc-9129-7481050906f1" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175821" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-85af2b1d-b270-4445-a880-64ec49914c2d" TYPE="day" ORDER="15" ORDERLABEL="1921-09-20">
+                  <mets:div ADMID="admd1" ID="uuid-79f86b24-7d56-44f4-8400-edcbace91724" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175822" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-6d479c00-ff7b-4a7e-a4cd-4d5d6ec0b662" TYPE="day" ORDER="16" ORDERLABEL="1921-09-21">
+                  <mets:div ADMID="admd1" ID="uuid-5f931037-3d91-492a-9fec-211dac3f003f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175823" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cb922a0f-6ff7-48e2-bf69-397dd6a1aec6" TYPE="day" ORDER="17" ORDERLABEL="1921-09-22">
+                  <mets:div ADMID="admd1" ID="uuid-8f207ae2-d4c8-4026-aeb5-444345f296c2" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175824" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-bc7ee13b-e648-45b9-a5d7-69a6687bfd49" TYPE="day" ORDER="18" ORDERLABEL="1921-09-23">
+                  <mets:div ADMID="admd1" ID="uuid-32279cd6-778f-4213-b97a-caf8515ec753" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175825" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-ff23cd9f-fb93-4f86-92cb-f389b524e07d" TYPE="day" ORDER="19" ORDERLABEL="1921-09-24">
+                  <mets:div ADMID="admd1" ID="uuid-52b993b5-1ce4-469b-83d0-f5d02c2c1bd5" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175826" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-0f82cb29-ca64-4bfb-95aa-712046e4711b" TYPE="day" ORDER="20" ORDERLABEL="1921-09-26">
+                  <mets:div ADMID="admd1" ID="uuid-80877bc2-0b98-4780-bcfc-cd20a2dda992" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175827" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e5526d1c-5a28-4b72-9bd4-b89644c1275d" TYPE="day" ORDER="21" ORDERLABEL="1921-09-27">
+                  <mets:div ADMID="admd1" ID="uuid-7e9e50e3-84b5-4024-88e2-36eb81cc740b" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175828" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-3b83cf6c-a698-4363-9b05-f55f1e43b5d0" TYPE="day" ORDER="22" ORDERLABEL="1921-09-28">
+                  <mets:div ADMID="admd1" ID="uuid-91856a50-4844-4c0a-b876-12ceab29ec7d" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175829" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cc53684a-d511-4730-8d20-2c2694c0f359" TYPE="day" ORDER="23" ORDERLABEL="1921-09-29">
+                  <mets:div ADMID="admd1" ID="uuid-800ed6b5-ef7f-4482-93c6-809a511c30fd" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175830" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-b06d1104-f75a-4d18-befd-408baf5eaf46" TYPE="day" ORDER="24" ORDERLABEL="1921-09-30">
+                  <mets:div ADMID="admd1" ID="uuid-8631ff1a-aa37-4021-92b7-90336a1dce74" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175831" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+            </mets:div>
+            <mets:div ID="uuid-4e5df175-35f7-4f41-a6a5-445d3f5fd6a2" TYPE="month" ORDER="5" ORDERLABEL="1921-10">
+               <mets:div ID="uuid-03abe367-f138-4906-832f-c91a0d233146" TYPE="day" ORDER="1" ORDERLABEL="1921-10-01">
+                  <mets:div ADMID="admd1" ID="uuid-63d5fb63-7103-49b8-b7c1-3c47d9c981de" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175832" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-a96b7927-1c43-43b8-882b-4dc9c7400552" TYPE="day" ORDER="2" ORDERLABEL="1921-10-03">
+                  <mets:div ADMID="admd1" ID="uuid-92450a6c-3660-44d6-a54d-ecae0bd66c48" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175833" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-5834d5ac-6f1c-4c64-a09d-d9ca0d8413c8" TYPE="day" ORDER="3" ORDERLABEL="1921-10-04">
+                  <mets:div ADMID="admd1" ID="uuid-c72ace2e-e6bb-41f9-8bea-139fb423ce74" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175834" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-a724455e-90a6-4e72-b1e1-2d5dcd22c36e" TYPE="day" ORDER="4" ORDERLABEL="1921-10-05">
+                  <mets:div ADMID="admd1" ID="uuid-eb7f7cb9-9a93-47c3-b175-86c4e3c2a62d" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175835" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-86bee47f-cf0c-4496-b2cf-45da4b81b47a" TYPE="day" ORDER="5" ORDERLABEL="1921-10-06">
+                  <mets:div ADMID="admd1" ID="uuid-e45f4f12-9a42-4ac4-8e4d-b0ebaffedee5" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175836" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-227fefaf-e313-40f5-a4f5-9d1517263ea5" TYPE="day" ORDER="6" ORDERLABEL="1921-10-07">
+                  <mets:div ADMID="admd1" ID="uuid-cee7bad0-f0c2-43df-a7b1-a0bce9cd96bd" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175837" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-ae0f80d7-06a8-4344-9112-01736cbf43f3" TYPE="day" ORDER="7" ORDERLABEL="1921-10-08">
+                  <mets:div ADMID="admd1" ID="uuid-ac74b549-550e-4e15-a4d4-ba807a986e44" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175838" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-48fa7ce0-04b5-4ce6-9b96-e5397cd67928" TYPE="day" ORDER="8" ORDERLABEL="1921-10-10">
+                  <mets:div ADMID="admd1" ID="uuid-151979d1-0910-4387-bdc1-bd3c71c9c0f9" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175839" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-2dcb4048-40b9-47f8-a4f9-507b7ef4c00d" TYPE="day" ORDER="9" ORDERLABEL="1921-10-11">
+                  <mets:div ADMID="admd1" ID="uuid-e916fca4-3d15-4445-bf05-ebe0d14f38cc" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175840" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c589cf35-8c36-48e5-b26f-eb3fd37369f9" TYPE="day" ORDER="10" ORDERLABEL="1921-10-12">
+                  <mets:div ADMID="admd1" ID="uuid-b15acea8-0aa4-4b9c-9bc5-4cb0c8701a94" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175841" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-68a757f2-e37d-4709-8cd0-b24901e0a7ee" TYPE="day" ORDER="11" ORDERLABEL="1921-10-13">
+                  <mets:div ADMID="admd1" ID="uuid-b4df5af5-74d6-456a-b44d-0c7304a0ee9f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175842" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-3f7d188b-eef7-432b-bade-65a4c0fd9872" TYPE="day" ORDER="12" ORDERLABEL="1921-10-14">
+                  <mets:div ADMID="admd1" ID="uuid-88836fd8-18d5-49e2-b45f-490846005085" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175843" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-27693c20-b951-4ded-bc61-32686f1ee143" TYPE="day" ORDER="13" ORDERLABEL="1921-10-15">
+                  <mets:div ADMID="admd1" ID="uuid-df6669fa-9813-419e-9754-a630eb9fb3d7" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175844" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c7f00a2f-b48e-4819-82bc-eea0cea2d86b" TYPE="day" ORDER="14" ORDERLABEL="1921-10-17">
+                  <mets:div ADMID="admd1" ID="uuid-47f7c870-2542-416d-b9cf-6ac984fee31d" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175845" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f577661e-add9-412c-ad62-5cd699f94f32" TYPE="day" ORDER="15" ORDERLABEL="1921-10-18">
+                  <mets:div ADMID="admd1" ID="uuid-e5c97929-48e7-41f5-9014-f4f788f8ffaa" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175846" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-65cb3c71-c8d0-447b-b780-2c290251f70d" TYPE="day" ORDER="16" ORDERLABEL="1921-10-19">
+                  <mets:div ADMID="admd1" ID="uuid-98a5d433-72aa-423a-996e-702325415aa8" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175847" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9b97f222-5a3b-403b-8221-43a4df6330fe" TYPE="day" ORDER="17" ORDERLABEL="1921-10-20">
+                  <mets:div ADMID="admd1" ID="uuid-1b465ca6-73ce-42a3-ae8c-a74084a2d67b" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175849" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f017412a-a67d-4883-a278-f32a0639697b" TYPE="day" ORDER="18" ORDERLABEL="1921-10-21">
+                  <mets:div ADMID="admd1" ID="uuid-5d604ad1-c2d7-4bf1-b820-b9251e256919" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175850" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-2e223488-fbec-475b-8092-c99a79b0cdd7" TYPE="day" ORDER="19" ORDERLABEL="1921-10-22">
+                  <mets:div ADMID="admd1" ID="uuid-f7561729-fb85-40cd-b949-f594fedb39e5" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175851" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-0900f050-50f4-473c-ab87-60d7cf179297" TYPE="day" ORDER="20" ORDERLABEL="1921-10-24">
+                  <mets:div ADMID="admd1" ID="uuid-181f0b43-ee01-4192-824e-d4ddbc50d5ac" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175852" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-4b96225a-c221-46ea-bb78-522a94950f44" TYPE="day" ORDER="21" ORDERLABEL="1921-10-25">
+                  <mets:div ADMID="admd1" ID="uuid-5b4cc862-1f79-4bb5-8bf3-1db79c1245e5" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175853" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-d73d3b37-0c14-4971-b924-1459890500b2" TYPE="day" ORDER="22" ORDERLABEL="1921-10-27">
+                  <mets:div ADMID="admd1" ID="uuid-fa2119c5-89b1-45cd-80ba-74b8a91127bd" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175854" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-7c8a558a-681f-401b-9668-2756e49d1d55" TYPE="day" ORDER="23" ORDERLABEL="1921-10-28">
+                  <mets:div ADMID="admd1" ID="uuid-1ea7b889-4ec4-49bf-8759-6d3b10c7fe41" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175855" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cd11a98f-5730-42ec-ba09-7fd832c63b41" TYPE="day" ORDER="24" ORDERLABEL="1921-10-29">
+                  <mets:div ADMID="admd1" ID="uuid-dcb4a7d3-d3dc-40e1-bc35-1c76a381e271" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175856" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-3822c274-a886-4d3c-b1c0-9bb0e5391c0c" TYPE="day" ORDER="25" ORDERLABEL="1921-10-31">
+                  <mets:div ADMID="admd1" ID="uuid-c166c688-5b97-4aef-9f0c-ac4674f563f4" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175857" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+            </mets:div>
+            <mets:div ID="uuid-b5917ff1-a062-4575-ab48-7744d55c2f2e" TYPE="month" ORDER="6" ORDERLABEL="1921-11">
+               <mets:div ID="uuid-9a2dd637-ba28-4b1b-bdb5-87ad8e305c3f" TYPE="day" ORDER="1" ORDERLABEL="1921-11-01">
+                  <mets:div ADMID="admd1" ID="uuid-8a571f88-b0a5-487e-8443-bc7782273a00" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175858" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-72d6d1f1-e4b8-4f0d-9d99-3f0f79dc9b97" TYPE="day" ORDER="2" ORDERLABEL="1921-11-02">
+                  <mets:div ADMID="admd1" ID="uuid-94923c22-a1da-4e7d-ad5c-2678565c7c93" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175859" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-0f3257a5-d1ef-4aef-bd2e-a747d56a5c3d" TYPE="day" ORDER="3" ORDERLABEL="1921-11-03">
+                  <mets:div ADMID="admd1" ID="uuid-e6e261e2-38e3-4907-94eb-ecc564ff62f7" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175860" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-73447f12-b7c1-444d-b400-b174fc35b820" TYPE="day" ORDER="4" ORDERLABEL="1921-11-04">
+                  <mets:div ADMID="admd1" ID="uuid-de0d6e0d-61d7-4f8f-8529-1c66c5e6098b" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175861" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-741634a6-7eed-4222-ae6f-be84a46868cb" TYPE="day" ORDER="5" ORDERLABEL="1921-11-05">
+                  <mets:div ADMID="admd1" ID="uuid-2208a510-9a2e-49b9-94a8-b41cda9fb15f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175862" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-846e94a0-d3c6-4090-bb00-5b17dc7370c5" TYPE="day" ORDER="6" ORDERLABEL="1921-11-07">
+                  <mets:div ADMID="admd1" ID="uuid-8a76c162-3d68-4285-ba93-26419ade55d5" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175863" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-a47c719c-8113-4604-aaf6-2b4eb52110e7" TYPE="day" ORDER="7" ORDERLABEL="1921-11-08">
+                  <mets:div ADMID="admd1" ID="uuid-7010fabf-7e88-469c-8af5-53f4444e3574" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175864" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-93d22ea6-7f8a-4d9d-add1-d584a487a8d8" TYPE="day" ORDER="8" ORDERLABEL="1921-11-09">
+                  <mets:div ADMID="admd1" ID="uuid-bddae14b-a884-486d-becc-f093d28525e7" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175865" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-b5a15e05-b37b-40b7-88a9-95400c722f05" TYPE="day" ORDER="9" ORDERLABEL="1921-11-10">
+                  <mets:div ADMID="admd1" ID="uuid-12ae32a3-3479-419d-b9f8-1e20d1c598ad" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175866" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9fd49025-1855-472c-9c30-150aeaa9beb2" TYPE="day" ORDER="10" ORDERLABEL="1921-11-11">
+                  <mets:div ADMID="admd1" ID="uuid-19d3007a-7296-45e4-ae75-c486d0d00aac" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175867" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c13a27c1-dd71-4537-86ad-3285ad7a341e" TYPE="day" ORDER="11" ORDERLABEL="1921-11-12">
+                  <mets:div ADMID="admd1" ID="uuid-c2c75f23-5cb8-4908-a049-a6fde4a4b44a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175868" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-4fb2f57c-cbf5-4608-8f6b-a60ee9d765d2" TYPE="day" ORDER="12" ORDERLABEL="1921-11-14">
+                  <mets:div ADMID="admd1" ID="uuid-9ab53f69-388f-45d2-8184-2baa17a7de27" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175869" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-29df82d9-6ee8-4a68-a830-fd0803c2feb3" TYPE="day" ORDER="13" ORDERLABEL="1921-11-15">
+                  <mets:div ADMID="admd1" ID="uuid-689d094a-498a-4e0f-8b17-8d8cbb6eb72c" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175870" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-d8bef3ab-d61a-4c9a-9997-c11aa3f2d788" TYPE="day" ORDER="14" ORDERLABEL="1921-11-17">
+                  <mets:div ADMID="admd1" ID="uuid-09f94bdd-1856-41d1-9646-2e7fc2e3c755" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175871" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-d22b14c8-d1e4-4a1d-b158-5b9dd1794067" TYPE="day" ORDER="15" ORDERLABEL="1921-11-18">
+                  <mets:div ADMID="admd1" ID="uuid-111a65b0-7017-4a06-9f8d-533dd5e7238a" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175872" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-c0f60ed4-c48e-42a3-89d3-e795bad590a8" TYPE="day" ORDER="16" ORDERLABEL="1921-11-19">
+                  <mets:div ADMID="admd1" ID="uuid-bc20df49-ff73-44c7-9679-53414a1b1710" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175873" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-20efbe5b-343e-46ff-ad50-a8163acf0a33" TYPE="day" ORDER="17" ORDERLABEL="1921-11-21">
+                  <mets:div ADMID="admd1" ID="uuid-ca36bd3b-76d8-4ca5-bce6-f68986e8ffdd" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175874" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-89f0d84c-02aa-4afa-ba20-6ac9d35d3bef" TYPE="day" ORDER="18" ORDERLABEL="1921-11-22">
+                  <mets:div ADMID="admd1" ID="uuid-85a042fb-8fbc-4437-948a-2d923b073ba2" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175875" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-bf22b569-b13f-4027-a5e0-bc6fc1a9be4f" TYPE="day" ORDER="19" ORDERLABEL="1921-11-23">
+                  <mets:div ADMID="admd1" ID="uuid-e32f7328-9c18-4196-8b82-76a0bffe006b" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175876" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9a62e9f6-b45f-4f94-9970-6e02bd4b857c" TYPE="day" ORDER="20" ORDERLABEL="1921-11-24">
+                  <mets:div ADMID="admd1" ID="uuid-179f8209-c22a-491a-ad4e-3e03517fe425" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175877" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-7062d1c0-cfc9-4a9f-94f3-47a606470ab0" TYPE="day" ORDER="21" ORDERLABEL="1921-11-25">
+                  <mets:div ADMID="admd1" ID="uuid-06c1f1ae-ff00-4fc9-a2a6-56d384f93c2f" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175878" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-4fd91187-40e6-4c37-bd5f-36dde6b96239" TYPE="day" ORDER="22" ORDERLABEL="1921-11-26">
+                  <mets:div ADMID="admd1" ID="uuid-df45ee00-8c9d-4697-895a-b1bdd4d8ecfc" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175879" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-3e342c64-13d6-4f55-a51f-1b8086a6047c" TYPE="day" ORDER="23" ORDERLABEL="1921-11-28">
+                  <mets:div ADMID="admd1" ID="uuid-b2163eb9-30e7-4e8a-a36c-932403248d05" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175880" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f9d37284-ec45-428a-a14f-33edb52933ae" TYPE="day" ORDER="24" ORDERLABEL="1921-11-29">
+                  <mets:div ADMID="admd1" ID="uuid-0a3f8d44-ec7f-4aea-8a43-861774149bd5" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175881" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-86ce9f1a-7450-47f3-9e8a-b5b9a85b139f" TYPE="day" ORDER="25" ORDERLABEL="1921-11-30">
+                  <mets:div ADMID="admd1" ID="uuid-4e2c1292-ac75-4ffa-98f5-3a10e604bfe3" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175882" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+            </mets:div>
+            <mets:div ID="uuid-9a7b26c4-cbb8-4643-bde2-ae9c3538eb42" TYPE="month" ORDER="7" ORDERLABEL="1921-12">
+               <mets:div ID="uuid-8f1cc602-3b4a-47a2-9788-85333b79f8db" TYPE="day" ORDER="1" ORDERLABEL="1921-12-01">
+                  <mets:div ADMID="admd1" ID="uuid-37773790-8c54-4b38-8f52-7d4de9064356" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175883" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e3908530-9307-4609-acae-de28a6ce8327" TYPE="day" ORDER="2" ORDERLABEL="1921-12-02">
+                  <mets:div ADMID="admd1" ID="uuid-9f2d04c8-6c91-4fa2-835c-9f7530fe0d5e" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175884" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-37dd5367-de5c-4fee-bab2-67bf8d07b83a" TYPE="day" ORDER="3" ORDERLABEL="1921-12-03">
+                  <mets:div ADMID="admd1" ID="uuid-846ce997-c876-428d-aa6c-cf04e5abb38d" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175885" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-b6036de1-e924-41b8-94d1-44818dec5048" TYPE="day" ORDER="4" ORDERLABEL="1921-12-05">
+                  <mets:div ADMID="admd1" ID="uuid-c966b312-3456-4b30-92a6-0823b3e69cb6" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175886" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-6107a045-7f66-4c99-a0fe-da1d335922a7" TYPE="day" ORDER="5" ORDERLABEL="1921-12-06">
+                  <mets:div ADMID="admd1" ID="uuid-1c151b50-7d5d-4882-a235-690b0c6e2f9d" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175887" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e4272473-1d9a-4add-96ff-dbc417748b65" TYPE="day" ORDER="6" ORDERLABEL="1921-12-07">
+                  <mets:div ADMID="admd1" ID="uuid-45a4b1f0-2443-41f3-8f5e-e9ca261ca9cb" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175888" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-2f513e34-1133-4075-9f55-5fd867a1c46b" TYPE="day" ORDER="7" ORDERLABEL="1921-12-08">
+                  <mets:div ADMID="admd1" ID="uuid-dccc0c0b-5ecc-4c1d-8fbf-575ca7966999" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175889" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-cad75561-95ea-4c8b-898d-b54e45f151ff" TYPE="day" ORDER="8" ORDERLABEL="1921-12-09">
+                  <mets:div ADMID="admd1" ID="uuid-47b106d6-470a-4e20-9599-14fe5c397bbc" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175890" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-2eee40e2-f753-4506-b89e-08978ee4d535" TYPE="day" ORDER="9" ORDERLABEL="1921-12-10">
+                  <mets:div ADMID="admd1" ID="uuid-14e99eeb-aa2b-486f-880d-457ed20b6dd0" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175891" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e2ca7b0c-66df-4e2b-a6df-4731490bd5d5" TYPE="day" ORDER="10" ORDERLABEL="1921-12-12">
+                  <mets:div ADMID="admd1" ID="uuid-210eae2d-ab4b-4ab7-987a-cf4c54ba424e" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175892" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-11a897ae-bb0c-4d3a-84c4-37d953099ad9" TYPE="day" ORDER="11" ORDERLABEL="1921-12-13">
+                  <mets:div ADMID="admd1" ID="uuid-424d3e5a-64f3-4890-b7d0-0fb6d5f7fa7e" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175893" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-ed82e512-9e2f-4c75-9cd8-3cd216090cc3" TYPE="day" ORDER="12" ORDERLABEL="1921-12-14">
+                  <mets:div ADMID="admd1" ID="uuid-21527685-95e4-409d-a24f-eb913b11ccb3" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175894" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-45ce41e9-68db-421e-aab0-7335a7e881a4" TYPE="day" ORDER="13" ORDERLABEL="1921-12-15">
+                  <mets:div ADMID="admd1" ID="uuid-8c0dba66-cf1c-4f88-9f5e-d2257616ed6d" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175895" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-eca2f2d7-09a7-4903-8b2e-b10be6f8ea2a" TYPE="day" ORDER="14" ORDERLABEL="1921-12-16">
+                  <mets:div ADMID="admd1" ID="uuid-ddd30ab8-30e0-4ea8-9768-b1a12367be05" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175909" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-027fd8c1-04f4-472b-9c87-6c5d9f153cf0" TYPE="day" ORDER="15" ORDERLABEL="1921-12-17">
+                  <mets:div ADMID="admd1" ID="uuid-53d83b01-a68b-47d4-b1b8-17c6b90c6358" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175910" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-7ab9400a-955e-40de-af8d-6d521957865e" TYPE="day" ORDER="16" ORDERLABEL="1921-12-19">
+                  <mets:div ADMID="admd1" ID="uuid-f31873b5-59fb-48db-9f0a-ee68b44131c4" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175896" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-dcdfce57-f659-4ca3-83d2-f2479b4bc682" TYPE="day" ORDER="17" ORDERLABEL="1921-12-20">
+                  <mets:div ADMID="admd1" ID="uuid-9d542c5c-9bfa-4ecb-a602-488a83e816ff" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175897" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-f84431b6-e233-4274-baf9-a8a287c65c66" TYPE="day" ORDER="18" ORDERLABEL="1921-12-21">
+                  <mets:div ADMID="admd1" ID="uuid-0da6cbdb-31b2-4975-9766-931c1a7b34aa" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175898" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-2990bce6-3ab7-42ba-9bd3-be0fdfbd7663" TYPE="day" ORDER="19" ORDERLABEL="1921-12-22">
+                  <mets:div ADMID="admd1" ID="uuid-9a70c178-ee8c-4629-a6a0-add340efe643" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175899" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-80f06259-5a8e-4cf6-ac4a-45697e59c800" TYPE="day" ORDER="20" ORDERLABEL="1921-12-23">
+                  <mets:div ADMID="admd1" ID="uuid-9d5f7b8d-2512-4b71-bdaf-ceb8616fadea" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175900" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-1b6d86df-ffa1-41e4-941b-c70106e322ff" TYPE="day" ORDER="21" ORDERLABEL="1921-12-24">
+                  <mets:div ADMID="admd1" ID="uuid-9e3b4804-8e72-4afb-8764-1119abce0c4e" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175901" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-196badaf-bc71-4761-a833-1776de305e4a" TYPE="day" ORDER="22" ORDERLABEL="1921-12-27">
+                  <mets:div ADMID="admd1" ID="uuid-16ea07ed-2db9-489f-9ec3-2ae133e999df" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175902" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-35eabdb6-ced7-493c-a536-4370c03cffa0" TYPE="day" ORDER="23" ORDERLABEL="1921-12-28">
+                  <mets:div ADMID="admd1" ID="uuid-8c999915-1d3a-48be-8739-603bc47551fd" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175903" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-d4f0a6ac-a2f4-43ec-afa6-397dc09716a3" TYPE="day" ORDER="24" ORDERLABEL="1921-12-29">
+                  <mets:div ADMID="admd1" ID="uuid-1b4979fd-ab54-4970-b168-cd33ef0c8575" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175904" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-e5599e64-ff67-4600-bb84-c84c49a1f506" TYPE="day" ORDER="25" ORDERLABEL="1921-12-30">
+                  <mets:div ADMID="admd1" ID="uuid-866b24af-9a20-4aaf-a772-14b5c313bcf8" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175905" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+               <mets:div ID="uuid-9ff4289c-3270-4864-8cc5-da67f66c54d4" TYPE="day" ORDER="26" ORDERLABEL="1921-12-31">
+                  <mets:div ADMID="admd1" ID="uuid-70a7298e-7a43-48d8-a6bc-fc771d20f8fe" TYPE="issue" ORDER="1">
+                     <mets:mptr xlink:href="https://opendata2.uni-halle.de/oai/dd?verb=GetRecord&amp;metadataPrefix=mets&amp;identifier=oai:opendata2.uni-halle.de:1516514412012/175906" LOCTYPE="URL" />
+                  </mets:div>
+               </mets:div>
+            </mets:div>
+         </mets:div>
+      </mets:div>
+  </mets:structMap>
+</mets:mets>
+</metadata></record></GetRecord></OAI-PMH>

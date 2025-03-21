@@ -127,7 +127,7 @@ def test_opendata_record_no_images_for_ocr():
 
     # act
     with pytest.raises(odem.ODEMNoImagesForOCRException) as odem_exc:
-        inspc.metadata_report()
+        inspc.read()
 
     # assert
     an_alert = "oai:opendata.uni-halle.de:1981185920/74357 contains no images for OCR (total: 15)!"
@@ -146,10 +146,10 @@ def test_opendata_record_no_printwork():
 
     # act
     with pytest.raises(odem.ODEMNoTypeForOCRException) as odem_exc:
-        inspc.metadata_report()
+        inspc.read()
 
     # assert
-    assert f"{oai_urn} unknown type: multivolume_work" == odem_exc.value.args[0]
+    assert f"{oai_urn} no PICA type for OCR: Ac" == odem_exc.value.args[0]
 
 
 def test_opendata_record_no_granular_urn_present():
@@ -165,7 +165,7 @@ def test_opendata_record_no_granular_urn_present():
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
-    inspc.metadata_report()
+    inspc.read()
 
     # assert
     for img_entry in inspc.image_pairs:
@@ -186,7 +186,7 @@ def test_opendata_record_type_error():
 
     # act
     with pytest.raises(odem.ODEMMetadataMetsException) as odem_exc:
-        inspc.metadata_report()
+        inspc.read()
 
     # assert
     assert "2x: Page PHYS_0112 not linked,Page PHYS_0113 not linked" == odem_exc.value.args[0]
@@ -207,7 +207,7 @@ def test_mets_mods_sbb_vol01_with_ulb_defaults():
 
     # act
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
-    inspc.metadata_report()
+    inspc.read()
 
     # assert
     assert inspc.process_identifier == oai_urn
@@ -230,7 +230,7 @@ def test_mets_filter_logical_structs_by_type():
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
-    inspc.metadata_report()
+    inspc.read()
 
     # assert
     assert inspc.process_identifier == oai_urn
@@ -258,7 +258,7 @@ def test_mets_mods_sbb_vol01_filtering():
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
-    inspc.metadata_report()
+    inspc.read()
 
     # assert
     image_page_pairs = inspc.image_pairs
@@ -280,7 +280,7 @@ def test_mets_mods_sbb_vol01_filtering_custom():
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
-    inspc.metadata_report()
+    inspc.read()
 
     # assert
     image_page_pairs = inspc.image_pairs
@@ -427,7 +427,7 @@ def test_extract_identifiers():
                                                 '1516514412012_175762',
                                                 fixture_configuration())
     # act
-    report = inspecteur.metadata_report()
+    report = inspecteur.read()
 
     # assert
     assert report is not None
@@ -466,7 +466,7 @@ def test_record_identifier_ulb_vd17():
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
-    inspc.metadata_report()
+    inspc.read()
 
     # assert
     assert inspc.process_identifier == oai_urn
@@ -491,3 +491,21 @@ def test_record_identifier_provoke_exception():
 
     # assert
     assert "Invalid match [] " in mets_ex.value.args[0]
+
+
+def test_metadata_newspaper_year_provoke_exception():
+    """Provoke exception if try to OCR irrelvant
+    newspaper year without any images"""
+
+    oai_urn = "oai:opendata2.uni-halle.de:1516514412012/175735"
+    orig_file = TEST_RES / "1516514412012_175735_year_1921.xml"
+    assert os.path.isfile(orig_file)
+    cfg: configparser.ConfigParser = fixture_configuration()
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+
+    # act
+    with pytest.raises(odem_pm.ODEMNoTypeForOCRException) as mets_ex:
+        inspc.read()
+
+    # assert
+    assert "no PICA type for OCR: Az" in mets_ex.value.args[0]
