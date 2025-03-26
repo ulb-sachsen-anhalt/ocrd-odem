@@ -131,6 +131,7 @@ DEFAULT_FGROUP = FILEGROUP_IMG
 DEFAULT_RTL_MODELS = ["ara.traineddata", "fas.traineddata", "heb.traineddata"]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_RES = PROJECT_ROOT / "resources"
 DEFAULT_LOG_CONFIG = os.path.join(PROJECT_ROOT, 'resources', 'odem_logging.ini')
 
 

@@ -2,9 +2,11 @@
 
 from pathlib import Path
 
+import PIL
+
 import pytest
 
-import lib.odem.processing.image as o_imgp
+import lib.odem.processing.image as oi
 
 from .conftest import create_test_tif
 
@@ -21,7 +23,7 @@ from .conftest import create_test_tif
 def test_odem_recognize_as_image(a_file, is_image):
     """Ensure image recognitions via path/url works"""
 
-    assert o_imgp.has_image_ext(a_file) == is_image
+    assert oi.has_image_ext(a_file) == is_image
 
 
 def test_format_tif_imput(tmp_path: Path):
@@ -33,8 +35,13 @@ def test_format_tif_imput(tmp_path: Path):
     create_test_tif(path_img)
     assert path_img.is_file()
 
-    result = o_imgp.ensure_image_format(path_img, work_dir)
+    result = oi.ensure_format_png(path_img)
     if not isinstance(result, Path):
         result = Path(result)
     assert result.is_file()
     assert result.suffix == ".png"
+
+    assert oi.get_imageinfo(result) == (0.006, 300.0)
+
+    result_image = PIL.Image.open(result)
+    assert "dpi" in result_image.info

@@ -2,8 +2,7 @@ lxml
 numpy
 requests
 Pillow
-ocrd
+digiflow
 ocrd-page-to-alto
 psutil
 humanize
-digiflow>=5

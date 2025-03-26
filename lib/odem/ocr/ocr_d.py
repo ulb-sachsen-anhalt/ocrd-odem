@@ -1,49 +1,48 @@
 """Implementation of OCR-D related OCR generation functionalities"""
 
 import os
+import shutil
 import subprocess
 import typing
 
-from ocrd.resolver import (
-    Resolver
-)
+from pathlib import Path
 
-from digiflow import (
-    run_profiled,
-)
+import digiflow as df
+import lxml.etree as ET
 
-from lib.odem.odem_commons import (
-    FILEGROUP_IMG,
-)
+import lib.odem.odem_commons as oc
+import lib.odem.processing.image as oi
 
+# pylint: disable=c-extension-no-member
 
-def ocrd_workspace_setup(path_workspace, image_path):
+def setup_workspace(path_workspace, image_src):
     """Wrap ocrd workspace init and add single file"""
 
     # init clean workspace
-    the_dir = os.path.abspath(path_workspace)
-    resolver = Resolver()
-    workspace = resolver.workspace_from_nothing(
-        directory=the_dir
-    )
-    workspace.save_mets()
-
-    # add the one image which resides
-    # already inside 'MAX' directory
-    image_name = os.path.basename(image_path)
-    resolver.download_to_directory(
-        the_dir,
-        image_path,
-        subdir=FILEGROUP_IMG)
-    kwargs = {
-        'fileGrp': FILEGROUP_IMG,
-        'ID': 'MAX_01',
-        'mimetype': 'image/png',
-        'pageId': 'PHYS_01',
-        'url': f"{FILEGROUP_IMG}/{image_name}"}
-    workspace.mets.add_file(**kwargs)
-    workspace.save_mets()
-    return image_path
+    page_dir = Path(path_workspace).absolute()
+    if page_dir.exists():
+        shutil.rmtree(page_dir)
+    png_image = oi.ensure_format_png(image_src)
+    image_dir = page_dir / oc.FILEGROUP_IMG
+    image_dir.mkdir(parents=True)
+    dst_image = image_dir / png_image.name
+    shutil.copyfile(png_image, dst_image)
+    mets_path = shutil.copyfile(oc.PROJECT_RES / "mets_empty.xml", page_dir / "mets.xml")
+    mets_proc = df.MetsProcessor(mets_path)
+    mets_proc.enrich_agent(agent_name="OCR-D", agent_note="page parallel")
+    max_group = mets_proc.root.find(".//mets:fileGrp[@USE='MAX']", namespaces=df.XMLNS)
+    file_attr = {"ID": "MAX_01", "MIMETYPE" : f"image/{png_image.suffix[1:]}"}
+    mets_file = ET.SubElement(max_group, "{http://www.loc.gov/METS/}file", file_attr)
+    locat_attr = {"{http://www.w3.org/1999/xlink}href": f"MAX/{png_image.name}",
+                  "LOCTYPE": "OTHER", "OTHERLOCTYPE": "FILE"}
+    ET.SubElement(mets_file, "{http://www.loc.gov/METS/}FLocat", locat_attr)
+    page_root = mets_proc.root.find(".//mets:div[@TYPE='physSequence']",
+                                    namespaces=df.XMLNS)
+    page_01 = ET.SubElement(page_root, "{http://www.loc.gov/METS/}div",
+                            {"ID": "PHYS_01", "TYPE": "page"})
+    ET.SubElement(page_01, "{http://www.loc.gov/METS/}fptr", {"FILEID": "MAX_01"})
+    mets_proc.write()
+    return page_dir
 
 
 def get_recognition_level(model_config: str, rtl_models: typing.List) -> str:
@@ -56,7 +55,7 @@ def get_recognition_level(model_config: str, rtl_models: typing.List) -> str:
     return 'word'
 
 
-@run_profiled
+@df.run_profiled
 def run_ocr_page(*args):
     """wrap ocr container process
     *Please note*

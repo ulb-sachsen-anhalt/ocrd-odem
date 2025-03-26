@@ -161,13 +161,10 @@ class OCRDPageParallel(ODEMWorkflow):
             shutil.rmtree(page_workdir, ignore_errors=True)
         os.mkdir(page_workdir)
         shutil.copy(ocr_log_conf, page_workdir)
+        # move and convert image data at once to new workspace
+        odem_ocrd.setup_workspace(page_workdir, image_path)
+        shutil.copy(ocr_log_conf, page_workdir)
         os.chdir(page_workdir)
-
-        # move and convert image data at once
-        processed_image_path = odem_img.ensure_image_format(image_path, page_workdir)
-
-        # init ocr-d workspace
-        odem_ocrd.ocrd_workspace_setup(page_workdir, processed_image_path)
 
         # find model config for tesseract
         model_config = self.odem_process.map_language_to_modelconfig(image_path)
@@ -370,9 +367,9 @@ class ODEMTesseract(ODEMWorkflow):
         if self.pipeline_configuration is None:
             if path_config is None:
                 if not self.config.has_option(odem_c.CFG_SEC_OCR, "ocr_pipeline_config"):
-                    raise odem_c.ODEMException("missing ocr_pipeline_config option!")    
+                    raise odem_c.ODEMException("missing ocr_pipeline_config option!")
                 path_config = os.path.abspath(self.config.get(odem_c.CFG_SEC_OCR,
-                                                                  "ocr_pipeline_config"))
+                                                              "ocr_pipeline_config"))
             if not os.path.isfile(path_config):
                 raise odem_c.ODEMException(f"no ocr-pipeline conf {path_config} !")
             pipe_cfg = configparser.ConfigParser()
