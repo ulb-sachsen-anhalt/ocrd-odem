@@ -19,7 +19,7 @@ def test_merge_args_exchange_model_mappings():
 
     # arrange
     _conf_parser = odem.get_configparser()
-    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.example.ini')
+    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.worker-example.ini')
     assert os.path.isfile(_default_ini_file)
     assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
     _prev_mapping = _conf_parser.getdict(odem.CFG_SEC_OCR, odem.KEY_MODEL_MAP)
@@ -43,7 +43,7 @@ def test_merge_args_from_cli():
 
     # arrange
     _conf_parser = odem.get_configparser()
-    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.example.ini')
+    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.worker-example.ini')
     assert os.path.isfile(_default_ini_file)
     assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
     _prev_mapping = _conf_parser.getdict(odem.CFG_SEC_OCR, odem.KEY_MODEL_MAP)
@@ -68,7 +68,7 @@ def test_merge_model_mappings_with_subsequent_calls():
 
     # arrange
     _conf_parser = odem.get_configparser()
-    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.example.ini')
+    _default_ini_file = os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.worker-example.ini')
     assert os.path.isfile(_default_ini_file)
     assert _conf_parser.read(_default_ini_file) == [_default_ini_file]
     _prev_mapping = _conf_parser.getdict(odem.CFG_SEC_OCR, odem.KEY_MODEL_MAP)

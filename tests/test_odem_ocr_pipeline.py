@@ -27,7 +27,7 @@ RES_0001_TIF = "0001.tif"
 RES_0002_PNG = "0002.png"
 RES_0003_JPG = "0003.jpg"
 RES_00041_XML = str(TEST_RES / '0041.xml')
-PATH_ODEM_CFG = PROD_RES / 'odem.example.ini'
+PATH_ODEM_CFG = PROD_RES / 'odem.worker-example.ini'
 ODEM_CFG = odem.get_configparser()
 ODEM_CFG.read(PATH_ODEM_CFG)
 OCR_PIPELINE_CFG_PATH = PROD_RES / 'odem.ocr-pipeline.steps.ini'

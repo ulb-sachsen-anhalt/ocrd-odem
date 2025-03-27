@@ -67,18 +67,16 @@ if __name__ == "__main__":
     PARSER.add_argument(
         "data_file",
         type=_oai_arg_parser,
-        help="Name of file with record data")
+        help="name of record data file managed by server")
     PARSER.add_argument(
         "-c",
         "--config",
-        required=False,
-        default="resources/odem.ini",
-        help="path to configuration file")
+        help="absolute path to configuration file")
     PARSER.add_argument(
         "-e",
         "--executors",
         required=False,
-        help="Number of OCR-D Executors in parallel mode")
+        help="number of parallel executors, overwrites configuration")
 
     # evaluate commandline arguments
     ARGS = PARSER.parse_args()
@@ -124,6 +122,7 @@ if __name__ == "__main__":
         CFG.set(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS, str(EXECUTOR_ARGS))
     EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS)
     LOGGER.debug("local work_root: '%s', executors:%s", LOCAL_WORK_ROOT, EXECUTORS)
+    # pylint: disable=no-member
     DATA_FIELDS = CFG.getlist(odem_c.CFG_SEC_FLOW, 'data_fields')
     HOST = CFG.get('record-server', 'record_server_url')
     PORT = CFG.getint('record-server', 'record_server_port')

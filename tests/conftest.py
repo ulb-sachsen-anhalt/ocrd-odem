@@ -32,7 +32,7 @@ def fixture_configuration():
     """
 
     config = odem.get_configparser()
-    config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.example.ini'))
+    config.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.worker-example.ini'))
     config.set(odem.CFG_SEC_FLOW, 'data_fields',
                'IDENTIFIER, SETSPEC, CREATED, INFO, STATE, STATE_TIME')
     config.set(odem.CFG_SEC_FLOW, odem.CFG_SEC_FLOW_OPT_URL,
