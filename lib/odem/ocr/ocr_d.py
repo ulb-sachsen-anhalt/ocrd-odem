@@ -26,7 +26,7 @@ def setup_workspace(path_workspace, image_src):
     image_dir = page_dir / oc.FILEGROUP_IMG
     image_dir.mkdir(parents=True)
     dst_image = image_dir / png_image.name
-    shutil.copyfile(png_image, dst_image)
+    shutil.move(png_image, dst_image)
     mets_path = shutil.copyfile(oc.PROJECT_RES / "mets_empty.xml", page_dir / "mets.xml")
     mets_proc = df.MetsProcessor(mets_path)
     mets_proc.enrich_agent(agent_name="OCR-D", agent_note="page parallel")

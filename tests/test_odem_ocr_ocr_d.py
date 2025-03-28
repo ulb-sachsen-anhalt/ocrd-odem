@@ -52,6 +52,8 @@ def test_create_workspace_mets(tmp_path):
     cf. https://github.com/OCR-D/assets/tree/master/data/kant_aufklaerung_1784
     =>
     LOCTYPE="OTHER" OTHERLOCTYPE="FILE"
+
+    Fix: move created png image to workspace, no copy
     """
 
     path_workspace = tmp_path / "00000001"
@@ -72,3 +74,4 @@ def test_create_workspace_mets(tmp_path):
                                  'OTHERLOCTYPE': 'FILE'}
 
     assert (path_workspace / "MAX" / "00000001.png").exists()
+    assert not (tmp_path / "00000001.png").exists()
