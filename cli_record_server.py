@@ -11,13 +11,15 @@ from pathlib import Path
 
 import digiflow.record as df_r
 
-import lib.odem.odem_commons as odem_c
+import lib.odem.odem_commons as oc
 
 
-_PROJECT_ROOT = Path(__file__).resolve().parent
-_ODEM_LOG_CONFIG_FILE = _PROJECT_ROOT / 'resources' / 'odem_logging.ini'
-_ODEM_LOG_NAME = 'odem'
-
+PROJECT_ROOT = Path(__file__).resolve().parent
+DEFAULT_ODEM_LOGCONF_FILE = "odem_logging.ini"
+DEFAULT_LOGCONF_DIR = PROJECT_ROOT / "resources"
+DEFAULT_ODEM_LOGCONF = DEFAULT_LOGCONF_DIR / DEFAULT_ODEM_LOGCONF_FILE
+DEFAULT_LOG_FILE = "odem_service.log"
+DEFAULT_ODEM_LOG_NAME = "odem.service"
 
 ########
 # Script
@@ -32,30 +34,37 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # initialze configuration
-    SCRIPT_CONFIGURATION = configparser.ConfigParser()
-    SCRIPT_CONFIGURATION.read(config_file)
+    THE_CONF: configparser.ConfigParser = configparser.ConfigParser()
+    THE_CONF.read(config_file)
 
     # check loggin pre-conditions
-    LOG_DIR = Path(SCRIPT_CONFIGURATION.get(odem_c.CFG_SEC_FLOW, 'local_log_dir'))
+    LOG_DIR = Path(THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOG_DIR))
     if not os.access(LOG_DIR, os.F_OK and os.W_OK):
         print(f"cant store log files at directory {LOG_DIR}")
         sys.exit(1)
-    if not _ODEM_LOG_CONFIG_FILE.exists():
-        print(f"config file not found {_ODEM_LOG_CONFIG_FILE.resolve()}")
-        sys.exit(1)
 
     # initialize server side logging
-    _logfile_name = LOG_DIR / "odem_oai_service.log"
-    CFG_DICT = {'logname': str(_logfile_name)}
-    logging.config.fileConfig(str(_ODEM_LOG_CONFIG_FILE), defaults=CFG_DICT)
-    LOGGER = logging.getLogger(_ODEM_LOG_NAME)
-    LOGGER.info("logging initialized - store entries in %s", _logfile_name)
+    LOG_FILE = THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOGFILE,
+                            fallback=DEFAULT_LOG_FILE)
+    if not Path(LOG_FILE).is_absolute():
+        LOG_FILE = LOG_DIR / LOG_FILE
+    CFG_DICT = {"logname": str(LOG_FILE)}
+    CONF_FILE_LOGGING = THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOGFILE,
+                                     fallback=DEFAULT_ODEM_LOGCONF_FILE)
+    if not Path(CONF_FILE_LOGGING).is_absolute():
+        CONF_FILE_LOGGING = DEFAULT_LOGCONF_DIR / CONF_FILE_LOGGING
+    logging.config.fileConfig(str(CONF_FILE_LOGGING), defaults=CFG_DICT)
+    LOG_NAME = THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOGNAME,
+                            fallback=DEFAULT_ODEM_LOG_NAME)
+    LOGGER = logging.getLogger(LOG_NAME)
+    LOGGER.info("logging initialized in %s", LOG_FILE)
 
     # evaluate configured server data
-    SRV_HOST = SCRIPT_CONFIGURATION.get('record-server', 'record_server_url')
-    SRV_PORT = SCRIPT_CONFIGURATION.getint('record-server', 'record_server_port')
-    SRV_RESOURCE_DIR = SCRIPT_CONFIGURATION.get('record-server', 'record_server_resource_dir')
-    RAW_IPS = SCRIPT_CONFIGURATION.get('record-server', "accepted_ips", fallback="")
+    SRV_HOST = THE_CONF.get('record-server', 'record_server_url')
+    SRV_PORT = THE_CONF.getint('record-server', 'record_server_port')
+    SRV_RESOURCE_DIR = THE_CONF.get(
+        'record-server', 'record_server_resource_dir')
+    RAW_IPS = THE_CONF.get('record-server', "accepted_ips", fallback="")
     CLIENT_IPS = [c.strip() for c in RAW_IPS.split(",") if len(c.strip()) > 0]
 
     # foster the record dir path, propably shortened
@@ -64,7 +73,8 @@ if __name__ == "__main__":
     SRV_RESOURCE_DIR = Path(SRV_RESOURCE_DIR).absolute().resolve()
 
     # forward to request handler
-    server_info: df_r.HandlerInformation = df_r.HandlerInformation(SRV_RESOURCE_DIR, LOGGER)
+    server_info: df_r.HandlerInformation = df_r.HandlerInformation(
+        SRV_RESOURCE_DIR, LOGGER)
     server_info.client_ips = CLIENT_IPS
     try:
         df_r.run_server(SRV_HOST, SRV_PORT, start_data=server_info)
