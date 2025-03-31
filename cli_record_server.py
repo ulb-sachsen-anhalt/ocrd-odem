@@ -49,7 +49,7 @@ if __name__ == "__main__":
     if not Path(LOG_FILE).is_absolute():
         LOG_FILE = LOG_DIR / LOG_FILE
     CFG_DICT = {"logname": str(LOG_FILE)}
-    CONF_FILE_LOGGING = THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOGFILE,
+    CONF_FILE_LOGGING = THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOGCONF,
                                      fallback=DEFAULT_ODEM_LOGCONF_FILE)
     if not Path(CONF_FILE_LOGGING).is_absolute():
         CONF_FILE_LOGGING = DEFAULT_LOGCONF_DIR / CONF_FILE_LOGGING
@@ -57,7 +57,8 @@ if __name__ == "__main__":
     LOG_NAME = THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOGNAME,
                             fallback=DEFAULT_ODEM_LOG_NAME)
     LOGGER = logging.getLogger(LOG_NAME)
-    LOGGER.info("logging initialized in %s", LOG_FILE)
+    LOGGER.info("configured logging using %s", CONF_FILE_LOGGING)
+    LOGGER.info("logs stored at %s", LOG_FILE)
 
     # evaluate configured server data
     SRV_HOST = THE_CONF.get('record-server', 'record_server_url')
