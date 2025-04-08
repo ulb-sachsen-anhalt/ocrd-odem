@@ -49,10 +49,10 @@ def test_mapping_from_imagefilename(img_path, lang_str, tmp_path):
     log_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     odem_processor.configuration = fixture_configuration()
-    _tess_dir = prepare_tessdata_dir(tmp_path)
+    tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
-                                     f'{_tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
-    odem_processor.logger = odem.get_logger(str(log_dir))
+                                     f'{tess_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
+    odem_processor.logger = odem.get_worker_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act
@@ -79,14 +79,14 @@ def test_exchange_language(img_path, langs, models, tmp_path):
     log_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     odem_processor.configuration = fixture_configuration()
-    _tess_dir = prepare_tessdata_dir(tmp_path)
+    tess_dir = prepare_tessdata_dir(tmp_path)
     odem_processor.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,
-        f"{_tess_dir}:/dummy"
+        f"{tess_dir}:/dummy"
     )
     odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, langs)
-    odem_processor.logger = odem.get_logger(str(log_dir))
+    odem_processor.logger = odem.get_worker_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act
@@ -111,12 +111,12 @@ def test_enforce_language_and_model_mapping(tmp_path):
     log_dir.mkdir()
     odem_processor = odem.ODEMProcessImpl(None, work_dir=str(work_2))
     odem_processor.configuration = fixture_configuration()
-    _tess_dir = prepare_tessdata_dir(tmp_path)
-    _kraken_dir = prepare_kraken_dir(tmp_path)
+    tess_dir = prepare_tessdata_dir(tmp_path)
+    kraken_dir = prepare_kraken_dir(tmp_path)
     odem_processor.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,
-        f'{_tess_dir}:/dummy,{_kraken_dir}:/dummy'
+        f'{tess_dir}:/dummy,{kraken_dir}:/dummy'
     )
     odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.KEY_LANGUAGES, 'ara+fas')
     odem_processor.configuration.set(
@@ -124,7 +124,7 @@ def test_enforce_language_and_model_mapping(tmp_path):
         odem.KEY_MODEL_MAP,
         'fas: fas.traineddata, ara:arabic_best.mlmodel'
     )
-    odem_processor.logger = odem.get_logger(str(log_dir))
+    odem_processor.logger = odem.get_worker_logger(str(log_dir))
     odem_processor.local_mode = True
 
     # act 1st
@@ -158,12 +158,12 @@ def test_load_mock_called(tmp_path_factory):
     log_dir.mkdir()
     record = df_r.Record('oai:opendata.uni-halle.de:1981185920/44046')
     odem_proc = odem.ODEMProcessImpl(fixture_configuration(), workdir,
-                                     odem.get_logger(str(log_dir)),
+                                     odem.get_worker_logger(str(log_dir)),
                                      str(log_dir), record)
     model_dir = prepare_tessdata_dir(workdir)
     odem_proc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
                                 f'{model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
-    odem_proc.logger = odem.get_logger(str(log_dir))
+    odem_proc.logger = odem.get_worker_logger(str(log_dir))
 
     # mock loading of OAI Record
     # actual load attempt *must* be done
@@ -211,7 +211,7 @@ def _fixture_odem_setup(tmp_path):
     model_dir_dst = f'{model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize'
     odem_processor.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL, model_dir_dst)
     odem_processor.local_mode = True
-    odem_processor.logger = odem.get_logger(log_dir)
+    odem_processor.logger = odem.get_worker_logger(log_dir)
     return odem_processor
 
 
@@ -292,10 +292,10 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEM
     fixture_27949.create_text_bundle_data()
 
     # assert
-    _txt_bundle_file = Path(tmp_path) / '198114125.pdf.txt'
-    assert os.path.exists(_txt_bundle_file)
+    txt_bundle_file = Path(tmp_path) / '198114125.pdf.txt'
+    assert os.path.exists(txt_bundle_file)
     assert 111 == fixture_27949.statistics['n_text_lines']
-    with open(_txt_bundle_file, encoding='utf-8') as bundle_handle:
+    with open(txt_bundle_file, encoding='utf-8') as bundle_handle:
         assert 111 == len(bundle_handle.readlines())
 
 
@@ -323,7 +323,7 @@ def test_images_4_ocr_properly_filtered(tmp_path):
     orig_mets = TEST_RES / '1981185920_44046.xml'
     shutil.copyfile(orig_mets, work_dir / '1981185920_44046.xml')
     odem_processor = odem.ODEMProcessImpl(fixture_configuration(), work_dir,
-                                          odem.get_logger(str(log_dir)), record=record)
+                                          odem.get_worker_logger(str(log_dir)), record=record)
     # act
     odem_processor.inspect_metadata()
     odem_processor.set_local_images()
@@ -349,7 +349,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
                                      logger=None,
                                      log_dir=log_dir, record=record)
     odem_proc.configuration.read(os.path.join(PROJECT_ROOT_DIR, 'resources', 'odem.ocrd.tesseract.ini'))
-    odem_proc.logger = odem.get_logger(str(log_dir))
+    odem_proc.logger = odem.get_worker_logger(str(log_dir))
 
     # act
     with pytest.raises(df.LoadException) as err:

@@ -124,6 +124,7 @@ STATS_KEY_N_OCR = 'n_ocr'
 STATS_KEY_OCR_LOSS = 'ocr_loss'
 STATS_KEY_MB = 'mb'
 STATS_KEY_MPS = 'mps'
+LOGGER_WORKER_QNAME = "odem.worker"
 
 # default language for fallback
 # when processing local images
@@ -284,7 +285,7 @@ def get_configparser():
         })
 
 
-def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
+def get_worker_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
     """Create logger with log_infix to divide several
     instances running on same host and
     using configuration from path_log_config
@@ -314,7 +315,7 @@ def get_logger(log_dir, log_infix=None, path_log_config=None) -> logging.Logger:
     if path_log_config is not None and os.path.isfile(path_log_config):
         _conf_path = path_log_config
     logging.config.fileConfig(_conf_path, defaults=conf_logname)
-    return logging.getLogger('odem')
+    return logging.getLogger(LOGGER_WORKER_QNAME)
 
 
 def merge_args(the_configuration: configparser.ConfigParser, the_args) -> typing.List:

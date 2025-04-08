@@ -103,7 +103,7 @@ if __name__ == "__main__":
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
-    LOGGER = odem.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
+    LOGGER = odem.get_worker_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # respect possible lock
     if os.path.isfile(LOCK_FILE_PATH):

@@ -67,7 +67,7 @@ if __name__ == "__main__":
     log_dir = CFG.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
     if not os.path.exists(log_dir) or not os.access(log_dir, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {log_dir}")
-    LOGGER = odem.get_logger(log_dir)
+    LOGGER = odem.get_worker_logger(log_dir)
 
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set

@@ -19,7 +19,7 @@ DEFAULT_ODEM_LOGCONF_FILE = "odem_logging.ini"
 DEFAULT_LOGCONF_DIR = PROJECT_ROOT / "resources"
 DEFAULT_ODEM_LOGCONF = DEFAULT_LOGCONF_DIR / DEFAULT_ODEM_LOGCONF_FILE
 DEFAULT_LOG_FILE = "odem_service.log"
-DEFAULT_ODEM_LOG_NAME = "odem.service"
+DEFAULT_SERIVE_LOG_QNAME = "odem.service"
 
 ########
 # Script
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         CONF_FILE_LOGGING = DEFAULT_LOGCONF_DIR / CONF_FILE_LOGGING
     logging.config.fileConfig(str(CONF_FILE_LOGGING), defaults=CFG_DICT)
     LOG_NAME = THE_CONF.get(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_LOGNAME,
-                            fallback=DEFAULT_ODEM_LOG_NAME)
+                            fallback=DEFAULT_SERIVE_LOG_QNAME)
     LOGGER = logging.getLogger(LOG_NAME)
     LOGGER.info("configured logging using %s", CONF_FILE_LOGGING)
     LOGGER.info("logs stored at %s", LOG_FILE)

@@ -25,7 +25,7 @@ from lib.odem import (
     MARK_OCR_FAIL,
     ODEMProcessImpl,
     ODEMException,
-    get_logger,
+    get_worker_logger,
 )
 
 DEFAULT_EXECUTORS = 2
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     LOG_FILE_NAME = None
     if CFG.has_option(odem_c.CFG_SEC_FLOW, 'logfile_name'):
         LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_FLOW, 'logfile_name')
-    LOGGER = get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
+    LOGGER = get_worker_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # inspect what kind of input to process
     # oai record file *OR* local data directory must be set

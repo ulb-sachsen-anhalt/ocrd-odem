@@ -69,7 +69,7 @@ if __name__ == "__main__":
     LOG_FILE_NAME = None
     if CFG.has_option(odem_c.CFG_SEC_FLOW, 'logfile_name'):
         LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_FLOW, 'logfile_name')
-    LOGGER = odem.get_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
+    LOGGER = odem.get_worker_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     METS_FILE: Path = Path(ARGS.mets_file).resolve()
     if not METS_FILE.is_file():
