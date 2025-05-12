@@ -211,7 +211,7 @@ def fname_ident_pairs_from_metadata(mets_root, images, blacklist_structs,
         final_res_name = img_cnt[0].get(Q_XLINK_HREF).split('/')[-1]
         if use_file_id:
             final_res_name = file_id
-        if not final_res_name.endswith(".jpg"):
+        if "." not in final_res_name: # sanitize jpg ext
             final_res_name += ".jpg"
         phys_cnt = _phys_container_for_id(phys_structs, file_id)
         try:
