@@ -12,7 +12,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 from lib import odem
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 import lib.odem.processing.mets as odem_pm
 
 from .conftest import (

@@ -1,11 +1,11 @@
 """Public ODEM API"""
 
-from .odem_commons import *
-from .odem_process import (
+from .commons import *
+from .workflow import (
     ODEMModelMissingException,
     ODEMProcessImpl,
 )
-from .odem_workflow import (
+from .ocr_processing import (
     ODEMWorkflowRunner,
     ODEMWorkflow,
     OCRDPageParallel,

@@ -19,7 +19,7 @@ import requests
 import digiflow as df
 import lxml.etree as ET
 
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 import lib.odem.ocr.ocr_model as ocr_m
 
 NAMESPACES = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}

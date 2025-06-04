@@ -18,7 +18,7 @@ from pathlib import Path
 import digiflow.record as df_r
 
 from lib import odem
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 import lib.odem.monitoring.resource as odem_rm
 
 

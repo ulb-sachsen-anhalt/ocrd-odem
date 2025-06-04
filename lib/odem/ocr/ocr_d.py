@@ -10,7 +10,7 @@ from pathlib import Path
 import digiflow as df
 import lxml.etree as ET
 
-import lib.odem.odem_commons as oc
+import lib.odem.commons as oc
 import lib.odem.processing.image as oi
 
 # pylint: disable=c-extension-no-member

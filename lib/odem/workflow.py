@@ -24,7 +24,7 @@ import digiflow.digiflow_metadata as dfm
 import digiflow.digiflow_io as dfo
 import digiflow.record as df_r
 
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 import lib.odem.processing.image as odem_image
 
 import lib.odem.processing.mets as odem_mets
@@ -110,6 +110,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             loader.load(request_identifier, local_dst=req_dst, use_file_id=use_file_id)
         except df.ClientError as load_err:
             raise odem_c.ODEMException(load_err.args[0]) from load_err
+        except df.LoadException as oai_err:
+            raise odem_c.ODEMException(oai_err.args[0]) from oai_err
         except RuntimeError as _err:
             raise odem_c.ODEMException(_err.args[0]) from _err
 

@@ -9,7 +9,7 @@ import lxml.etree as ET
 import digiflow as df
 import digiflow.validate as dfv
 
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 
 
 # contains PICA types like

@@ -12,8 +12,8 @@ import sys
 import time
 import typing
 
-import lib.odem.odem_commons as odem_c
-import lib.odem.odem_process as odem_p
+import lib.odem.commons as odem_c
+import lib.odem.workflow as odem_p
 import lib.odem.ocr.ocr_d as odem_ocrd
 import lib.odem.ocr.ocr_pipeline as odem_tess
 import lib.odem.processing.image as odem_img

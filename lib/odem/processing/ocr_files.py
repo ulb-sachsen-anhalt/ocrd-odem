@@ -11,7 +11,7 @@ import lxml.etree as ET
 import digiflow as df
 import ocrd_page_to_alto.convert as opta_c
 
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 
 # very common separator '⸗'
 DOUBLE_OBLIQUE_HYPHEN = '\u2E17'

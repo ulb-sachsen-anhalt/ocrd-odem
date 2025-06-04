@@ -11,10 +11,10 @@ import digiflow as df
 import digiflow.record as df_r
 
 from lib import odem
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 import lib.odem.monitoring.resource as odem_rm
 
-from lib.odem.odem_commons import (
+from lib.odem.commons import (
     RECORD_IDENTIFIER,
     RECORD_INFO,
 )

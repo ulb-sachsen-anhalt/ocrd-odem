@@ -11,7 +11,7 @@ from pathlib import Path
 
 import digiflow.record as df_r
 
-import lib.odem.odem_commons as oc
+import lib.odem.commons as oc
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent

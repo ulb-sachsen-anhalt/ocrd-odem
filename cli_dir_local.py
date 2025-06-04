@@ -11,7 +11,7 @@ import sys
 import ocrd_utils
 
 from lib import odem
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 
 
 ########

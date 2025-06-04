@@ -15,7 +15,7 @@ import lxml.etree as ET
 import pytest
 
 from lib import odem
-import lib.odem.odem_commons as odem_c
+import lib.odem.commons as odem_c
 
 from .conftest import (
     PROJECT_ROOT_DIR,
@@ -352,7 +352,7 @@ def test_no_catch_when_load_exc(mock_load, tmp_path):
     odem_proc.logger = odem.get_worker_logger(str(log_dir))
 
     # act
-    with pytest.raises(df.LoadException) as err:
+    with pytest.raises(odem.ODEMException) as err:
         odem_proc.load()
 
     # assert
