@@ -3,6 +3,8 @@
 # pylint: disable=broad-exception-caught
 
 import argparse
+import configparser
+import logging
 import os
 import shutil
 import sys
@@ -24,8 +26,8 @@ LOCK_FILE_PATH = os.path.join(os.path.dirname(__file__), LOCK_FILE_NAME)
 # date format pattern
 STATETIME_FORMAT = '%Y-%m-%d_%H:%M:%S'
 
-LOGGER = None
-CFG = None
+LOGGER: logging.Logger = None
+CFG: configparser.ConfigParser = None
 
 
 def _notify(subject, message):
@@ -211,14 +213,14 @@ if __name__ == "__main__":
         exc_dict = {exc_label: odem_missmatch.args[0]}
         CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **exc_dict)
         odem_process.clear_mets_resources()
-    except odem.ODEMException as _odem_exc:
+    except (odem.ODEMMetadataMetsException, odem.ODEMException) as data_exc:
         # raised if record
-        # * contains no PPN (gbv)
+        # * contains not required PPN identifier ("gbv", "vd17-ppn")
         # * contains no language mapping for mods:language
         # * misses model config for language
         # * contains no images
         # * contains no OCR results but should have at least one page
-        exc_dict = {'ODEMException': _odem_exc.args[0]}
+        exc_dict = {'ODEMException': data_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", odem_process.process_identifier, exc_dict)
         CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, **exc_dict)
