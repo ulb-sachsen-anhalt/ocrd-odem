@@ -211,7 +211,15 @@ if __name__ == "__main__":
         LOGGER.warning("[%s] odem skips '%s'",
                        odem_process.process_identifier, odem_missmatch.args)
         exc_dict = {exc_label: odem_missmatch.args[0]}
-        CLIENT.update(status=odem.MARK_OCR_SKIP, oai_urn=rec_ident, **exc_dict)
+        exc_suffix = ""
+        if exc_label == "ODEMNoTypeForOCRException":
+            exc_suffix = "_type"
+        elif exc_label == "ODEMNoImagesForOCRException":
+            exc_suffix = "_input"
+        elif exc_label == "ODEMModelMissingException":
+            exc_suffix = "_model"
+        the_state = f"{odem.MARK_OCR_SKIP}{exc_suffix}"
+        CLIENT.update(status=the_state, oai_urn=rec_ident, **exc_dict)
         odem_process.clear_mets_resources()
     except (odem.ODEMMetadataMetsException, odem.ODEMException) as data_exc:
         # raised if record
