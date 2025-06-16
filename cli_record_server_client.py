@@ -128,14 +128,19 @@ if __name__ == "__main__":
     DATA_FIELDS = CFG.getlist(odem_c.CFG_SEC_FLOW, 'data_fields')
     HOST = CFG.get('record-server', 'record_server_url')
     PORT = CFG.getint('record-server', 'record_server_port')
+    ODEM_OPEN = CFG.get('record-server', 'record_state_open', fallback=odem.MARK_OCR_OPEN)
+    ODEM_BUSY = CFG.get('record-server', 'record_state_busy', fallback=odem.MARK_OCR_BUSY)
+    ODEM_SKIP = CFG.get('record-server', 'record_state_skip', fallback=odem.MARK_OCR_SKIP)
+    ODEM_FAIL = CFG.get('record-server', 'record_state_fails', fallback=odem.MARK_OCR_FAIL)
+    ODEM_DONE = CFG.get('record-server', 'record_state_done', fallback=odem.MARK_OCR_DONE)
     LOGGER.info("client requests %s:%s/%s for records (state: %s, fmt:%s)",
-                HOST, PORT, OAI_RECORD_FILE_NAME, odem.MARK_OCR_OPEN, DATA_FIELDS)
+                HOST, PORT, OAI_RECORD_FILE_NAME, ODEM_OPEN, DATA_FIELDS)
     CLIENT = df_r.Client(OAI_RECORD_FILE_NAME, HOST, PORT, logger=LOGGER)
 
     # try to get next data record
     try:
-        record = CLIENT.get_record(get_record_state=odem.MARK_OCR_OPEN,
-                                   set_record_state=odem.MARK_OCR_BUSY)
+        record = CLIENT.get_record(get_record_state=ODEM_OPEN,
+                                   set_record_state=ODEM_BUSY)
         if not record:
             # if no open data records, lock worker and exit
             LOGGER.info("no open records in '%s', work done", OAI_RECORD_FILE_NAME)
@@ -193,7 +198,7 @@ if __name__ == "__main__":
         odem_process.postprocess(ocr_results)
         # communicate outcome
         the_stats = odem_process.statistics
-        the_resp = CLIENT.update(odem.MARK_OCR_DONE, rec_ident, **the_stats)
+        the_resp = CLIENT.update(ODEM_DONE, rec_ident, **the_stats)
         status_code = the_resp.status_code
         if status_code == 200:
             LOGGER.info("[%s] state %s set", odem_process.process_identifier, status_code)
@@ -218,7 +223,7 @@ if __name__ == "__main__":
             exc_suffix = "_input"
         elif exc_label == "ODEMModelMissingException":
             exc_suffix = "_model"
-        the_state = f"{odem.MARK_OCR_SKIP}{exc_suffix}"
+        the_state = f"{ODEM_SKIP}{exc_suffix}"
         CLIENT.update(status=the_state, oai_urn=rec_ident, **exc_dict)
         odem_process.clear_mets_resources()
     except (odem.ODEMMetadataMetsException, odem.ODEMException) as data_exc:
@@ -231,14 +236,14 @@ if __name__ == "__main__":
         exc_dict = {'ODEMException': data_exc.args[0]}
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", odem_process.process_identifier, exc_dict)
-        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, **exc_dict)
+        CLIENT.update(status=ODEM_FAIL, oai_urn=rec_ident, **exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         odem_process.clear_mets_resources()
     except odem_md.NotEnoughDiskSpaceException as _space_exc:
         exc_dict = {'NotEnoughDiskSpaceException': _space_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", odem_process.process_identifier, exc_dict)
-        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=exc_dict)
+        CLIENT.update(status=ODEM_FAIL, oai_urn=rec_ident, info=exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
@@ -247,7 +252,7 @@ if __name__ == "__main__":
         exc_dict = {'VirtualMemoryExceededException': _vmem_exc.args[0]}
         LOGGER.error("[%s] odem fails with NotEnoughDiskSpaceException:"
                      "'%s'", odem_process.process_identifier, exc_dict)
-        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=exc_dict)
+        CLIENT.update(status=ODEM_FAIL, oai_urn=rec_ident, info=exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         LOGGER.warning("[%s] remove working sub_dirs beneath '%s'",
                        odem_process.process_identifier, LOCAL_WORK_ROOT)
@@ -261,7 +266,7 @@ if __name__ == "__main__":
         LOGGER.error("[%s] odem fails with %s:"
                      "'%s'", odem_process.process_identifier, _name, exc_dict)
         # when running parallel
-        CLIENT.update(status=odem.MARK_OCR_FAIL, oai_urn=rec_ident, info=exc_dict)
+        CLIENT.update(status=ODEM_FAIL, oai_urn=rec_ident, info=exc_dict)
         _notify(f'[OCR-D-ODEM] Failure for {rec_ident}', f'{exc_dict}')
         odem_process.clear_mets_resources()
         # don't remove lock file, human interaction required
