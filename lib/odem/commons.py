@@ -194,10 +194,9 @@ class OCRResult:
             if res_dst.is_file():
                 raise ODEMDataException(f"OCRResult {res_dst} already exists!")
             return self.local_path.rename(res_dst)
-        else:
-            if new_path.exists():
-                raise ODEMDataException(f"OCRResult {new_path} already exists!")
-            return self.local_path.rename(new_path)
+        if new_path.exists():
+            raise ODEMDataException(f"OCRResult {new_path} already exists!")
+        return self.local_path.rename(new_path)
 
 
 class ODEMProcess:

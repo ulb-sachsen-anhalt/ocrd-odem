@@ -232,12 +232,15 @@ class OCRDPageParallel(ODEMWorkflow):
             stored = self._store_fulltext(page_workdir, image_path)
             if stored:
                 self._preserve_log(page_workdir, ident)
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        except subprocess.CalledProcessError as sub_exc:
+            self.logger.error("[%s] image '%s' failed due to subprocess error: %s",
+                              _ident, base_image, sub_exc)
+        except subprocess.TimeoutExpired as time_exc:
             self.logger.error("[%s] image '%s' failed due to subprocess timeout: %s",
-                              _ident, base_image, exc)
-        except Exception as plain_exc:
+                              _ident, base_image, time_exc)
+        except Exception as gen_exc:
             self.logger.error("[%s] generic exc '%s' for image '%s'",
-                              _ident, plain_exc, base_image)
+                              _ident, gen_exc, base_image)
 
         os.chdir(self.odem_process.work_dir_root)
         if self.config.getboolean(odem_c.CFG_SEC_OCR, 'keep_temp_orcd_data', fallback=False) is False:
