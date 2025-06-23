@@ -86,8 +86,8 @@ if __name__ == "__main__":
             shutil.rmtree(req_dst_dir)
         os.makedirs(req_dst_dir, exist_ok=True)
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=odem.DEFAULT_WORKLFOW)
-        odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record=None, CFG,
-                                                                  ROOT_PATH,
+        odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record=None, configuration=CFG,
+                                                                  work_dir=ROOT_PATH,
                                                                   log_dir=log_dir,
                                                                   logger=LOGGER)
         local_images = odem_process.get_local_image_paths(image_local_dir=ROOT_PATH)
