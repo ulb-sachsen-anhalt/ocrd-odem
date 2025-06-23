@@ -1,19 +1,14 @@
 """Public ODEM API"""
 
 from .commons import *
-from .workflow import (
-    ODEMModelMissingException,
-    ODEMProcessImpl,
-)
-from .ocr_processing import (
-    ODEMWorkflowRunner,
-    ODEMWorkflow,
+from .odem_process_impl import ODEMProcessImpl
+from .ocr.ocr_workflow import (
+    OCRWorkflowRunner,
+    OCRWorkflow,
     OCRDPageParallel,
     ODEMTesseract,
 )
-from .ocr.ocr_d import (
-    get_recognition_level,
-)
+from .ocr.ocr_d import get_recognition_level
 from .processing.mets import (
     PPN_GVK,
     ODEMMetadataInspecteur,

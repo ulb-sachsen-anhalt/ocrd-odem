@@ -110,9 +110,9 @@ if __name__ == "__main__":
         odem_process.modify_mets_groups()
         odem_process.resolve_language_modelconfig()
         odem_process.set_local_images()
-        odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
-        odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
-        ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+        ocr_workflow = odem.OCRWorkflow.create(proc_type, odem_process)
+        the_runner = odem.OCRWorkflowRunner(local_ident, EXECUTORS, LOGGER, ocr_workflow)
+        ocr_results = process_resource_monitor.monit_vmem(the_runner.run)
         odem_process.postprocess(ocr_results)
         time_delta = odem_process.statistics['timedelta']
         odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,

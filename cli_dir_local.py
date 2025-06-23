@@ -97,9 +97,9 @@ if __name__ == "__main__":
             odem_process.resolve_language_modelconfig(languages)
         candidate_tuples = list(zip(local_images, [pathlib.Path(i).stem for i in local_images]))
         odem_process.ocr_candidates = candidate_tuples
-        the_workflow: odem.ODEMWorkflow = odem.ODEMWorkflow.create(proc_type, odem_process)
-        odem_runner = odem.ODEMWorkflowRunner(REQ_IDENT, EXECUTORS, LOGGER, the_workflow)
-        odem_runner.run()
+        the_workflow: odem.OCRWorkflow = odem.OCRWorkflow.create(proc_type, odem_process)
+        the_runner = odem.OCRWorkflowRunner(REQ_IDENT, EXECUTORS, LOGGER, the_workflow)
+        the_runner.run()
         odem_process.logger.info("[%s] duration: %s (%s)", REQ_IDENT,
                                 odem_process.statistics['timedelta'], odem_process.statistics)
     except Exception as exc:

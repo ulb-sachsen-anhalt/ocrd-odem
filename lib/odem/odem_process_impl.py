@@ -33,10 +33,6 @@ import lib.odem.processing.mets as odem_mets
 os.environ['OMP_THREAD_LIMIT'] = '1'
 
 
-class ODEMModelMissingException(odem_c.ODEMException):
-    """Mark ODEM process misses model configuration"""
-
-
 class ODEMProcessImpl(odem_c.ODEMProcess):
     """Create OCR for OAI Records.
 
@@ -50,8 +46,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         for the underlying OCR-Engine Tesseract-OCR.
     """
 
-    def __init__(self, configuration=None, work_dir=None,
-                 logger=None, log_dir=None, record: df_r.Record = None):
+    def __init__(self, record: df_r.Record, configuration=None, work_dir=None,
+                  log_dir=None, logger=None):
         """Create new ODEM Process.
         Args:
             record (OAIRecord): OAI Record dataset
@@ -63,8 +59,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 Defaults to None.
         """
 
-        super().__init__(configuration, work_dir=work_dir,
-                         logger=logger, log_dir=log_dir, record=record)
+        super().__init__(record, configuration, work_dir=work_dir,
+                         log_dir=log_dir, logger=logger)
         self.mods_identifier = None
         self.process_identifier = self.work_dir_root.name
         if record is not None and record.local_identifier is not None:
@@ -190,12 +186,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
-                raise ODEMModelMissingException(f"'{lang}' mapping not found (languages: {languages})!")
+                raise odem_c.ODEMModelMissingException(f"'{lang}' mapping not found (languages: {languages})!")
             for model in model_entry.split('+'):
                 if self._is_model_available(model):
                     models.append(model)
                 else:
-                    raise ODEMModelMissingException(f"'{model}' model config not found !")
+                    raise odem_c.ODEMModelMissingException(f"'{model}' model config not found !")
         model_cfg = models[0]
         if self.configuration.getboolean(odem_c.CFG_SEC_OCR, "model_combinable",
                                          fallback=True):
@@ -288,7 +284,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         return images
 
     def set_local_images(self):
-        """Construct pairs of local paths for 
+        """Construct pairs of local paths for
         (optional previously filtered by object metadata)
         images and original page urn
         """
@@ -322,7 +318,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                                                       fallback=True)
         if wf_enrich_ocr:
             self.link_ocr_files()
-        wf_create_derivates = self.configuration.getboolean('derivans', 'derivans_enabled',
+        wf_create_derivates = self.configuration.getboolean(odem_c.CFG_SEC_DERIVANS,
+                                                            odem_c.CFG_SEC_DERIVANS_ENABLED,
                                                             fallback=False)
         if wf_create_derivates:
             self.create_derivates()
@@ -415,21 +412,23 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def create_derivates(self):
         """Forward PDF-creation to Derivans"""
 
-        cfg_path_dir_bin = self.configuration.get('derivans', 'derivans_dir_bin', fallback=None)
+        cfg_path_dir_bin = self.configuration.get(odem_c.CFG_SEC_DERIVANS,
+                                                  'derivans_dir_bin', fallback=None)
         path_bin = None
         if cfg_path_dir_bin is not None:
             path_bin = os.path.join(odem_c.PROJECT_ROOT, cfg_path_dir_bin)
-        cfg_path_dir_project = self.configuration.get('derivans', 'derivans_dir_project',
+        cfg_path_dir_project = self.configuration.get(odem_c.CFG_SEC_DERIVANS,
+                                                      'derivans_dir_project',
                                                       fallback=None)
         path_prj = None
         if cfg_path_dir_project is not None:
             path_prj = os.path.join(odem_c.PROJECT_ROOT, cfg_path_dir_project)
         path_cfg = os.path.join(
             odem_c.PROJECT_ROOT,
-            self.configuration.get('derivans', 'derivans_config')
+            self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_CONFIG)
         )
-        derivans_image = self.configuration.get('derivans', 'derivans_image', fallback=None)
-        path_logging = self.configuration.get('derivans', 'derivans_logdir', fallback=None)
+        derivans_image = self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_IMAGE, fallback=None)
+        path_logging = self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_LOGDIR, fallback=None)
         derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
             self.mets_file_path,
             container_image_name=derivans_image,
@@ -452,6 +451,22 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             err_args = [err_msg]
             err_args.extend(_sub_err.args)
             raise odem_c.ODEMException(err_args) from _sub_err
+        if self.configuration.has_option(odem_c.CFG_SEC_DERIVANS,
+                                            odem_c.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF):
+            check_required = self.configuration.getboolean(odem_c.CFG_SEC_DERIVANS,
+                                            odem_c.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF)
+            if check_required:
+                the_root = self.work_dir_root
+                if not isinstance(the_root, Path):
+                    the_root = Path(the_root)
+                if not any(the_root.rglob("*.pdf")):
+                    err_msg = f"PDF missing in {the_root}!"
+                    raise odem_c.ODEMDerivateException(err_msg)
+                pdf_estm_path = list(the_root.rglob("*.pdf"))
+                pdf_size = pdf_estm_path[0].stat().st_size
+                if  pdf_size < 1000:
+                    err_msg = f"PDF too small: {pdf_size}B for {pdf_estm_path[0]}"
+                    raise odem_c.ODEMDerivateException(err_msg)
 
     def delete_local_directories(self, folders):
         """delete folders given by list"""
@@ -489,21 +504,26 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         validation for 'digitalisierte medien'
         """
 
-        if not self.configuration.getboolean('mets', 'prevalidate', fallback=True):
+        if not self.configuration.getboolean(odem_c.CFG_SEC_METS,
+                                             'prevalidate', fallback=True):
             self.logger.warning("[%s] skipping pre-validation",
                                 self.process_identifier)
             return
-        if not self.configuration.getboolean('mets', 'postvalidate', fallback=False):
+        if not self.configuration.getboolean(odem_c.CFG_SEC_METS,
+                                             'postvalidate', fallback=False):
             self.logger.warning("[%s] skipping post-validation",
                                 self.process_identifier)
             return
         ignore_ddb = []
-        if self.configuration.has_option('mets', 'ddb_validation_ignore'):
-            raw_ignore_str = self.configuration.get('mets', 'ddb_validation_ignore')
+        if self.configuration.has_option(odem_c.CFG_SEC_METS,
+                                         'ddb_validation_ignore'):
+            raw_ignore_str = self.configuration.get(odem_c.CFG_SEC_METS,
+                                                    'ddb_validation_ignore')
             ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
         ddb_min_level = 'fatal'
-        if self.configuration.has_option('mets', 'ddb_min_level'):
-            ddb_min_level = self.configuration.get('mets', 'ddb_min_level')
+        if self.configuration.has_option(odem_c.CFG_SEC_METS, 'ddb_min_level'):
+            ddb_min_level = self.configuration.get(odem_c.CFG_SEC_METS,
+                                                   'ddb_min_level')
         the_type = self.record.info["pica"]
         if the_type is None:
             the_type = "Ac"

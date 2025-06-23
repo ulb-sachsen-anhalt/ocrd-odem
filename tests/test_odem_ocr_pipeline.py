@@ -121,7 +121,7 @@ def _fixture_custom_config_pipeline(a_workspace):
         conf_dir.mkdir()
     conf_file = TEST_RES / 'ocr_config_full.ini'
     assert os.path.isfile(conf_file)
-    odem_process = odem.ODEMProcessImpl(df_r.Record('oai:urn_custom'), a_workspace)
+    odem_process = odem.ODEMProcessImpl(df_r.Record('oai:urn_custom'), work_dir=a_workspace)
     odem_process.configuration = ODEM_CFG
     odem_process.process_statistics[odem.KEY_LANGUAGES] = ['ger', 'lat']
     odem_process.logger = odem.get_worker_logger(a_workspace / 'log')

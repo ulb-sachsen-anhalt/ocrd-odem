@@ -185,16 +185,16 @@ if __name__ == "__main__":
         odem_process.resolve_language_modelconfig()
         odem_process.set_local_images()
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
-        odem_wf = odem.ODEMWorkflow.create(proc_type, odem_process)
-        odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_wf)
+        ocr_workflow = odem.OCRWorkflow.create(proc_type, odem_process)
+        the_runner = odem.OCRWorkflowRunner(local_ident, EXECUTORS, LOGGER, ocr_workflow)
         if CFG.getboolean(odem.CFG_SEC_MONITOR, 'live', fallback=False):
             LOGGER.info("[%s] live-monitoring of ocr workflow resources",
                         local_ident)
-            ocr_results = pr_monitor.monit_vmem(odem_runner.run)
+            ocr_results = pr_monitor.monit_vmem(the_runner.run)
         else:
             LOGGER.info("[%s] execute ocr workflow with poolsize %d",
                         local_ident, EXECUTORS)
-            ocr_results = odem_runner.run()
+            ocr_results = the_runner.run()
         odem_process.postprocess(ocr_results)
         # communicate outcome
         the_stats = odem_process.statistics
@@ -226,7 +226,8 @@ if __name__ == "__main__":
         the_state = f"{ODEM_SKIP}{exc_suffix}"
         CLIENT.update(status=the_state, oai_urn=rec_ident, **exc_dict)
         odem_process.clear_mets_resources()
-    except (odem.ODEMMetadataMetsException, odem.ODEMException) as data_exc:
+    except (odem.ODEMMetadataMetsException, odem.ODEMDerivateException,
+            odem.ODEMException) as data_exc:
         # raised if record
         # * contains not required PPN identifier ("gbv", "vd17-ppn")
         # * contains no language mapping for mods:language

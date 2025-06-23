@@ -89,9 +89,8 @@ def _module_fixture_123456789_27949(tmp_path_factory):
     mock_cfg: configparser.ConfigParser = fixture_configuration()
     mock_cfg.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
                  f'{_model_dir}:/usr/local/share/ocrd-resources/ocrd-tesserocr-recognize')
-    odem_proc = odem.ODEMProcessImpl(mock_cfg, work_dir=path_work_dir,
-                                     log_dir=work_dir_root / 'log',
-                                     record=record)
+    odem_proc = odem.ODEMProcessImpl(record, mock_cfg, work_dir=path_work_dir,
+                                     log_dir=work_dir_root / 'log')
     odem_proc.ocr_files = [os.path.join(trgt_alto, a)
                            for a in os.listdir(trgt_alto)]
     odem_proc.mets_file_path = str(trgt_mets)

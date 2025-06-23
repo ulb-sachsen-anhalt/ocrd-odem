@@ -67,7 +67,12 @@ CFG_SEC_METS_OPT_CLEAN = 'post_clean'
 CFG_SEC_METS_OPT_ID_XPR = "record_identifier_xpr"
 CFG_SEC_METS_FGROUP = "use_fgroup"
 CFG_SEC_DERIVANS = "derivans"
+CFG_SEC_DERIVANS_ENABLED = "derivans_enabled"
+CFG_SEC_DERIVANS_CONFIG = "derivans_config"
+CFG_SEC_DERIVANS_IMAGE = "derivans_image"
+CFG_SEC_DERIVANS_LOGDIR = "derivans_logdir"
 CFG_SEC_DERIVANS_FGROUP = "image_fgroup"
+CFG_SEC_DERIVANS_FGROUP_CHECK_PDF = "check_pdf"
 CFG_SEC_EXP = 'export'
 CFG_SEC_EXP_ENABLED = "export_enabled"
 CFG_SEC_EXP_OPT_DEL_SDIRS = 'delete_subdirs_before_export'
@@ -149,6 +154,15 @@ class ODEMDataException(ODEMException):
     general workflow or external factors"""
 
 
+class ODEMModelMissingException(ODEMException):
+    """Mark ODEM process misses model configuration"""
+
+
+class ODEMDerivateException(ODEMException):
+    """Mark failures concerning creation of
+    archivable PDF/A derivates"""
+
+
 class OAIRecordExhaustedException(Exception):
     """Mark given resource contains no open records"""
 
@@ -203,11 +217,11 @@ class ODEMProcess:
     """Basic Interface for ODEM"""
 
     def __init__(self,
+                 record: df_r.Record,
                  configuration: configparser.ConfigParser,
                  work_dir: Path,
-                 logger: logging.Logger,
-                 log_dir=None,
-                 record: df_r.Record = None):
+                 log_dir,
+                 logger):
         self.configuration = configuration
         self.local_mode = record is None
         if not isinstance(work_dir, Path):

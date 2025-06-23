@@ -13,7 +13,7 @@ import time
 import typing
 
 import lib.odem.commons as odem_c
-import lib.odem.workflow as odem_p
+import lib.odem.odem_process_impl as odem_p
 import lib.odem.ocr.ocr_d as odem_ocrd
 import lib.odem.ocr.ocr_pipeline as odem_tess
 import lib.odem.processing.image as odem_img
@@ -30,7 +30,7 @@ DEFAULT_DOCKER_CONTAINER_TIMEOUT = 600
 LOCAL_OCRD_RESULT_DIR = 'PAGE'
 
 
-class ODEMWorkflowRunner:
+class OCRWorkflowRunner:
     """Wrap actual ODEM process execution"""
 
     def __init__(self, identifier, n_executors,
@@ -38,7 +38,7 @@ class ODEMWorkflowRunner:
         self.process_identifier = identifier
         self.n_executors = n_executors
         self.logger: logging.Logger = internal_logger
-        self.odem_workflow: ODEMWorkflow = odem_workflow
+        self.odem_workflow: OCRWorkflow = odem_workflow
 
     def run(self):
         """Actual run wrapper"""
@@ -108,14 +108,14 @@ class ODEMWorkflowRunner:
             raise odem_c.ODEMException(f"ODEM sequential: {err.args[0]}") from err
 
 
-class ODEMWorkflow:
+class OCRWorkflow:
     """Base Interface"""
 
     @staticmethod
     def create(
             workflow_type: odem_c.OdemWorkflowProcessType | str,
             odem: odem_p.ODEMProcessImpl,
-    ) -> ODEMWorkflow:
+    ) -> OCRWorkflow:
         """Create actual instance"""
         if workflow_type == odem_c.OdemWorkflowProcessType.ODEM_TESSERACT:
             return ODEMTesseract(odem)
@@ -140,7 +140,7 @@ class ODEMWorkflow:
         """
 
 
-class OCRDPageParallel(ODEMWorkflow):
+class OCRDPageParallel(OCRWorkflow):
     """Use page parallel workflow"""
 
     def get_inputs(self):
@@ -333,7 +333,7 @@ class OCRDPageParallel(ODEMWorkflow):
                          self.odem_process.process_identifier, len(self.ocr_results))
 
 
-class ODEMTesseract(ODEMWorkflow):
+class ODEMTesseract(OCRWorkflow):
     """Tesseract Runner"""
 
     def __init__(self, odem_process: odem_c.ODEMProcess):

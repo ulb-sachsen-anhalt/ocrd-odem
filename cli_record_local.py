@@ -149,16 +149,16 @@ if __name__ == "__main__":
         odem_process.modify_mets_groups()
         odem_process.resolve_language_modelconfig()
         odem_process.set_local_images()
-        odem_pipeline = odem.ODEMWorkflow.create(proc_type, odem_process)
-        odem_runner = odem.ODEMWorkflowRunner(local_ident, EXECUTORS, LOGGER, odem_pipeline)
+        ocr_workflow = odem.OCRWorkflow.create(proc_type, odem_process)
+        the_runner = odem.OCRWorkflowRunner(local_ident, EXECUTORS, LOGGER, ocr_workflow)
         if CFG.getboolean(odem.CFG_SEC_MONITOR, 'live', fallback=False):
             LOGGER.info("[%s] live-monitoring of ocr workflow resources",
                         local_ident)
-            ocr_results = process_resource_monitor.monit_vmem(odem_runner.run)
+            ocr_results = process_resource_monitor.monit_vmem(the_runner.run)
         else:
             LOGGER.info("[%s] execute ocr workflow with poolsize %d",
                         local_ident, EXECUTORS)
-            ocr_results = odem_runner.run()
+            ocr_results = the_runner.run()
         odem_process.postprocess(ocr_results)
         stats_kwargs = odem_process.statistics
         if odem_process.record.info != odem_c.UNSET:
