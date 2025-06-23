@@ -91,8 +91,10 @@ if __name__ == "__main__":
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         record = df_r.Record(urn=local_ident)
-        odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, mets_file_dir,
-                                                                  LOGGER, LOCAL_LOG_DIR, record)
+        odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record, CFG,
+                                                                  mets_file_dir,
+                                                                  log_dir=LOCAL_LOG_DIR,
+                                                                  logger=LOGGER)
         odem_process.logger = LOGGER
         odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, METS_FILE, EXECUTORS)
         odem_process.configuration = CFG

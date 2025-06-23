@@ -125,7 +125,9 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
         proc_type = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=odem.DEFAULT_WORKLFOW)
-        odem_process: ODEMProcessImpl = ODEMProcessImpl(CFG, req_dst_dir, LOGGER, log_dir=None, record=record)
+        odem_process: ODEMProcessImpl = ODEMProcessImpl(record, CFG,
+                                                        work_dir=req_dst_dir,
+                                                        logger=LOGGER)
         odem_process.logger = LOGGER
         odem_process.logger.info("[%s] odem from %s, %d executors", local_ident,
                                  OAI_RECORD_FILE, EXECUTORS)

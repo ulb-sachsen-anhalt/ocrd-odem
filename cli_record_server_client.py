@@ -156,9 +156,9 @@ if __name__ == "__main__":
     rec_ident = record.identifier
     local_ident = record.local_identifier
     req_dst_dir = os.path.join(LOCAL_WORK_ROOT, local_ident)
-    odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(CFG, req_dst_dir,
-                                                              LOGGER, None,
-                                                              record=record)
+    odem_process: odem.ODEMProcessImpl = odem.ODEMProcessImpl(record, CFG,
+                                                              work_dir=req_dst_dir,
+                                                              logger=LOGGER)
     try:
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
