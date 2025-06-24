@@ -307,7 +307,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         """Encapsulate after-OCR workflow"""
 
         if ocr_results is None or len(ocr_results) == 0:
-            raise odem_c.ODEMException(f"process run error: {self.record.identifier}")
+            the_alert = f"zero results from {len(self.ocr_candidates)} candidates"
+            raise odem_c.ODEMException(the_alert)
         self.calculate_statistics_ocr(ocr_results)
         self.process_statistics[odem_c.STATS_KEY_N_EXECS] = self.configuration.get(
             odem_c.CFG_SEC_OCR,
