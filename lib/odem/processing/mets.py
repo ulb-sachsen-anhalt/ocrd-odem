@@ -71,8 +71,8 @@ class ODEMMetadataInspecteur:
             try:
                 self._reader = df.MetsReader(self._data)
                 self._report = self._reader.report
-            except RuntimeError as _err:
-                raise ODEMMetadataMetsException(_err) from _err
+            except (RuntimeError, df.DigiflowMetadataException) as exc:
+                raise ODEMMetadataMetsException(exc) from exc
         return self._report
 
     def read(self) -> df.MetsReport:
@@ -87,8 +87,11 @@ class ODEMMetadataInspecteur:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} found no logical type")
         if not self.__is_relevant():
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} not relevant")
-        reader = df.MetsReader(self._data)
-        reader.inspect_logical_struct_links()
+        try:
+            reader = df.MetsReader(self._data)
+            reader.inspect_logical_struct_links()
+        except df.DigiflowMetadataException as dfmd_exc:
+            raise ODEMMetadataMetsException(dfmd_exc) from dfmd_exc
         self.inspect_metadata_images()
         return self._report
 
