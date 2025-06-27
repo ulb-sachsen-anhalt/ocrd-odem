@@ -235,7 +235,7 @@ if __name__ == "__main__":
         # * misses model config for language
         # * contains no images
         # * contains no OCR results but should have at least one page
-        exc_dict = {'ODEMException': data_exc.args[0]}
+        exc_dict = {'ODEMException': str(data_exc.args[0])}
         LOGGER.error("[%s] odem fails with ODEMException:"
                      "'%s'", odem_process.process_identifier, exc_dict)
         CLIENT.update(status=ODEM_FAIL, oai_urn=rec_ident, **exc_dict)

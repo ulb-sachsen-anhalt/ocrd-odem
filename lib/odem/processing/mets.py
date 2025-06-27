@@ -90,7 +90,7 @@ class ODEMMetadataInspecteur:
         try:
             self._reader.inspect_logical_struct_links()
         except df.DigiflowMetadataException as dfmd_exc:
-            raise ODEMMetadataMetsException(dfmd_exc) from dfmd_exc
+            raise ODEMMetadataMetsException(dfmd_exc.args[0]) from dfmd_exc
         self.inspect_metadata_images()
         return self._report
 
