@@ -226,7 +226,8 @@ if __name__ == "__main__":
         the_state = f"{ODEM_SKIP}{exc_suffix}"
         CLIENT.update(status=the_state, oai_urn=rec_ident, **exc_dict)
         odem_process.clear_mets_resources()
-    except (odem.ODEMMetadataMetsException, odem.ODEMDerivateException,
+    except (odem.ODEMMetadataMetsException,
+            odem.ODEMDerivateException,
             odem.ODEMException) as data_exc:
         # raised if record
         # * contains not required PPN identifier ("gbv", "vd17-ppn")

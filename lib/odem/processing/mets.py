@@ -88,8 +88,7 @@ class ODEMMetadataInspecteur:
         if not self.__is_relevant():
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} not relevant")
         try:
-            reader = df.MetsReader(self._data)
-            reader.inspect_logical_struct_links()
+            self._reader.inspect_logical_struct_links()
         except df.DigiflowMetadataException as dfmd_exc:
             raise ODEMMetadataMetsException(dfmd_exc) from dfmd_exc
         self.inspect_metadata_images()

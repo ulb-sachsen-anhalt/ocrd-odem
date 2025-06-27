@@ -126,14 +126,11 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         insp = odem_mets.ODEMMetadataInspecteur(self.mets_file_path,
                                                 self.record.identifier,
                                                 cfg=self.configuration)
-        try:
-            insp.read()
-            (mets, pica) = insp.types
-            self.record.info["mets"] = mets
-            self.record.info["pica"] = pica
-            self.ocr_candidates = insp.image_pairs
-        except RuntimeError as mde:
-            raise odem_c.ODEMException(f"{mde.args[0]}") from mde
+        insp.read()
+        (mets, pica) = insp.types
+        self.record.info["mets"] = mets
+        self.record.info["pica"] = pica
+        self.ocr_candidates = insp.image_pairs
         self.mods_identifier = insp.mods_record_identifier
         for t, ident in insp.identifiers.items():
             self.process_statistics[t] = ident
