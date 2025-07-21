@@ -23,7 +23,7 @@ Digitized prints are accessed as records via [OAI-PMH](https://www.openarchives.
 * Docker images, prefer to pull/build before usage:
   * ocr-d: `ocr-d/all:2023-02-07` (size: 13.9GB)
   * opt. derivans for PDF: `ghcr.io/ulb-sachsen-anhalt/digital-derivans:2.0.0` (size: 476MB)
-* Python 3.10+
+* Python 3.10 (currently *not* running with 3.12+)
 * high quality model configurations for Tesseract-OCR can be loaded from ["UB Mannheim"](https://digi.bib.uni-mannheim.de/tesseract/traineddata/)
   and must be placed to the proper directory (see configuration `[ocr][ocrd_resources_volumes]`)
 
