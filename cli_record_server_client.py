@@ -131,7 +131,7 @@ if __name__ == "__main__":
     LOGGER.debug("local work_root: '%s', executors:%s", LOCAL_WORK_ROOT, EXECUTORS)
 
     # evaluate optional export name
-    if hasattr(ARGS, "name"):
+    if hasattr(ARGS, "name") and ARGS.name is not None:
         EXPORT_NAME = ARGS.name
         CFG.set(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME, EXPORT_NAME)
 

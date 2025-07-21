@@ -402,13 +402,19 @@ class ODEMProcessImpl(oc.ODEMProcess):
 
         txt_lines = odem_mets.extract_text_content(self.ocr_files)
         txt_content = '\n'.join(txt_lines)
-        out_path = os.path.join(self.work_dir_root, f'{self.artefact_identifier}.pdf.txt')
-        with open(out_path, mode='w', encoding='UTF-8') as tl_writer:
-            tl_writer.write(txt_content)
-        self.logger.info("[%s] harvested %d lines from %d ocr files to %s",
-                         self.process_identifier, len(txt_lines),
-                         len(self.ocr_files), out_path)
-        self.process_statistics['n_text_lines'] = len(txt_lines)
+        pdf_path_gen = Path(self.work_dir_root).glob("*.pdf")
+        try:
+            pdf_path = next(pdf_path_gen)
+            out_path = os.path.join(self.work_dir_root, f"{pdf_path.name}.txt")
+            with open(out_path, mode='w', encoding='UTF-8') as tl_writer:
+                tl_writer.write(txt_content)
+            self.logger.info("[%s] harvested %d lines from %d ocr files to %s",
+                             self.process_identifier, len(txt_lines),
+                             len(self.ocr_files), out_path)
+            self.process_statistics['n_text_lines'] = len(txt_lines)
+        except StopIteration:
+            self.logger.warning("[%s] no PDF, no text bundle",
+                                self.process_identifier)
 
     def create_derivates(self):
         """Forward PDF-creation to Derivans"""
@@ -550,8 +556,6 @@ class ODEMProcessImpl(oc.ODEMProcess):
 
         exp_dst = self.configuration.get(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_DST)
         exp_tmp = self.configuration.get(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_TMP)
-        exp_col = self.configuration.get(oc.CFG_SEC_EXP,
-                                         oc.CFG_SEC_EXP_OPT_COLLECTION)
         exp_map = self.configuration.getdict(oc.CFG_SEC_EXP,
                                              oc.CFG_SEC_EXP_OPT_MAPPINGS)
         exp_prefix = self.configuration.get(oc.CFG_SEC_EXP,
@@ -570,7 +574,11 @@ class ODEMProcessImpl(oc.ODEMProcess):
             saf_name = exp_name
         if exp_prefix is not None:
             saf_name = f"{exp_prefix}{saf_name}"
+        exp_col = None
         if export_format == oc.ExportFormat.SAF:
+            # for DSpace-SAF target collection required
+            exp_col = self.configuration.get(oc.CFG_SEC_EXP,
+                                             oc.CFG_SEC_EXP_OPT_COLLECTION)
             export_result = df.export_data_from(
                 self.mets_file_path,
                 exp_col,
@@ -608,6 +616,10 @@ class ODEMProcessImpl(oc.ODEMProcess):
                 self.logger.debug('[%s] rename %s to %s',
                                   self.process_identifier, pth, final_path)
                 shutil.move(pth, final_path)
+                self.statistics["export_name"] = os.path.basename(pth)
+                self.statistics["export_size"] = size
+                if exp_col is not None:
+                    self.statistics["export_coll"] = exp_col
                 return final_path, size
         return None
 

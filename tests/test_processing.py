@@ -285,6 +285,8 @@ def test_fixture_one_postprocess_ocr_create_text_bundle(fixture_27949: odem.ODEM
 
     # arrange
     tmp_path = fixture_27949.work_dir_root
+    with open(Path(tmp_path) / "198114125.pdf", mode="wb") as pdf_writer:
+        pdf_writer.write(b"\0x00")
 
     # act
     fixture_27949.link_ocr_files()

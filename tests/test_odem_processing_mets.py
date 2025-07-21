@@ -51,7 +51,7 @@ def test_odem_process_catalog_identifier(inspecteur_44046: odem.ODEMMetadataInsp
     """
 
     # assert
-    assert inspecteur_44046.record_identifier == '265982944'
+    assert inspecteur_44046.record_identifier == "urn+nbn+de+gbv+3+1-146566"
 
 
 @pytest.fixture(name='post_mets', scope='module')
@@ -235,7 +235,7 @@ def test_mets_filter_logical_structs_by_type():
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.record_identifier == '058134433'
+    assert inspc.record_identifier == "urn+nbn+de+gbv+3+1-1192015415-058134433-12"
     image_page_pairs = inspc.image_pairs
     assert not any('PHYS_0001' in p[1] for p in image_page_pairs)
     assert not any('PHYS_0002' in p[1] for p in image_page_pairs)
@@ -432,7 +432,7 @@ def test_extract_identifiers():
 
     # assert
     assert report is not None
-    assert inspecteur.record_identifier == '16691561019210131'
+    assert inspecteur.record_identifier == "urn+nbn+de+gbv+3+1-171133730-16691561019210131-18"
 
 
 def test_process_bad_input_data():
