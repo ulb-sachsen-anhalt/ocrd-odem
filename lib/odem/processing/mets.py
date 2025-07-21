@@ -9,7 +9,7 @@ import lxml.etree as ET
 import digiflow as df
 import digiflow.validate as dfv
 
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 
 
 # contains PICA types like
@@ -60,20 +60,21 @@ class ODEMMetadataInspecteur:
         self.process_identifier = process_identifier
         self._data = input_data
         self._cfg: configparser.ConfigParser = cfg
-        self._report = None
-        self._reader: df.MetsReader = None
+        self._reader: typing.Optional[df.MetsReader]
+        self._report: typing.Optional[df.DmdReport]
         self.image_pairs = []
         self.n_images_pages = 0
         self.n_images_ocrable = 0
 
-    def _get_reader(self):
-        if self._report is None:
+    def __set_reader(self):
+        if not hasattr(self, "_report") or self._report is None:
             try:
-                self._reader = df.MetsReader(self._data)
-                self._report = self._reader.report
+                reader = df.MetsReader(self._data)
+                if reader is None:
+                    raise ODEMMetadataMetsException("Invalid METS report None")
+                self._reader = reader
             except (RuntimeError, df.DigiflowMetadataException) as exc:
                 raise ODEMMetadataMetsException(exc) from exc
-        return self._report
 
     def read(self) -> df.MetsReport:
         """Gather knowledge about digital object's.
@@ -82,9 +83,16 @@ class ODEMMetadataInspecteur:
         actual metadata from METS/MODS
         Stop if data corrupt, ill or bad
         """
-        self._get_reader()
-        if not self._report.type:
+        self.__set_reader()
+        report = self._reader.report
+        if report is None:
+            raise ODEMMetadataMetsException("Invalid METS report None")
+        if not report.type:
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} found no logical type")
+        prime_report = report.prime_report
+        if prime_report is None:
+            raise ODEMMetadataMetsException("Invalid MODS prime report None")
+        self._report = prime_report
         if not self.__is_relevant():
             raise ODEMNoTypeForOCRException(f"{self.process_identifier} not relevant")
         try:
@@ -92,7 +100,7 @@ class ODEMMetadataInspecteur:
         except df.DigiflowMetadataException as dfmd_exc:
             raise ODEMMetadataMetsException(dfmd_exc.args[0]) from dfmd_exc
         self.inspect_metadata_images()
-        return self._report
+        return report
 
     def __is_relevant(self) -> bool:
         """Determine whether this digital object shall be processed by
@@ -114,26 +122,33 @@ class ODEMMetadataInspecteur:
     @property
     def identifiers(self):
         """Get *all* identifiers"""
-        return self._get_reader().prime_report.identifiers
+        if self._report is None:
+            raise ODEMMetadataMetsException
+        return self._report.identifiers
 
     @property
-    def mods_record_identifier(self):
-        """Get main MODS recordIdentifier if present
-        if dedicated xpr exists, this will preceeded any
+    def record_identifier(self):
+        """Get Identifier-of-Interest if present
+        if dedicated xpr exists, use it to overwrite any
         other heurictics to identify the record
         otherwise look for commen ones like GVK or GBV
         of even guess if more than 1 source present
         """
         # call first to set the reader in place
-        ident_map = dict(self._get_reader().prime_report.identifiers)
-        ident_xpr = self._cfg.get(odem_c.CFG_SEC_METS,
-                                  odem_c.CFG_SEC_METS_OPT_ID_XPR, fallback=None)
+        if self._report is None or self._report.identifiers is None:
+            raise ODEMMetadataMetsException
+        ident_map = dict(self._report.identifiers)
+        ident_xpr = self._cfg.get(oc.CFG_SEC_METS,
+                                  oc.CFG_SEC_METS_OPT_ID_XPR, fallback=None)
         if ident_xpr is not None:
             idents = self._reader.xpath(ident_xpr)
             if len(idents) != 1:
                 the_msg = f"Invalid match {idents} for {ident_xpr} in {self.process_identifier}"
                 raise ODEMMetadataMetsException(the_msg)
-            return idents[0]
+            tmp_ident = idents[0]
+            if ":" in tmp_ident:
+                return tmp_ident.replace(":","+")
+            return tmp_ident
         if PPN_GVK in ident_map:
             return ident_map[PPN_GVK]
         if 'urn' in ident_map:
@@ -146,13 +161,19 @@ class ODEMMetadataInspecteur:
     @property
     def languages(self):
         """Get language information"""
-        return self._get_reader().prime_report.languages
+        if self._report is None:
+            raise RuntimeError
+        return self._report.languages
 
     @property
     def types(self):
         """Get type information"""
-        log_type = self._get_reader().type
-        prime_type = self._get_reader().prime_report.type
+        if self._reader is None:
+            raise ODEMMetadataMetsException
+        log_type = self._reader.report.type
+        if self._report is None:
+            raise ODEMMetadataMetsException
+        prime_type = self._report.type
         return (log_type, prime_type)
 
     def inspect_metadata_images(self):
@@ -168,8 +189,8 @@ class ODEMMetadataInspecteur:
 
         blacklist_log = self._cfg.getlist('mets', 'blacklist_logical_containers')
         blacklist_lab = self._cfg.getlist('mets', 'blacklist_physical_container_labels')
-        use_fgroup = self._cfg.get(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP,
-                                   fallback=odem_c.DEFAULT_FGROUP)
+        use_fgroup = self._cfg.get(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP,
+                                   fallback=oc.DEFAULT_FGROUP)
         mets_root = ET.parse(self._data).getroot()
         image_files = mets_root.findall(f'.//mets:fileGrp[@USE="{use_fgroup}"]/mets:file', df.XMLNS)
         n_images = len(image_files)
@@ -177,7 +198,7 @@ class ODEMMetadataInspecteur:
             the_msg = f"{self.process_identifier} contains absolutly no images for OCR!"
             raise ODEMNoImagesForOCRException(the_msg)
         # gather present images via generator
-        use_id = self._cfg.getboolean(odem_c.CFG_SEC_FLOW, odem_c.CFG_SEC_FLOW_USE_FILEID,
+        use_id = self._cfg.getboolean(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_USE_FILEID,
                                       fallback=False)
         pairs_img_id = fname_ident_pairs_from_metadata(mets_root, image_files, blacklist_log,
                                                        blacklist_lab, use_file_id=use_id)
@@ -301,7 +322,7 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List):
     tag_file = f'{{{df.XMLNS["mets"]}}}file'
     tag_flocat = f'{{{df.XMLNS["mets"]}}}FLocat'
 
-    file_grp_fulltext = ET.Element(tag_file_group, USE=odem_c.FILEGROUP_FULLTEXT)
+    file_grp_fulltext = ET.Element(tag_file_group, USE=oc.FILEGROUP_FULLTEXT)
     for ocr_file in ocr_files:
         file_name = df.UNSET_LABEL
         try:
@@ -322,7 +343,7 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List):
             # (Das Element mets:file muss über sein Attribut ID mit
             # einem mets:fptr-Element im Element mets:structMap[@TYPE='PHYSICAL']
             # über dessen Attribut FILEID referenziert werden.
-            new_id = odem_c.FILEGROUP_FULLTEXT + '_' + file_name
+            new_id = oc.FILEGROUP_FULLTEXT + '_' + file_name
             file_ocr = ET.Element(
                 tag_file, MIMETYPE="application/alto+xml", ID=new_id)
             flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
@@ -350,7 +371,7 @@ def _sanitize_namespaces(tree):
 
 def _link_fulltext(file_ident, xml_tree):
     file_name = file_ident.split('_')[-1]
-    xp_files = f'.//mets:fileGrp[@USE="{odem_c.FILEGROUP_IMG}"]/mets:file'
+    xp_files = f'.//mets:fileGrp[@USE="{oc.FILEGROUP_IMG}"]/mets:file'
     file_grp_max_files = xml_tree.findall(xp_files, df.XMLNS)
     for file_grp_max_file in file_grp_max_files:
         _file_link = file_grp_max_file[0].attrib['{http://www.w3.org/1999/xlink}href']
@@ -385,7 +406,7 @@ def postprocess_mets(mets_file, odem_config: configparser.ConfigParser):
         If not properly configured, skip executiom
     """
 
-    if odem_config.getboolean(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_CLEAN,
+    if odem_config.getboolean(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_CLEAN,
                               fallback=False):
         mproc = df.MetsProcessor(mets_file)
         xp_dv_iif_or_sru = '//dv:links/*[local-name()="iiif" or local-name()="sru"]'
@@ -395,9 +416,9 @@ def postprocess_mets(mets_file, odem_config: configparser.ConfigParser):
             parent.remove(old_dv)
         mproc.write()
 
-    if odem_config.has_option(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_AGENTS):
-        agent_entries = odem_config.get(odem_c.CFG_SEC_METS,
-                                        odem_c.CFG_SEC_METS_OPT_AGENTS).split(',')
+    if odem_config.has_option(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_AGENTS):
+        agent_entries = odem_config.get(oc.CFG_SEC_METS,
+                                        oc.CFG_SEC_METS_OPT_AGENTS).split(',')
         if len(agent_entries) > 0:
             mproc = df.MetsProcessor(mets_file)
             for agent_entry in agent_entries:
@@ -420,7 +441,7 @@ def process_mets_derivans_agents(mets_file, odem_config: configparser.ConfigPars
         it clears all Derivans agenten entries but this latest
     """
 
-    if not odem_config.getboolean(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_CLEAN,
+    if not odem_config.getboolean(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_CLEAN,
                               fallback=False):
         return
     mproc = df.MetsProcessor(mets_file)
@@ -462,14 +483,14 @@ def validate_mets(mets_file: str, digi_type, ddb_ignores, ddb_min_level):
         if report.alert(min_ddb_role_label=ddb_min_level):
             xsd_msg = report.xsd_errors if report.xsd_errors else ''
             ddb_msg = report.read()
-            raise odem_c.ODEMException(f"{xsd_msg}{ddb_msg}")
+            raise oc.ODEMException(f"{xsd_msg}{ddb_msg}")
         return True
     except ET.XMLSchemaError as lxml_err:
         msg = f"fail to parse {mets_file}: {lxml_err.args}"
-        raise odem_c.ODEMDataException(msg) from lxml_err
+        raise oc.ODEMDataException(msg) from lxml_err
     except df.DigiflowTransformException as df_err:
         msg = f"fail to process {mets_file}: {df_err.args}"
-        raise odem_c.ODEMDataException(msg) from df_err
+        raise oc.ODEMDataException(msg) from df_err
 
 
 def extract_text_content(ocr_files: typing.List) -> typing.List:

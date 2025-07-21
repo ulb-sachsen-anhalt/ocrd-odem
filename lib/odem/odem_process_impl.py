@@ -24,7 +24,7 @@ import digiflow.digiflow_metadata as dfm
 import digiflow.digiflow_io as dfo
 import digiflow.record as df_r
 
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 import lib.odem.processing.image as odem_image
 
 import lib.odem.processing.mets as odem_mets
@@ -33,7 +33,7 @@ import lib.odem.processing.mets as odem_mets
 os.environ['OMP_THREAD_LIMIT'] = '1'
 
 
-class ODEMProcessImpl(odem_c.ODEMProcess):
+class ODEMProcessImpl(oc.ODEMProcess):
     """Create OCR for OAI Records.
 
         Runs both wiht OAIRecord or local path as input.
@@ -61,7 +61,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
         super().__init__(record, configuration, work_dir=work_dir,
                          log_dir=log_dir, logger=logger)
-        self.mods_identifier = None
+        self.artefact_identifier = None
         self.process_identifier = self.work_dir_root.name
         if record is not None and record.local_identifier is not None:
             self.process_identifier = record.local_identifier
@@ -73,12 +73,12 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def load(self):
         request_identifier = self.record.identifier
         local_identifier = self.record.local_identifier
-        if not self.configuration.has_option(odem_c.CFG_SEC_FLOW,
-                                             odem_c.CFG_SEC_FLOW_OPT_URL):
-            self.logger.info("[%s] no download basis provided", self.process_identifier)
+        if not self.configuration.has_option(oc.CFG_SEC_FLOW,
+                                             oc.CFG_SEC_FLOW_OPT_URL):
+            self.logger.info("[%s] no download URL provided", self.process_identifier)
             return
-        oai_base_url = self.configuration.get(odem_c.CFG_SEC_FLOW,
-                                              odem_c.CFG_SEC_FLOW_OPT_URL)
+        oai_base_url = self.configuration.get(oc.CFG_SEC_FLOW,
+                                              oc.CFG_SEC_FLOW_OPT_URL)
         req_dst_dir = os.path.join(
             os.path.dirname(self.work_dir_root), local_identifier)
         if not os.path.exists(req_dst_dir):
@@ -88,28 +88,28 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                           self.process_identifier, request_identifier, req_dst)
         try:
             req_kwargs = {}
-            if self.configuration.has_option(odem_c.CFG_SEC_FLOW,
-                                             odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS):
-                requests_kwargs = self.configuration.get(odem_c.CFG_SEC_FLOW,
-                                                         odem_c.CFG_SEC_FLOW_OPT_URL_KWARGS)
+            if self.configuration.has_option(oc.CFG_SEC_FLOW,
+                                             oc.CFG_SEC_FLOW_OPT_URL_KWARGS):
+                requests_kwargs = self.configuration.get(oc.CFG_SEC_FLOW,
+                                                         oc.CFG_SEC_FLOW_OPT_URL_KWARGS)
                 req_kwargs = {dfo.OAI_KWARG_REQUESTS: requests_kwargs}
-            load_fgroup = self.configuration.get(odem_c.CFG_SEC_METS,
-                                                 odem_c.CFG_SEC_METS_FGROUP,
-                                                 fallback=odem_c.DEFAULT_FGROUP)
+            load_fgroup = self.configuration.get(oc.CFG_SEC_METS,
+                                                 oc.CFG_SEC_METS_FGROUP,
+                                                 fallback=oc.DEFAULT_FGROUP)
             req_kwargs[dfo.OAI_KWARG_FGROUP_IMG] = load_fgroup
             loader = df.OAILoader(req_dst_dir, base_url=oai_base_url,
                                   post_oai=dfm.extract_mets, **req_kwargs)
             loader.store = self.store
-            use_file_id = self.configuration.getboolean(odem_c.CFG_SEC_FLOW,
-                                                        odem_c.CFG_SEC_FLOW_USE_FILEID,
+            use_file_id = self.configuration.getboolean(oc.CFG_SEC_FLOW,
+                                                        oc.CFG_SEC_FLOW_USE_FILEID,
                                                         fallback=False)
             loader.load(request_identifier, local_dst=req_dst, use_file_id=use_file_id)
         except df.ClientError as load_err:
-            raise odem_c.ODEMException(load_err.args[0]) from load_err
+            raise oc.ODEMException(load_err.args[0]) from load_err
         except df.LoadException as oai_err:
-            raise odem_c.ODEMException(oai_err.args[0]) from oai_err
+            raise oc.ODEMException(oai_err.args[0]) from oai_err
         except RuntimeError as _err:
-            raise odem_c.ODEMException(_err.args[0]) from _err
+            raise oc.ODEMException(_err.args[0]) from _err
 
     def clear_mets_resources(self):
         """Remove OAI-Resources from store or even
@@ -131,11 +131,14 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         self.record.info["mets"] = mets
         self.record.info["pica"] = pica
         self.ocr_candidates = insp.image_pairs
-        self.mods_identifier = insp.mods_record_identifier
+        record_ident = insp.record_identifier
+        if record_ident is None or insp.identifiers is None:
+            raise oc.ODEMDataException(f"No record identifier: {self.mets_file_path}")
+        self.artefact_identifier = record_ident
         for t, ident in insp.identifiers.items():
             self.process_statistics[t] = ident
         self.process_statistics['type'] = insp.types
-        self.process_statistics[odem_c.STATS_KEY_LANGS] = insp.languages
+        self.process_statistics[oc.STATS_KEY_LANGS] = insp.languages
         self.process_statistics['n_images_pages'] = insp.n_images_pages
         self.process_statistics['n_images_ocrable'] = insp.n_images_ocrable
         ocrable_ratio = insp.n_images_ocrable / insp.n_images_pages * 100
@@ -175,25 +178,25 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
         models = []
         model_mappings: dict = self.configuration.getdict(  # pylint: disable=no-member
-            odem_c.CFG_SEC_OCR, 'model_mapping')
+            oc.CFG_SEC_OCR, 'model_mapping')
         if languages is None:
-            languages = self.process_statistics.get(odem_c.STATS_KEY_LANGS)
+            languages = self.process_statistics.get(oc.STATS_KEY_LANGS)
         self.logger.info("[%s] map languages '%s'",
                          self.process_identifier, languages)
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
-                raise odem_c.ODEMModelMissingException(f"'{lang}' mapping not found (languages: {languages})!")
+                raise oc.ODEMModelMissingException(f"'{lang}' mapping not found (languages: {languages})!")
             for model in model_entry.split('+'):
                 if self._is_model_available(model):
                     models.append(model)
                 else:
-                    raise odem_c.ODEMModelMissingException(f"'{model}' model config not found !")
+                    raise oc.ODEMModelMissingException(f"'{model}' model config not found !")
         model_cfg = models[0]
-        if self.configuration.getboolean(odem_c.CFG_SEC_OCR, "model_combinable",
+        if self.configuration.getboolean(oc.CFG_SEC_OCR, "model_combinable",
                                          fallback=True):
             model_cfg = '+'.join(models)
-        self.process_statistics[odem_c.KEY_LANGUAGES] = model_cfg
+        self.process_statistics[oc.KEY_LANGUAGES] = model_cfg
         self.logger.info("[%s] mapped languages '%s' => '%s'",
                          self.process_identifier, languages, model_cfg)
         return model_cfg
@@ -212,23 +215,23 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         #3: inspect metadata
         """
 
-        file_lang_suffixes = odem_c.DEFAULT_LANG
+        file_lang_suffixes = oc.DEFAULT_LANG
         # inspect language arg
-        if self.configuration.has_option(odem_c.CFG_SEC_OCR, odem_c.KEY_LANGUAGES):
-            file_lang_suffixes = self.configuration.get(odem_c.CFG_SEC_OCR,
-                                                        odem_c.KEY_LANGUAGES).split('+')
+        if self.configuration.has_option(oc.CFG_SEC_OCR, oc.KEY_LANGUAGES):
+            file_lang_suffixes = self.configuration.get(oc.CFG_SEC_OCR,
+                                                        oc.KEY_LANGUAGES).split('+')
             return self.resolve_language_modelconfig(file_lang_suffixes)
         # inspect final '_' segment of local file names
         if self.local_mode:
             try:
                 image_name = Path(image_path).stem
                 if '_' not in image_name:
-                    raise odem_c.ODEMException(f"Miss language mark for '{image_name}'!")
+                    raise oc.ODEMException(f"Miss language mark for '{image_name}'!")
                 file_lang_suffixes = image_name.split('_')[-1].split('+')
-            except odem_c.ODEMException as oxc:
+            except oc.ODEMException as oxc:
                 self.logger.warning("[%s] language mapping err '%s' for '%s', fallback to %s",
                                     self.process_identifier, oxc.args[0],
-                                    image_path, odem_c.DEFAULT_LANG)
+                                    image_path, oc.DEFAULT_LANG)
             return self.resolve_language_modelconfig(file_lang_suffixes)
         # inspect language information from MODS metadata
         return self.resolve_language_modelconfig()
@@ -237,8 +240,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         """Determine whether model is available at execting
         host/machine"""
 
-        resource_dir_mappings = self.configuration.getdict(odem_c.CFG_SEC_OCR,
-                                                           odem_c.CFG_SEC_OCR_OPT_RES_VOL,
+        resource_dir_mappings = self.configuration.getdict(oc.CFG_SEC_OCR,
+                                                           oc.CFG_SEC_OCR_OPT_RES_VOL,
                                                            fallback={})
         for host_dir in resource_dir_mappings:
             training_file = host_dir + '/' + model
@@ -274,7 +277,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
         # this shouldn't happen
         if len(images) < 1:
-            raise odem_c.ODEMException(f"{self.record.identifier} contains no images!")
+            raise oc.ODEMException(f"{self.record.identifier} contains no images!")
 
         self.logger.info("[%s] %d images total",
                          self.process_identifier, len(images))
@@ -287,64 +290,64 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         """
         images_of_interest = []
         images_dir = 'MAX'
-        if self.configuration.has_option(odem_c.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR):
-            images_dir = self.configuration.get(odem_c.CFG_SEC_OCR,
-                                                odem_c.CFG_SEC_OCR_OPT_IMG_SUBDIR)
+        if self.configuration.has_option(oc.CFG_SEC_OCR, oc.CFG_SEC_OCR_OPT_IMG_SUBDIR):
+            images_dir = self.configuration.get(oc.CFG_SEC_OCR,
+                                                oc.CFG_SEC_OCR_OPT_IMG_SUBDIR)
         local_img_dir = os.path.join(self.work_dir_root, images_dir)
         self.logger.debug("[%s] inspect local image dir %s",
                           self.process_identifier, local_img_dir)
         for img, urn in self.ocr_candidates:
             the_file = os.path.join(local_img_dir, img)
             if not os.path.exists(the_file):
-                raise odem_c.ODEMException(f"[{self.process_identifier}] missing {the_file}!")
+                raise oc.ODEMException(f"[{self.process_identifier}] missing {the_file}!")
             images_of_interest.append((the_file, urn))
         self.ocr_candidates = images_of_interest
 
-    def postprocess(self, ocr_results: typing.List[odem_c.OCRResult]):
+    def postprocess(self, ocr_results: typing.List[oc.OCRResult]):
         """Encapsulate after-OCR workflow"""
 
         if ocr_results is None or len(ocr_results) == 0:
             the_alert = f"zero results from {len(self.ocr_candidates)} candidates"
-            raise odem_c.ODEMException(the_alert)
+            raise oc.ODEMException(the_alert)
         self.calculate_statistics_ocr(ocr_results)
-        self.process_statistics[odem_c.STATS_KEY_N_EXECS] = self.configuration.get(
-            odem_c.CFG_SEC_OCR,
-            odem_c.CFG_SEC_OCR_OPT_EXECS)
+        self.process_statistics[oc.STATS_KEY_N_EXECS] = self.configuration.get(
+            oc.CFG_SEC_OCR,
+            oc.CFG_SEC_OCR_OPT_EXECS)
         self.logger.info("[%s] %s", self.record.local_identifier, self.statistics)
-        wf_enrich_ocr = self.configuration.getboolean(odem_c.CFG_SEC_METS,
-                                                      odem_c.CFG_SEC_METS_OPT_ENRICH,
+        wf_enrich_ocr = self.configuration.getboolean(oc.CFG_SEC_METS,
+                                                      oc.CFG_SEC_METS_OPT_ENRICH,
                                                       fallback=True)
         if wf_enrich_ocr:
             self.link_ocr_files()
-        wf_create_derivates = self.configuration.getboolean(odem_c.CFG_SEC_DERIVANS,
-                                                            odem_c.CFG_SEC_DERIVANS_ENABLED,
+        wf_create_derivates = self.configuration.getboolean(oc.CFG_SEC_DERIVANS,
+                                                            oc.CFG_SEC_DERIVANS_ENABLED,
                                                             fallback=False)
         if wf_create_derivates:
             self.create_derivates()
             self.postprocess_review_derivans_agents()
-        if self.configuration.getboolean(odem_c.CFG_SEC_FLOW, odem_c.CFG_SEC_FLOW_OPT_TEXTLINE,
+        if self.configuration.getboolean(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_OPT_TEXTLINE,
                                          fallback=False):
             self.create_text_bundle_data()
         # METS postprocessing has own configuration options
         self.postprocess_mets()
-        if self.configuration.getboolean(odem_c.CFG_SEC_METS, 'postvalidate', fallback=True):
+        if self.configuration.getboolean(oc.CFG_SEC_METS, 'postvalidate', fallback=True):
             self.validate_metadata()
-        if self.configuration.getboolean(odem_c.CFG_SEC_EXP,
-                                         odem_c.CFG_SEC_EXP_ENABLED, fallback=False):
+        if self.configuration.getboolean(oc.CFG_SEC_EXP,
+                                         oc.CFG_SEC_EXP_ENABLED, fallback=False):
             self.logger.info("[%s] start export", self.process_identifier)
-            if self.configuration.has_option(odem_c.CFG_SEC_FLOW,
-                                             odem_c.CFG_SEC_FLOW_OPT_DELETE_DIRS):
-                del_dirs = self.configuration.getlist(odem_c.CFG_SEC_FLOW,
-                                                      odem_c.CFG_SEC_FLOW_OPT_DELETE_DIRS)
+            if self.configuration.has_option(oc.CFG_SEC_FLOW,
+                                             oc.CFG_SEC_FLOW_OPT_DELETE_DIRS):
+                del_dirs = self.configuration.getlist(oc.CFG_SEC_FLOW,
+                                                      oc.CFG_SEC_FLOW_OPT_DELETE_DIRS)
                 if len(del_dirs) > 0:
                     self.delete_local_directories(del_dirs)
             self.export_data()
-        if self.configuration.getboolean(odem_c.CFG_SEC_FLOW,
-                                         odem_c.CFG_SEC_FLOW_OPT_REM_RES,
+        if self.configuration.getboolean(oc.CFG_SEC_FLOW,
+                                         oc.CFG_SEC_FLOW_OPT_REM_RES,
                                          fallback=False):
             self.clear_mets_resources()
 
-    def calculate_statistics_ocr(self, outcomes: typing.List[odem_c.OCRResult]):
+    def calculate_statistics_ocr(self, outcomes: typing.List[oc.OCRResult]):
         """Calculate stats from given ODEMOutcomes"""
 
         n_ocr_created = len(outcomes)
@@ -356,9 +359,9 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         mps_np = list(zip(*mod_val_counts))
         mps = [(float(pair[0]), int(pair[1])) for pair in mps_np]  # since numpy 2.x
         total_mb = sum([o.images_fsize for o in outcomes], 0)
-        self.process_statistics[odem_c.STATS_KEY_N_OCR] = n_ocr_created
-        self.process_statistics[odem_c.STATS_KEY_MB] = round(total_mb, 2)
-        self.process_statistics[odem_c.STATS_KEY_MPS] = mps
+        self.process_statistics[oc.STATS_KEY_N_OCR] = n_ocr_created
+        self.process_statistics[oc.STATS_KEY_MB] = round(total_mb, 2)
+        self.process_statistics[oc.STATS_KEY_MPS] = mps
         n_ocr_cands = len(self.ocr_candidates)
         if n_ocr_created != n_ocr_cands:
             self.logger.warning("[%s] %d ocr candidates != %d ocr results",
@@ -370,13 +373,13 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             ocr_names = [Path(o.local_path).stem for o in outcomes]
             data_loss = set(img_candidate_names) ^ set(ocr_names)
             if len(data_loss) > 0:
-                self.process_statistics[odem_c.STATS_KEY_OCR_LOSS] = list(data_loss)
+                self.process_statistics[oc.STATS_KEY_OCR_LOSS] = list(data_loss)
 
     def link_ocr_files(self) -> int:
         """Prepare and link OCR-data"""
 
-        list_from_dir = Path(self.work_dir_root) / odem_c.FILEGROUP_FULLTEXT
-        self.ocr_files = odem_c.list_files(list_from_dir)
+        list_from_dir = Path(self.work_dir_root) / oc.FILEGROUP_FULLTEXT
+        self.ocr_files = oc.list_files(list_from_dir)
         if not self.ocr_files:
             return 0
         proc = df.MetsProcessor(self.mets_file_path)
@@ -399,7 +402,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
 
         txt_lines = odem_mets.extract_text_content(self.ocr_files)
         txt_content = '\n'.join(txt_lines)
-        out_path = os.path.join(self.work_dir_root, f'{self.mods_identifier}.pdf.txt')
+        out_path = os.path.join(self.work_dir_root, f'{self.artefact_identifier}.pdf.txt')
         with open(out_path, mode='w', encoding='UTF-8') as tl_writer:
             tl_writer.write(txt_content)
         self.logger.info("[%s] harvested %d lines from %d ocr files to %s",
@@ -410,23 +413,23 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def create_derivates(self):
         """Forward PDF-creation to Derivans"""
 
-        cfg_path_dir_bin = self.configuration.get(odem_c.CFG_SEC_DERIVANS,
+        cfg_path_dir_bin = self.configuration.get(oc.CFG_SEC_DERIVANS,
                                                   'derivans_dir_bin', fallback=None)
         path_bin = None
         if cfg_path_dir_bin is not None:
-            path_bin = os.path.join(odem_c.PROJECT_ROOT, cfg_path_dir_bin)
-        cfg_path_dir_project = self.configuration.get(odem_c.CFG_SEC_DERIVANS,
+            path_bin = os.path.join(oc.PROJECT_ROOT, cfg_path_dir_bin)
+        cfg_path_dir_project = self.configuration.get(oc.CFG_SEC_DERIVANS,
                                                       'derivans_dir_project',
                                                       fallback=None)
         path_prj = None
         if cfg_path_dir_project is not None:
-            path_prj = os.path.join(odem_c.PROJECT_ROOT, cfg_path_dir_project)
+            path_prj = os.path.join(oc.PROJECT_ROOT, cfg_path_dir_project)
         path_cfg = os.path.join(
-            odem_c.PROJECT_ROOT,
-            self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_CONFIG)
+            oc.PROJECT_ROOT,
+            self.configuration.get(oc.CFG_SEC_DERIVANS, oc.CFG_SEC_DERIVANS_CONFIG)
         )
-        derivans_image = self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_IMAGE, fallback=None)
-        path_logging = self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_LOGDIR, fallback=None)
+        derivans_image = self.configuration.get(oc.CFG_SEC_DERIVANS, oc.CFG_SEC_DERIVANS_IMAGE, fallback=None)
+        path_logging = self.configuration.get(oc.CFG_SEC_DERIVANS, oc.CFG_SEC_DERIVANS_LOGDIR, fallback=None)
         derivans: df.BaseDerivansManager = df.BaseDerivansManager.create(
             self.mets_file_path,
             container_image_name=derivans_image,
@@ -435,8 +438,8 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             path_mvn_project=path_prj,
             path_logging=path_logging,
         )
-        if self.configuration.has_option(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_FGROUP):
-            the_fgroup = self.configuration.get(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_FGROUP)
+        if self.configuration.has_option(oc.CFG_SEC_DERIVANS, oc.CFG_SEC_DERIVANS_FGROUP):
+            the_fgroup = self.configuration.get(oc.CFG_SEC_DERIVANS, oc.CFG_SEC_DERIVANS_FGROUP)
             derivans.images = the_fgroup
         derivans.init()
         # be cautious
@@ -448,23 +451,23 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
             err_msg = _sub_err.stdout.decode().split(os.linesep)[0].replace("'", "\"")
             err_args = [err_msg]
             err_args.extend(_sub_err.args)
-            raise odem_c.ODEMException(err_args) from _sub_err
-        if self.configuration.has_option(odem_c.CFG_SEC_DERIVANS,
-                                            odem_c.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF):
-            check_required = self.configuration.getboolean(odem_c.CFG_SEC_DERIVANS,
-                                            odem_c.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF)
+            raise oc.ODEMException(err_args) from _sub_err
+        if self.configuration.has_option(oc.CFG_SEC_DERIVANS,
+                                            oc.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF):
+            check_required = self.configuration.getboolean(oc.CFG_SEC_DERIVANS,
+                                            oc.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF)
             if check_required:
                 the_root = self.work_dir_root
                 if not isinstance(the_root, Path):
                     the_root = Path(the_root)
                 if not any(the_root.rglob("*.pdf")):
                     err_msg = f"PDF missing in {the_root}!"
-                    raise odem_c.ODEMDerivateException(err_msg)
+                    raise oc.ODEMDerivateException(err_msg)
                 pdf_estm_path = list(the_root.rglob("*.pdf"))
                 pdf_size = pdf_estm_path[0].stat().st_size
                 if  pdf_size < 1000:
                     err_msg = f"PDF too small: {pdf_size}B for {pdf_estm_path[0]}"
-                    raise odem_c.ODEMDerivateException(err_msg)
+                    raise oc.ODEMDerivateException(err_msg)
 
     def delete_local_directories(self, folders):
         """delete folders given by list"""
@@ -502,25 +505,25 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
         validation for 'digitalisierte medien'
         """
 
-        if not self.configuration.getboolean(odem_c.CFG_SEC_METS,
+        if not self.configuration.getboolean(oc.CFG_SEC_METS,
                                              'prevalidate', fallback=True):
             self.logger.warning("[%s] skipping pre-validation",
                                 self.process_identifier)
             return
-        if not self.configuration.getboolean(odem_c.CFG_SEC_METS,
+        if not self.configuration.getboolean(oc.CFG_SEC_METS,
                                              'postvalidate', fallback=False):
             self.logger.warning("[%s] skipping post-validation",
                                 self.process_identifier)
             return
         ignore_ddb = []
-        if self.configuration.has_option(odem_c.CFG_SEC_METS,
+        if self.configuration.has_option(oc.CFG_SEC_METS,
                                          'ddb_validation_ignore'):
-            raw_ignore_str = self.configuration.get(odem_c.CFG_SEC_METS,
+            raw_ignore_str = self.configuration.get(oc.CFG_SEC_METS,
                                                     'ddb_validation_ignore')
             ignore_ddb = [i.strip() for i in raw_ignore_str.split(',')]
         ddb_min_level = 'fatal'
-        if self.configuration.has_option(odem_c.CFG_SEC_METS, 'ddb_min_level'):
-            ddb_min_level = self.configuration.get(odem_c.CFG_SEC_METS,
+        if self.configuration.has_option(oc.CFG_SEC_METS, 'ddb_min_level'):
+            ddb_min_level = self.configuration.get(oc.CFG_SEC_METS,
                                                    'ddb_min_level')
         the_type = self.record.info["pica"]
         if the_type is None:
@@ -538,32 +541,36 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
     def export_data(self):
         """re-do metadata and transform into output format"""
 
-        export_format: str = self.configuration.get(odem_c.CFG_SEC_EXP,
-                                                    odem_c.CFG_SEC_EXP_OPT_FORMAT,
-                                                    fallback=odem_c.ExportFormat.SAF)
-        export_mets: bool = self.configuration.getboolean(odem_c.CFG_SEC_EXP,
-                                                          odem_c.CFG_SEC_EXP_OPT_METS,
+        export_format: str = self.configuration.get(oc.CFG_SEC_EXP,
+                                                    oc.CFG_SEC_EXP_OPT_FORMAT,
+                                                    fallback=oc.ExportFormat.SAF)
+        export_mets: bool = self.configuration.getboolean(oc.CFG_SEC_EXP,
+                                                          oc.CFG_SEC_EXP_OPT_METS,
                                                           fallback=True)
 
-        exp_dst = self.configuration.get(odem_c.CFG_SEC_EXP, odem_c.CFG_SEC_EXP_OPT_DST)
-        exp_tmp = self.configuration.get(odem_c.CFG_SEC_EXP, odem_c.CFG_SEC_EXP_OPT_TMP)
-        exp_col = self.configuration.get(odem_c.CFG_SEC_EXP,
-                                         odem_c.CFG_SEC_EXP_OPT_COLLECTION)
-        exp_map = self.configuration.getdict(odem_c.CFG_SEC_EXP,
-                                             odem_c.CFG_SEC_EXP_OPT_MAPPINGS)
-        exp_prefix = self.configuration.get(odem_c.CFG_SEC_EXP,
-                                            odem_c.CFG_SEC_EXP_OPT_PREFIX,
+        exp_dst = self.configuration.get(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_DST)
+        exp_tmp = self.configuration.get(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_TMP)
+        exp_col = self.configuration.get(oc.CFG_SEC_EXP,
+                                         oc.CFG_SEC_EXP_OPT_COLLECTION)
+        exp_map = self.configuration.getdict(oc.CFG_SEC_EXP,
+                                             oc.CFG_SEC_EXP_OPT_MAPPINGS)
+        exp_prefix = self.configuration.get(oc.CFG_SEC_EXP,
+                                            oc.CFG_SEC_EXP_OPT_PREFIX,
                                             fallback=None)
+        exp_name = self.configuration.get(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME,
+                                          fallback=None)
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
         # created due OCR and do more specific mapping, though
         exp_map = {k: v for k, v in exp_map.items() if v != 'mets.xml'}
         if export_mets:
             exp_map[os.path.basename(self.mets_file_path)] = 'mets.xml'
-        saf_name = self.mods_identifier
+        saf_name = self.artefact_identifier
+        if exp_name is not None:
+            saf_name = exp_name
         if exp_prefix is not None:
             saf_name = f"{exp_prefix}{saf_name}"
-        if export_format == odem_c.ExportFormat.SAF:
+        if export_format == oc.ExportFormat.SAF:
             export_result = df.export_data_from(
                 self.mets_file_path,
                 exp_col,
@@ -572,7 +579,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 export_map=exp_map,
                 tmp_saf_dir=exp_tmp,
             )
-        elif export_format == odem_c.ExportFormat.FLAT_ZIP:
+        elif export_format == oc.ExportFormat.FLAT_ZIP:
             prefix = 'opendata-working-'
             source_path_dir = os.path.dirname(self.mets_file_path)
             tmp_dir = tempfile.gettempdir()
@@ -588,7 +595,7 @@ class ODEMProcessImpl(odem_c.ODEMProcess):
                 path_export_processing = dfx.move_to_tmp_file(tmp_zip_path, exp_dst)
                 export_result = path_export_processing, size
         else:
-            raise odem_c.ODEMException(f'Unsupported export format: {export_format}')
+            raise oc.ODEMException(f'Unsupported export format: {export_format}')
         self.logger.info("[%s] exported data: %s",
                          self.process_identifier, export_result)
         if export_result:

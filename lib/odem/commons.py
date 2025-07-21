@@ -83,6 +83,7 @@ CFG_SEC_EXP_OPT_TMP = "export_tmp"
 CFG_SEC_EXP_OPT_METS = "export_mets"
 CFG_SEC_EXP_OPT_COLLECTION = "export_collection"
 CFG_SEC_EXP_OPT_MAPPINGS = "export_mappings"
+CFG_SEC_EXP_OPT_NAME = "export_artefact_name"
 KEY_LANGUAGES = 'language_model'
 KEY_MODEL_MAP = 'model_mapping'
 KEY_SEQUENTIAL_MODE = 'sequential_mode'

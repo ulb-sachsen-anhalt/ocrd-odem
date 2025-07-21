@@ -14,7 +14,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 from lib import odem
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 import lib.odem.monitoring.datatypes as odem_md
 import lib.odem.monitoring.resource as odem_rm
 
@@ -79,6 +79,11 @@ if __name__ == "__main__":
         "--executors",
         required=False,
         help="number of parallel executors, overwrites configuration")
+    PARSER.add_argument(
+        "-n",
+        "--name",
+        required=False,
+        help="optional name of final export artefact if current workflow creates one")
 
     # evaluate commandline arguments
     ARGS = PARSER.parse_args()
@@ -97,11 +102,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_WORK_ROOT = CFG.get(odem_c.CFG_SEC_FLOW, 'local_work_root')
+    LOCAL_WORK_ROOT = CFG.get(oc.CFG_SEC_FLOW, 'local_work_root')
     LOG_FILE_NAME = None
-    if CFG.has_option(odem_c.CFG_SEC_FLOW, 'logfile_name'):
-        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_FLOW, 'logfile_name')
-    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
+    if CFG.has_option(oc.CFG_SEC_FLOW, 'logfile_name'):
+        LOG_FILE_NAME = CFG.get(oc.CFG_SEC_FLOW, 'logfile_name')
+    LOCAL_LOG_DIR = CFG.get(oc.CFG_SEC_FLOW, 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
@@ -121,11 +126,17 @@ if __name__ == "__main__":
     # if valid n_executors via cli, use it's value
     EXECUTOR_ARGS = ARGS.executors
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
-        CFG.set(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS, str(EXECUTOR_ARGS))
-    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS)
+        CFG.set(odem.CFG_SEC_OCR, oc.CFG_SEC_OCR_OPT_EXECS, str(EXECUTOR_ARGS))
+    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, oc.CFG_SEC_OCR_OPT_EXECS)
     LOGGER.debug("local work_root: '%s', executors:%s", LOCAL_WORK_ROOT, EXECUTORS)
+
+    # evaluate optional export name
+    if hasattr(ARGS, "name"):
+        EXPORT_NAME = ARGS.name
+        CFG.set(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME, EXPORT_NAME)
+
     # pylint: disable=no-member
-    DATA_FIELDS = CFG.getlist(odem_c.CFG_SEC_FLOW, 'data_fields')
+    DATA_FIELDS = CFG.getlist(oc.CFG_SEC_FLOW, 'data_fields')
     HOST = CFG.get('record-server', 'record_server_url')
     PORT = CFG.getint('record-server', 'record_server_port')
     ODEM_OPEN = CFG.get('record-server', 'record_state_open', fallback=odem.MARK_OCR_OPEN)
@@ -163,7 +174,7 @@ if __name__ == "__main__":
         if os.path.exists(req_dst_dir):
             shutil.rmtree(req_dst_dir)
 
-        local_store_root = CFG.get(odem_c.CFG_SEC_FLOW, 'local_store_root', fallback=None)
+        local_store_root = CFG.get(oc.CFG_SEC_FLOW, 'local_store_root', fallback=None)
         if local_store_root is not None:
             store_root_dir = os.path.join(local_store_root, local_ident)
             odem_process.store = df.LocalStore(store_root_dir, req_dst_dir)
