@@ -11,7 +11,7 @@ import lxml.etree as ET
 import digiflow as df
 import ocrd_page_to_alto.convert as opta_c
 
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 
 # very common separator '⸗'
 DOUBLE_OBLIQUE_HYPHEN = '\u2E17'
@@ -91,7 +91,7 @@ def postprocess_ocr_file(ocr_file, strip_tags):
     xml_proc.write()
 
 
-def convert_to_output_format(ocr_results: typing.List[odem_c.OCRResult], dst_dir):
+def convert_to_output_format(ocr_results: typing.List[oc.OCRResult], dst_dir):
     """Convert created OCR-Files to required presentation
     format (i.e. ALTO)
     """

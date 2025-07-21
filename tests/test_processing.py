@@ -15,7 +15,7 @@ import lxml.etree as ET
 import pytest
 
 from lib import odem
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 
 from .conftest import (
     PROJECT_ROOT_DIR,
@@ -409,7 +409,7 @@ def test_expected_pdf_missing(mock_derivans_init: unittest.mock.Mock,
     log_dir.mkdir()
     record = df_r.Record('oai:opendata.uni-halle.de:1981185920/72977')
     the_cfg = fixture_configuration()
-    the_cfg.set(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF, "True")
+    the_cfg.set(oc.CFG_SEC_DERIVANS, oc.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF, "True")
     oproc = odem.ODEMProcessImpl(record, the_cfg, work_dir=path_workdir, log_dir=log_dir)
     model_dir = prepare_tessdata_dir(tmp_path)
     oproc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
@@ -443,7 +443,7 @@ def test_expected_pdf_zero_bytes(mock_derivans_init: unittest.mock.Mock,
     log_dir.mkdir()
     record = df_r.Record('oai:opendata.uni-halle.de:1981185920/72977')
     the_cfg = fixture_configuration()
-    the_cfg.set(odem_c.CFG_SEC_DERIVANS, odem_c.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF, "True")
+    the_cfg.set(oc.CFG_SEC_DERIVANS, oc.CFG_SEC_DERIVANS_FGROUP_CHECK_PDF, "True")
     oproc = odem.ODEMProcessImpl(record, the_cfg, work_dir=path_workdir, log_dir=log_dir)
     model_dir = prepare_tessdata_dir(tmp_path)
     oproc.configuration.set(odem.CFG_SEC_OCR, odem.CFG_SEC_OCR_OPT_RES_VOL,
@@ -491,10 +491,10 @@ def test_export_flat_zip(tmp_path):
                                  path_workdir,
                                  log_dir=log_dir, logger=None)
     model_dir = prepare_tessdata_dir(tmp_path)
-    oproc.configuration.set(odem_c.CFG_SEC_EXP, odem_c.CFG_SEC_EXP_OPT_FORMAT,
+    oproc.configuration.set(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_FORMAT,
                             odem.ExportFormat.FLAT_ZIP)
-    oproc.configuration.set(odem_c.CFG_SEC_EXP, odem_c.CFG_SEC_EXP_OPT_TMP, str(path_tmp_export_dir))
-    oproc.configuration.set(odem_c.CFG_SEC_EXP, odem_c.CFG_SEC_EXP_OPT_DST, str(path_export_dir))
+    oproc.configuration.set(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_TMP, str(path_tmp_export_dir))
+    oproc.configuration.set(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_DST, str(path_export_dir))
     oproc.configuration.set(
         odem.CFG_SEC_OCR,
         odem.CFG_SEC_OCR_OPT_RES_VOL,
@@ -531,11 +531,11 @@ def test_odem_common_ocr_statistics(tmp_path):
                             ('/MAX/00000005.jpg', 'PHYS_05'),
                             ('/MAX/00000006.jpg', 'PHYS_06'),
                             ]
-    ocr_outcomes = [odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
-                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
-                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
-                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000005.xml', 0.6669, 3.893415),
-                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)]
+    ocr_outcomes = [oc.OCRResult(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
+                    oc.OCRResult(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
+                    oc.OCRResult(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
+                    oc.OCRResult(f'{_PATH_38841}/PAGE/00000005.xml', 0.6669, 3.893415),
+                    oc.OCRResult(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)]
 
     # act
     oproc.calculate_statistics_ocr(ocr_outcomes)
@@ -565,10 +565,10 @@ def test_odem_ocr_statistics_some_loss(tmp_path):
                             ('/MAX/00000005.jpg', 'PHYS_05'),
                             ('/MAX/00000006.jpg', 'PHYS_06'),
                             ]
-    ocr_outcomes = [odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
-                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
-                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
-                    odem_c.OCRResult(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)
+    ocr_outcomes = [oc.OCRResult(f'{_PATH_38841}/PAGE/00000002.xml', 0.5577, 3.893415),
+                    oc.OCRResult(f'{_PATH_38841}/PAGE/00000003.xml', 0.6628, 3.893415),
+                    oc.OCRResult(f'{_PATH_38841}/PAGE/00000004.xml', 0.6748, 3.893415),
+                    oc.OCRResult(f'{_PATH_38841}/PAGE/00000006.xml', 0.6753, 3.893415)
                     ]
 
     # act

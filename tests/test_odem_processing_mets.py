@@ -12,7 +12,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 from lib import odem
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 import lib.odem.processing.mets as odem_pm
 
 from .conftest import (
@@ -34,6 +34,7 @@ def _fixture_1981185920_44046():
     inspc = odem.ODEMMetadataInspecteur(file,
                                         process_identifier=an_ident,
                                         cfg=fixture_configuration())
+    inspc.read()
     yield inspc
 
 
@@ -50,7 +51,7 @@ def test_odem_process_catalog_identifier(inspecteur_44046: odem.ODEMMetadataInsp
     """
 
     # assert
-    assert inspecteur_44046.mods_record_identifier == '265982944'
+    assert inspecteur_44046.record_identifier == '265982944'
 
 
 @pytest.fixture(name='post_mets', scope='module')
@@ -202,8 +203,8 @@ def test_mets_mods_sbb_vol01_with_ulb_defaults():
     assert os.path.isfile(orig_file)
     cfg: configparser.ConfigParser = fixture_configuration()
     xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='gbv-ppn']/text()"
-    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
-    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, "DEFAULT")
+    cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
+    cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP, "DEFAULT")
 
     # act
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
@@ -211,7 +212,7 @@ def test_mets_mods_sbb_vol01_with_ulb_defaults():
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.mods_record_identifier == 'PPN891267093'
+    assert inspc.record_identifier == 'PPN891267093'
 
 
 def test_mets_filter_logical_structs_by_type():
@@ -234,7 +235,7 @@ def test_mets_filter_logical_structs_by_type():
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.mods_record_identifier == '058134433'
+    assert inspc.record_identifier == '058134433'
     image_page_pairs = inspc.image_pairs
     assert not any('PHYS_0001' in p[1] for p in image_page_pairs)
     assert not any('PHYS_0002' in p[1] for p in image_page_pairs)
@@ -254,7 +255,7 @@ def test_mets_mods_sbb_vol01_filtering():
     orig_file = TEST_RES / 'sbb-PPN891267093.xml'
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
-    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, "DEFAULT")
+    cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP, "DEFAULT")
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
@@ -276,7 +277,7 @@ def test_mets_mods_sbb_vol01_filtering_custom():
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
     cfg.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back,binding')
-    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_FGROUP, "DEFAULT")
+    cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP, "DEFAULT")
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
@@ -431,7 +432,7 @@ def test_extract_identifiers():
 
     # assert
     assert report is not None
-    assert inspecteur.mods_record_identifier == '16691561019210131'
+    assert inspecteur.record_identifier == '16691561019210131'
 
 
 def test_process_bad_input_data():
@@ -455,14 +456,14 @@ def test_process_bad_input_data():
 
 def test_record_identifier_ulb_vd17():
     """Check result outcome for ULB VD17 from
-    with special configuration settings
+    legacy migration with special configuration setting
     """
     oai_urn = "oai:opendata2.uni-halle.de:1516514412012/32294"
     orig_file = TEST_RES / "1516514412012_32294.xml"
     assert os.path.isfile(orig_file)
     cfg: configparser.ConfigParser = fixture_configuration()
     xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='vd17-ppn']/text()"
-    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
+    cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
 
     # act
@@ -470,7 +471,27 @@ def test_record_identifier_ulb_vd17():
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.mods_record_identifier == "004952871"
+    assert inspc.record_identifier == "004952871"
+
+
+def test_record_identifier_type_urn():
+    """Check result outcome for ULB VD17 from recent
+    digitalisation output with special configuration setting
+    """
+    oai_urn = "oai:opendata2.uni-halle.de:1516514412012/32294"
+    orig_file = TEST_RES / "1516514412012_32294.xml"
+    assert os.path.isfile(orig_file)
+    cfg: configparser.ConfigParser = fixture_configuration()
+    xpr_id = "//mods:mods/mods:identifier[@type='urn']/text()"
+    cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+
+    # act
+    inspc.read()
+
+    # assert
+    assert inspc.process_identifier == oai_urn
+    assert inspc.record_identifier == "urn+nbn+de+gbv+3+1-52939"
 
 
 def test_record_identifier_provoke_exception():
@@ -482,12 +503,13 @@ def test_record_identifier_provoke_exception():
     assert os.path.isfile(orig_file)
     cfg: configparser.ConfigParser = fixture_configuration()
     xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='ulb-ppn']/text()"
-    cfg.set(odem_c.CFG_SEC_METS, odem_c.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
+    cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+    inspc.read()
 
     # act
     with pytest.raises(odem_pm.ODEMMetadataMetsException) as mets_ex:
-        inspc.mods_record_identifier
+        inspc.record_identifier
 
     # assert
     assert "Invalid match [] " in mets_ex.value.args[0]

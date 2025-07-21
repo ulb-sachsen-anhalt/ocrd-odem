@@ -11,7 +11,7 @@ import sys
 import ocrd_utils
 
 from lib import odem
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 
 
 ########
@@ -62,9 +62,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_WORK_ROOT = CFG.get(odem_c.CFG_SEC_FLOW, 'local_work_root')
+    LOCAL_WORK_ROOT = CFG.get(oc.CFG_SEC_FLOW, 'local_work_root')
     ocrd_utils.initLogging()
-    log_dir = CFG.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
+    log_dir = CFG.get(oc.CFG_SEC_FLOW, 'local_log_dir')
     if not os.path.exists(log_dir) or not os.access(log_dir, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {log_dir}")
     LOGGER = odem.get_worker_logger(log_dir)

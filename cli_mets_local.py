@@ -18,7 +18,7 @@ from pathlib import Path
 import digiflow.record as df_r
 
 from lib import odem
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 import lib.odem.monitoring.resource as odem_rm
 
 
@@ -62,13 +62,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
+    LOCAL_LOG_DIR = CFG.get(oc.CFG_SEC_FLOW, 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
     LOG_FILE_NAME = None
-    if CFG.has_option(odem_c.CFG_SEC_FLOW, 'logfile_name'):
-        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_FLOW, 'logfile_name')
+    if CFG.has_option(oc.CFG_SEC_FLOW, 'logfile_name'):
+        LOG_FILE_NAME = CFG.get(oc.CFG_SEC_FLOW, 'logfile_name')
     LOGGER = odem.get_worker_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     METS_FILE: Path = Path(ARGS.mets_file).resolve()
@@ -80,8 +80,8 @@ if __name__ == "__main__":
 
     # if valid n_executors via cli, use it's value
     if EXECUTOR_ARGS and int(EXECUTOR_ARGS) > 0:
-        CFG.set(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS, str(EXECUTOR_ARGS))
-    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, odem_c.CFG_SEC_OCR_OPT_EXECS,
+        CFG.set(odem.CFG_SEC_OCR, oc.CFG_SEC_OCR_OPT_EXECS, str(EXECUTOR_ARGS))
+    EXECUTORS = CFG.getint(odem.CFG_SEC_OCR, oc.CFG_SEC_OCR_OPT_EXECS,
                            fallback=DEFAULT_EXECUTORS)
     LOGGER.debug("local work_root: '%s', executors:%s", mets_file_dir, EXECUTORS)
 

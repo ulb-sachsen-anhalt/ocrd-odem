@@ -19,7 +19,7 @@ import requests
 import digiflow as df
 import lxml.etree as ET
 
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 import lib.odem.ocr.ocr_model as ocr_m
 
 NAMESPACES = {'alto': 'http://www.loc.gov/standards/alto/ns-v3#'}
@@ -566,7 +566,7 @@ def profile(func):
     return f"{label} run {func_delta:.2f}s"
 
 
-def run_pipeline(*args) -> odem_c.OCRResult:
+def run_pipeline(*args) -> oc.OCRResult:
     """Wrap Tesseract execution"""
     start_path = args[0][0]
     if isinstance(start_path, typing.Tuple):
@@ -578,11 +578,11 @@ def run_pipeline(*args) -> odem_c.OCRResult:
     batch_label = f"{n_curr:04d}/{n_total:04d}"
     next_in = start_path
     if not df.group_can_read(start_path):
-        raise odem_c.ODEMException(f'Group cant read {start_path}')
+        raise oc.ODEMException(f'Group cant read {start_path}')
     if not df.group_can_write(os.path.dirname(start_path)):
-        raise odem_c.ODEMException(f'Group cant write {os.path.dirname(start_path)}')
+        raise oc.ODEMException(f'Group cant write {os.path.dirname(start_path)}')
     file_path = Path(start_path)
-    p_result = odem_c.OCRResult(file_path)
+    p_result = oc.OCRResult(file_path)
     try:
         file_name = file_path.name
         the_steps = init_steps(step_config)
@@ -616,7 +616,7 @@ def run_pipeline(*args) -> odem_c.OCRResult:
     except (StepException) as exc:
         the_logger.error(
             "[%s] %s: %s", start_path, step, exc.args)
-        raise odem_c.ODEMException(exc) from exc
+        raise oc.ODEMException(exc) from exc
         # OSError means something really severe, like
         # non-existing resources/connections that will harm
         # all images in pipeline, therefore signal halt

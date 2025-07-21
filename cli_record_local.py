@@ -11,7 +11,7 @@ import digiflow as df
 import digiflow.record as df_r
 
 from lib import odem
-import lib.odem.commons as odem_c
+import lib.odem.commons as oc
 import lib.odem.monitoring.resource as odem_rm
 
 from lib.odem.commons import (
@@ -84,14 +84,14 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # set work_dirs and logger
-    LOCAL_WORK_ROOT = CFG.get(odem_c.CFG_SEC_FLOW, 'local_work_root')
-    LOCAL_LOG_DIR = CFG.get(odem_c.CFG_SEC_FLOW, 'local_log_dir')
+    LOCAL_WORK_ROOT = CFG.get(oc.CFG_SEC_FLOW, 'local_work_root')
+    LOCAL_LOG_DIR = CFG.get(oc.CFG_SEC_FLOW, 'local_log_dir')
     if not os.path.exists(LOCAL_LOG_DIR) or not os.access(
             LOCAL_LOG_DIR, os.W_OK):
         raise RuntimeError(f"cant store log files at invalid {LOCAL_LOG_DIR}")
     LOG_FILE_NAME = None
-    if CFG.has_option(odem_c.CFG_SEC_FLOW, 'logfile_name'):
-        LOG_FILE_NAME = CFG.get(odem_c.CFG_SEC_FLOW, 'logfile_name')
+    if CFG.has_option(oc.CFG_SEC_FLOW, 'logfile_name'):
+        LOG_FILE_NAME = CFG.get(oc.CFG_SEC_FLOW, 'logfile_name')
     LOGGER = get_worker_logger(LOCAL_LOG_DIR, LOG_FILE_NAME)
 
     # inspect what kind of input to process
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     LOGGER.debug("local work_root: '%s', executors:%s", LOCAL_WORK_ROOT, EXECUTORS)
 
     # request next open oai record data
-    DATA_FIELDS = CFG.getlist(odem_c.CFG_SEC_FLOW, 'data_fields')
+    DATA_FIELDS = CFG.getlist(oc.CFG_SEC_FLOW, 'data_fields')
     LOGGER.info("data fields: '%s'", DATA_FIELDS)
     LOGGER.info("use records from '%s'", OAI_RECORD_FILE)
     handler = df_r.RecordHandler(
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         odem_process.logger.info("[%s] odem from %s, %d executors", local_ident,
                                  OAI_RECORD_FILE, EXECUTORS)
         odem_process.configuration = CFG
-        local_store_root = CFG.get(odem_c.CFG_SEC_FLOW, 'local_store_root', fallback=None)
+        local_store_root = CFG.get(oc.CFG_SEC_FLOW, 'local_store_root', fallback=None)
         if local_store_root is not None:
             store_root_dir = os.path.join(local_store_root, local_ident)
             odem_process.store = df.LocalStore(store_root_dir, req_dst_dir)
@@ -163,7 +163,7 @@ if __name__ == "__main__":
             ocr_results = the_runner.run()
         odem_process.postprocess(ocr_results)
         stats_kwargs = odem_process.statistics
-        if odem_process.record.info != odem_c.UNSET:
+        if odem_process.record.info != oc.UNSET:
             try:
                 if isinstance(odem_process.record.info, str):
                     the_info = dict(ast.literal_eval(odem_process.record.info))
