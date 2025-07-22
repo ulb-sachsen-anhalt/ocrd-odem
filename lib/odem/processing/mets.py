@@ -58,6 +58,7 @@ class ODEMMetadataInspecteur:
     def __init__(self, input_data, process_identifier: str,
                  cfg):
         self.process_identifier = process_identifier
+        self.digital_object_identifier = ""
         self._data = input_data
         self._cfg: configparser.ConfigParser = cfg
         self._reader: typing.Optional[df.MetsReader]
@@ -99,7 +100,8 @@ class ODEMMetadataInspecteur:
             self._reader.inspect_logical_struct_links()
         except df.DigiflowMetadataException as dfmd_exc:
             raise ODEMMetadataMetsException(dfmd_exc.args[0]) from dfmd_exc
-        self.inspect_metadata_images()
+        self.__inspect_metadata_images()
+        self.__metadata_export_name()
         return report
 
     def __is_relevant(self) -> bool:
@@ -126,37 +128,41 @@ class ODEMMetadataInspecteur:
             raise ODEMMetadataMetsException
         return self._report.identifiers
 
-    @property
-    def record_identifier(self):
-        """Get Identifier-of-Interest if present
-        if dedicated xpr exists, use it to overwrite any
-        other heurictics to identify the record
-        otherwise look for commen ones like GVK or GBV
-        of even guess if more than 1 source present
+    def set_metadata_identifier(self):
+        """Fix Identifiers-of-Interest
+        A) If dedicated identifier xpr exists to calculate it from metadata,
+           use this
+        B) If ULB default exists, use gvk-ppn
+        C) If exactly 1 identifier was found, use this (*should* be URN)
+        D) raise Exception
         """
+
+        identifier = None
         # call first to set the reader in place
         if self._report is None or self._report.identifiers is None:
             raise ODEMMetadataMetsException
         ident_map = dict(self._report.identifiers)
         ident_xpr = self._cfg.get(oc.CFG_SEC_METS,
-                                  oc.CFG_SEC_METS_OPT_ID_XPR, fallback=None)
+                                  oc.CFG_SEC_METS_OPT_ID_XPR,
+                                  fallback=None)
         if ident_xpr is not None:
             idents = self._reader.xpath(ident_xpr)
             if len(idents) != 1:
                 the_msg = f"Invalid match {idents} for {ident_xpr} in {self.process_identifier}"
                 raise ODEMMetadataMetsException(the_msg)
             tmp_ident = idents[0]
+            identifier = tmp_ident
             if ":" in tmp_ident:
-                return tmp_ident.replace(":","+")
-            return tmp_ident
-        if PPN_GVK in ident_map:
-            return ident_map[PPN_GVK]
-        if 'urn' in ident_map:
-            del ident_map['urn']
-        if len(ident_map) == 1:
-            return list(ident_map.values())[0]
-        the_msg = f"found no record identifier in {self.process_identifier}"
-        raise ODEMMetadataMetsException(the_msg)
+                identifier = tmp_ident.replace(":","+")
+        if identifier is None and PPN_GVK in ident_map:
+            identifier = ident_map[PPN_GVK]
+        if identifier is None and len(ident_map) == 1:
+            identifier = list(ident_map.values())[0]
+        if identifier is None:
+            the_msg = f"found no record identifier in {self.process_identifier}"
+            raise ODEMMetadataMetsException(the_msg)
+        self.digital_object_identifier = identifier
+        return identifier
 
     @property
     def languages(self):
@@ -176,7 +182,7 @@ class ODEMMetadataInspecteur:
         prime_type = self._report.type
         return (log_type, prime_type)
 
-    def inspect_metadata_images(self):
+    def __inspect_metadata_images(self):
         """Reduce amount of Images passed on to
         OCR by utilizing metadata knowledge.
         Drop images which belong to
@@ -195,8 +201,8 @@ class ODEMMetadataInspecteur:
         image_files = mets_root.findall(f'.//mets:fileGrp[@USE="{use_fgroup}"]/mets:file', df.XMLNS)
         n_images = len(image_files)
         if n_images < 1:
-            the_msg = f"{self.process_identifier} contains absolutly no images for OCR!"
-            raise ODEMNoImagesForOCRException(the_msg)
+            the_msg = f"{self.process_identifier} contains no images!"
+            raise ODEMMetadataMetsException(the_msg)
         # gather present images via generator
         use_id = self._cfg.getboolean(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_USE_FILEID,
                                       fallback=False)
@@ -210,6 +216,25 @@ class ODEMMetadataInspecteur:
         self.image_pairs = pairs_img_id
         self.n_images_pages = n_images
         self.n_images_ocrable = len(self.image_pairs)
+
+    def __metadata_export_name(self):
+        """Evaluate optional export artefact name
+        which assumes some kind of URN (OAI, NBN, DOI)
+        If present, replace colon by plus sign for
+        sake of ULB-ITZ convention
+        """
+        export_name_xpr = self._cfg.get(oc.CFG_SEC_EXP,
+                                  oc.CFG_SEC_EXP_OPT_NAME,
+                                  fallback=None)
+        if export_name_xpr is not None:
+            export_names = self._reader.xpath(export_name_xpr)
+            if len(export_names) != 1:
+                the_msg = f"Invalid {export_names} for {export_name_xpr} " \
+                          f"in {self.process_identifier}"
+                raise ODEMMetadataMetsException(the_msg)
+            if ":" in export_names[0]:
+                export_names[0] = export_names[0].replace(":","+")
+            self._cfg.set(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME, export_names[0])
 
 
 def fname_ident_pairs_from_metadata(mets_root, images, blacklist_structs,

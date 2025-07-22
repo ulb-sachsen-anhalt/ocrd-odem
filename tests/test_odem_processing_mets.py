@@ -35,6 +35,7 @@ def _fixture_1981185920_44046():
                                         process_identifier=an_ident,
                                         cfg=fixture_configuration())
     inspc.read()
+    inspc.set_metadata_identifier()
     yield inspc
 
 
@@ -51,7 +52,7 @@ def test_odem_process_catalog_identifier(inspecteur_44046: odem.ODEMMetadataInsp
     """
 
     # assert
-    assert inspecteur_44046.record_identifier == "urn+nbn+de+gbv+3+1-146566"
+    assert inspecteur_44046.digital_object_identifier == "265982944"
 
 
 @pytest.fixture(name='post_mets', scope='module')
@@ -205,14 +206,16 @@ def test_mets_mods_sbb_vol01_with_ulb_defaults():
     xpr_id = "//mods:mods/mods:recordInfo/mods:recordIdentifier[@source='gbv-ppn']/text()"
     cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_OPT_ID_XPR, xpr_id)
     cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP, "DEFAULT")
+    cfg.remove_option(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME)
 
     # act
     inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
     inspc.read()
+    inspc.set_metadata_identifier()
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.record_identifier == 'PPN891267093'
+    assert inspc.digital_object_identifier == "PPN891267093"
 
 
 def test_mets_filter_logical_structs_by_type():
@@ -232,10 +235,11 @@ def test_mets_filter_logical_structs_by_type():
 
     # act
     inspc.read()
+    inspc.set_metadata_identifier()
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.record_identifier == "urn+nbn+de+gbv+3+1-1192015415-058134433-12"
+    assert inspc.digital_object_identifier == "058134433"
     image_page_pairs = inspc.image_pairs
     assert not any('PHYS_0001' in p[1] for p in image_page_pairs)
     assert not any('PHYS_0002' in p[1] for p in image_page_pairs)
@@ -256,9 +260,10 @@ def test_mets_mods_sbb_vol01_filtering():
     assert os.path.isfile(orig_file)
     cfg = fixture_configuration()
     cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP, "DEFAULT")
-    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+    cfg.remove_option(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME)
 
     # act
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
     inspc.read()
 
     # assert
@@ -278,9 +283,10 @@ def test_mets_mods_sbb_vol01_filtering_custom():
     cfg = fixture_configuration()
     cfg.set('mets', 'blacklist_logical_containers', 'cover_front,cover_back,binding')
     cfg.set(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP, "DEFAULT")
-    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
+    cfg.remove_option(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME)
 
     # act
+    inspc = odem.ODEMMetadataInspecteur(orig_file, oai_urn, cfg)
     inspc.read()
 
     # assert
@@ -429,10 +435,11 @@ def test_extract_identifiers():
                                                 fixture_configuration())
     # act
     report = inspecteur.read()
+    inspecteur.set_metadata_identifier()
 
     # assert
     assert report is not None
-    assert inspecteur.record_identifier == "urn+nbn+de+gbv+3+1-171133730-16691561019210131-18"
+    assert inspecteur.digital_object_identifier == "16691561019210131"
 
 
 def test_process_bad_input_data():
@@ -468,10 +475,11 @@ def test_record_identifier_ulb_vd17():
 
     # act
     inspc.read()
+    inspc.set_metadata_identifier()
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.record_identifier == "004952871"
+    assert inspc.digital_object_identifier == "004952871"
 
 
 def test_record_identifier_type_urn():
@@ -488,10 +496,11 @@ def test_record_identifier_type_urn():
 
     # act
     inspc.read()
+    inspc.set_metadata_identifier()
 
     # assert
     assert inspc.process_identifier == oai_urn
-    assert inspc.record_identifier == "urn+nbn+de+gbv+3+1-52939"
+    assert inspc.digital_object_identifier == "urn+nbn+de+gbv+3+1-52939"
 
 
 def test_record_identifier_provoke_exception():
@@ -509,7 +518,7 @@ def test_record_identifier_provoke_exception():
 
     # act
     with pytest.raises(odem_pm.ODEMMetadataMetsException) as mets_ex:
-        inspc.record_identifier
+        inspc.set_metadata_identifier()
 
     # assert
     assert "Invalid match [] " in mets_ex.value.args[0]

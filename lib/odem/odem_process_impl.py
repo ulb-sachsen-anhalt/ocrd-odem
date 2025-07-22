@@ -32,6 +32,8 @@ import lib.odem.processing.mets as odem_mets
 # python process-wrapper limit
 os.environ['OMP_THREAD_LIMIT'] = '1'
 
+__PDF_GLOB_PATTERN__ = "*.pdf"
+
 
 class ODEMProcessImpl(oc.ODEMProcess):
     """Create OCR for OAI Records.
@@ -127,14 +129,15 @@ class ODEMProcessImpl(oc.ODEMProcess):
                                                 self.record.identifier,
                                                 cfg=self.configuration)
         insp.read()
-        (mets, pica) = insp.types
-        self.record.info["mets"] = mets
-        self.record.info["pica"] = pica
+        (mets_type, pica_type) = insp.types
+        if isinstance(self.record.info, dict):
+            self.record.info["mets"] = mets_type
+            self.record.info["pica"] = pica_type
         self.ocr_candidates = insp.image_pairs
-        record_ident = insp.record_identifier
-        if record_ident is None or insp.identifiers is None:
+        metadata_ident = insp.set_metadata_identifier()
+        if metadata_ident is None or insp.identifiers is None:
             raise oc.ODEMDataException(f"No record identifier: {self.mets_file_path}")
-        self.artefact_identifier = record_ident
+        self.artefact_identifier = metadata_ident
         for t, ident in insp.identifiers.items():
             self.process_statistics[t] = ident
         self.process_statistics['type'] = insp.types
@@ -402,7 +405,7 @@ class ODEMProcessImpl(oc.ODEMProcess):
 
         txt_lines = odem_mets.extract_text_content(self.ocr_files)
         txt_content = '\n'.join(txt_lines)
-        pdf_path_gen = Path(self.work_dir_root).glob("*.pdf")
+        pdf_path_gen = Path(self.work_dir_root).glob(__PDF_GLOB_PATTERN__)
         try:
             pdf_path = next(pdf_path_gen)
             out_path = os.path.join(self.work_dir_root, f"{pdf_path.name}.txt")
@@ -466,10 +469,10 @@ class ODEMProcessImpl(oc.ODEMProcess):
                 the_root = self.work_dir_root
                 if not isinstance(the_root, Path):
                     the_root = Path(the_root)
-                if not any(the_root.rglob("*.pdf")):
+                if not any(the_root.rglob(__PDF_GLOB_PATTERN__)):
                     err_msg = f"PDF missing in {the_root}!"
                     raise oc.ODEMDerivateException(err_msg)
-                pdf_estm_path = list(the_root.rglob("*.pdf"))
+                pdf_estm_path = list(the_root.rglob(__PDF_GLOB_PATTERN__))
                 pdf_size = pdf_estm_path[0].stat().st_size
                 if  pdf_size < 1000:
                     err_msg = f"PDF too small: {pdf_size}B for {pdf_estm_path[0]}"
@@ -512,12 +515,14 @@ class ODEMProcessImpl(oc.ODEMProcess):
         """
 
         if not self.configuration.getboolean(oc.CFG_SEC_METS,
-                                             'prevalidate', fallback=True):
+                                             'prevalidate',
+                                             fallback=True):
             self.logger.warning("[%s] skipping pre-validation",
                                 self.process_identifier)
             return
         if not self.configuration.getboolean(oc.CFG_SEC_METS,
-                                             'postvalidate', fallback=False):
+                                             'postvalidate',
+                                             fallback=False):
             self.logger.warning("[%s] skipping post-validation",
                                 self.process_identifier)
             return
@@ -531,12 +536,9 @@ class ODEMProcessImpl(oc.ODEMProcess):
         if self.configuration.has_option(oc.CFG_SEC_METS, 'ddb_min_level'):
             ddb_min_level = self.configuration.get(oc.CFG_SEC_METS,
                                                    'ddb_min_level')
-        the_type = self.record.info["pica"]
-        if the_type is None:
-            the_type = "Ac"
-            if self.logger is not None:
-                self.logger.warning("[%s] no prime_mods pica type present, fallbabk to Ac",
-                                    self.process_identifier)
+        the_type = "Ac"
+        if isinstance(self.record.info, dict) and "pica" in self.record.info:
+            the_type = self.record.info["pica"]
         if self.logger is not None:
             self.logger.info("[%s] validate type %s ddb_ignore: %s", self.process_identifier,
                              the_type, ignore_ddb)
@@ -561,7 +563,8 @@ class ODEMProcessImpl(oc.ODEMProcess):
         exp_prefix = self.configuration.get(oc.CFG_SEC_EXP,
                                             oc.CFG_SEC_EXP_OPT_PREFIX,
                                             fallback=None)
-        exp_name = self.configuration.get(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME,
+        exp_name = self.configuration.get(oc.CFG_SEC_EXP,
+                                          oc.CFG_SEC_EXP_OPT_NAME,
                                           fallback=None)
         # overwrite default mapping *.xml => 'mets.xml'
         # since we will have currently many more XML-files
@@ -612,15 +615,16 @@ class ODEMProcessImpl(oc.ODEMProcess):
                              self.process_identifier, pth, size)
             # final re-move at export destination
             if '.processing' in str(pth):
-                final_path = pth.replace('.processing', '')
+                old_path = pth
+                pth = pth.replace('.processing', '')
                 self.logger.debug('[%s] rename %s to %s',
-                                  self.process_identifier, pth, final_path)
-                shutil.move(pth, final_path)
-                self.statistics["export_name"] = os.path.basename(pth)
-                self.statistics["export_size"] = size
-                if exp_col is not None:
-                    self.statistics["export_coll"] = exp_col
-                return final_path, size
+                                  self.process_identifier, old_path, pth)
+                shutil.move(old_path, pth)
+            self.statistics["export_name"] = os.path.basename(pth)
+            self.statistics["export_size"] = size
+            if exp_col is not None:
+                self.statistics["export_coll"] = exp_col
+            return pth, size
         return None
 
     @classmethod
