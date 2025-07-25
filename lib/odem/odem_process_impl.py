@@ -69,7 +69,7 @@ class ODEMProcessImpl(oc.ODEMProcess):
             self.process_identifier = record.local_identifier
         self.export_dir = None
         self.store: df.LocalStore = None
-        self.__mets_file_path: Path | None = None
+        self.__mets_file_path: typing.Optional[Path] = None
         self.ocr_files = []
         self._process_start = time.time()
 

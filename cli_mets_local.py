@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     try:
         local_ident = METS_FILE.stem
-        proc_type: str | None = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
+        proc_type: str = CFG.get(odem.CFG_SEC_OCR, 'workflow_type', fallback=None)
         if proc_type is None:
             LOGGER.warning("no 'workflow_type' in section ocr defined. defaults to 'OCRD_PAGE_PARALLEL'")
         record = df_r.Record(urn=local_ident)
