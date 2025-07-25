@@ -69,6 +69,7 @@ class ODEMProcessImpl(oc.ODEMProcess):
             self.process_identifier = record.local_identifier
         self.export_dir = None
         self.store: df.LocalStore = None
+        self.__mets_file_path: Path | None = None
         self.ocr_files = []
         self._process_start = time.time()
 
@@ -405,19 +406,28 @@ class ODEMProcessImpl(oc.ODEMProcess):
 
         txt_lines = odem_mets.extract_text_content(self.ocr_files)
         txt_content = '\n'.join(txt_lines)
-        pdf_path_gen = Path(self.work_dir_root).glob(__PDF_GLOB_PATTERN__)
-        try:
-            pdf_path = next(pdf_path_gen)
-            out_path = os.path.join(self.work_dir_root, f"{pdf_path.name}.txt")
+        bundle_label = None
+        if self.artefact_identifier is not None:
+            bundle_label = self.artefact_identifier
+        else:
+            pdf_path_gen = Path(self.work_dir_root).glob(__PDF_GLOB_PATTERN__)
+            try:
+                pdf_path = next(pdf_path_gen)
+                bundle_label = pdf_path.name
+            except StopIteration:
+                self.logger.warning("[%s] no text bundle: dont know the name",
+                                    self.process_identifier)
+        if bundle_label is not None:
+            if not str(bundle_label).endswith(".pdf"):
+                bundle_label += ".pdf"
+            out_path = os.path.join(self.work_dir_root, f"{bundle_label}.txt")
             with open(out_path, mode='w', encoding='UTF-8') as tl_writer:
                 tl_writer.write(txt_content)
             self.logger.info("[%s] harvested %d lines from %d ocr files to %s",
                              self.process_identifier, len(txt_lines),
                              len(self.ocr_files), out_path)
             self.process_statistics['n_text_lines'] = len(txt_lines)
-        except StopIteration:
-            self.logger.warning("[%s] no PDF, no text bundle",
-                                self.process_identifier)
+
 
     def create_derivates(self):
         """Forward PDF-creation to Derivans"""
@@ -643,12 +653,16 @@ class ODEMProcessImpl(oc.ODEMProcess):
     @property
     def mets_file_path(self) -> Path:
         """Get actual METS/MODS file from work_dir"""
-        mets_file = f"{os.path.basename(self.work_dir_root)}.xml"
-        return Path(self.work_dir_root) / mets_file
+
+        if self.__mets_file_path is None:
+            mets_file = f"{os.path.basename(self.work_dir_root)}.xml"
+            self.__mets_file_path = Path(self.work_dir_root) / mets_file
+        return self.__mets_file_path
 
     @mets_file_path.setter
     def mets_file_path(self, mets_path):
-        """Set enclosed MET/MODS data for testing purposes"""
+        """Set enclosed MET/MODS data for testing purposes or local mounts"""
+        self.__mets_file_path = Path(mets_path)
         mets_dir = os.path.dirname(mets_path)
         self.work_dir_root = mets_dir
 

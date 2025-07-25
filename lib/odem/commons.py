@@ -207,7 +207,7 @@ class OCRResult:
         if new_path.is_dir():
             res_dst = new_path / self.local_path.name
             if res_dst.is_file():
-                raise ODEMDataException(f"OCRResult {res_dst} already exists!")
+                res_dst.unlink()
             return self.local_path.rename(res_dst)
         if new_path.exists():
             raise ODEMDataException(f"OCRResult {new_path} already exists!")
@@ -223,6 +223,10 @@ class ODEMProcess:
                  work_dir: Path,
                  log_dir,
                  logger):
+        self.process_identifier = None
+        self.process_statistics = {}
+        self.ocr_candidates = []
+        self.logger = logger
         self.configuration = configuration
         self.local_mode = record is None
         if not isinstance(work_dir, Path):
@@ -233,10 +237,6 @@ class ODEMProcess:
         if self.local_mode and (not self.work_dir_root.is_dir()):
             raise ODEMException(f"Invalid work_dir {self.work_dir_root}!")
         self.record = record
-        self.process_identifier = None
-        self.process_statistics = {}
-        self.ocr_candidates = []
-        self.logger = logger
         if logger is not None:
             self.logger = logger
         if log_dir is not None and os.path.exists(log_dir):

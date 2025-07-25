@@ -12,6 +12,8 @@ import sys
 import time
 import typing
 
+from pathlib import Path
+
 import lib.odem.commons as oc
 import lib.odem.odem_process_impl as odem_p
 import lib.odem.ocr.ocr_d as odem_ocrd
@@ -403,7 +405,7 @@ class ODEMTesseract(OCRWorkflow):
                 self.logger.warning("missing %s", a_result.local_path)
         if self.config.has_option(oc.CFG_SEC_OCR, "fulltext_subdir"):
             sub_dir = self.config.get(oc.CFG_SEC_OCR, "fulltext_subdir")
-            final_dir = self.odem_process.work_dir_root / sub_dir
+            final_dir = Path(self.odem_process.work_dir_root) / sub_dir
             if not final_dir.is_dir():
                 final_dir.mkdir()
             for result in self.ocr_results:

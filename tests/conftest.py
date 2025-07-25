@@ -44,7 +44,7 @@ def fixture_configuration():
                'Auftragszettel,Colorchecker,Leerseite,Rückdeckel,Deckblatt,Vorderdeckel,Illustration')
     config.set(odem.CFG_SEC_METS, 'agents', 'DFG-OCRD3-ODEM_ocrd/all:2022-08-15')
     config.set(odem.CFG_SEC_OCR, 'strip_tags',
-               'alto:Shape,alto:Processing,alto:Illustration,alto:GraphicalElement')
+               'Shape,Processing,Illustration,GraphicalElement')
     config.set(odem.CFG_SEC_OCR, 'ocrd_baseimage', 'ocrd/all:2022-08-15')
     return config
 
