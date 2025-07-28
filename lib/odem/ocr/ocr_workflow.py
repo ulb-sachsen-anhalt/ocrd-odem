@@ -397,7 +397,10 @@ class ODEMTesseract(OCRWorkflow):
         """Additional processing to OCR results"""
 
         self.ocr_results = the_outcomes
+        pid = self.odem_process.process_identifier
         strip_tags = self.config.getlist(oc.CFG_SEC_OCR, 'strip_tags')
+        self.logger.info("[%s] from %d results strip tags %s",
+                         pid, len(self.ocr_results), strip_tags)
         for a_result in self.ocr_results:
             if a_result.local_path.exists():
                 odem_fmt.postprocess_ocr_file(a_result.local_path, strip_tags)
@@ -406,7 +409,17 @@ class ODEMTesseract(OCRWorkflow):
         if self.config.has_option(oc.CFG_SEC_OCR, "fulltext_subdir"):
             sub_dir = self.config.get(oc.CFG_SEC_OCR, "fulltext_subdir")
             final_dir = Path(self.odem_process.work_dir_root) / sub_dir
+            self.logger.info("[%s] move %d ocr results to '%s'",
+                             pid, len(self.ocr_results), final_dir)
             if not final_dir.is_dir():
-                final_dir.mkdir()
+                self.logger.debug("[%s] create %s", pid, final_dir)
+                try:
+                    final_dir.mkdir(parents=True, exist_ok=True)
+                except OSError as exc:
+                    self.logger.error("[%s] unable to create %s: %s", pid, final_dir, exc)
+                    raise oc.ODEMException(f"unable to create {final_dir}: {exc}") from exc
+            else:
+                self.logger.debug("[%s] directory %s already exists", pid, final_dir)
             for result in self.ocr_results:
                 result.local_path = result.move(final_dir)
+        self.logger.info("[%s] postprocessed %d ocr files", pid, len(self.ocr_results))
