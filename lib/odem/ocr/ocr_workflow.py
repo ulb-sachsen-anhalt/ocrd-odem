@@ -414,7 +414,7 @@ class ODEMTesseract(OCRWorkflow):
             if not final_dir.is_dir():
                 self.logger.debug("[%s] create %s", pid, final_dir)
                 try:
-                    final_dir.mkdir(parents=True, exist_ok=True)
+                    final_dir.mkdir(mode=0o777, parents=True, exist_ok=True)
                 except OSError as exc:
                     self.logger.error("[%s] unable to create %s: %s", pid, final_dir, exc)
                     raise oc.ODEMException(f"unable to create {final_dir}: {exc}") from exc

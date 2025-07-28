@@ -370,7 +370,7 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List):
             # über dessen Attribut FILEID referenziert werden.
             new_id = oc.FILEGROUP_FULLTEXT + '_' + file_name
             file_ocr = ET.Element(
-                tag_file, MIMETYPE="application/alto+xml", ID=new_id)
+                tag_file, MIMETYPE="text/xml", ID=new_id)
             flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
             flocat_href.set(Q_XLINK_HREF, ocr_file)
             file_ocr.append(flocat_href)
