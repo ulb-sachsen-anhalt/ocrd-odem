@@ -16,8 +16,11 @@ import time
 import typing
 
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import numpy as np
+import PIL.Image
+import requests
 import digiflow as df
 import digiflow.digiflow_export as dfx
 import digiflow.digiflow_io as dfo
@@ -70,6 +73,9 @@ class ODEMProcessImpl(oc.ODEMProcess):
         self.store: typing.Optional[df.LocalStore] = None
         self.__mets_file_path: typing.Optional[Path] = None
         self.ocr_files = []
+        self.page_languages: typing.Dict[str, typing.Tuple[str, ...]] = {}
+        self.page_model_configs: typing.Dict[str, str] = {}
+        self.image_sources: typing.Dict[typing.Tuple[str, str], str] = {}
         self._process_start = time.time()
 
     def load(self):
@@ -133,6 +139,9 @@ class ODEMProcessImpl(oc.ODEMProcess):
             self.record.info["mets"] = mets_type
             self.record.info["pica"] = pica_type
         self.ocr_candidates = insp.image_pairs
+        self.page_languages = insp.page_languages
+        self.image_sources = insp.image_sources
+        self.page_model_configs = {}
         metadata_ident = insp.set_metadata_identifier()
         if metadata_ident is None or insp.identifiers is None:
             raise oc.ODEMDataException(f"No record identifier: {self.mets_file_path}")
@@ -178,46 +187,92 @@ class ODEMProcessImpl(oc.ODEMProcess):
         the additional inner loop
         """
 
+        if languages is None:
+            languages = self.process_statistics.get(oc.STATS_KEY_LANGS)
+        model_cfg = self._resolve_models(languages)
+        self.process_statistics[oc.KEY_LANGUAGES] = model_cfg
+        return model_cfg
+
+    def _resolve_models(self, languages) -> str:
+        if isinstance(languages, str):
+            languages = languages.split('+')
+        if not languages:
+            raise oc.ODEMModelMissingException("No language metadata or explicit language override")
         models = []
         model_mappings: dict = self.configuration.getdict(  # pylint: disable=no-member
             oc.CFG_SEC_OCR, 'model_mapping')
-        if languages is None:
-            languages = self.process_statistics.get(oc.STATS_KEY_LANGS)
         self.logger.info("[%s] map languages '%s'",
                          self.process_identifier, languages)
-        assert languages is not None
         for lang in languages:
             model_entry = model_mappings.get(lang)
             if not model_entry:
                 raise oc.ODEMModelMissingException(f"'{lang}' mapping not found (languages: {languages})!")
             for model in model_entry.split('+'):
                 if self._is_model_available(model):
-                    models.append(model)
+                    if model not in models:
+                        models.append(model)
                 else:
                     raise oc.ODEMModelMissingException(f"'{model}' model config not found !")
         model_cfg = models[0]
         if self.configuration.getboolean(oc.CFG_SEC_OCR, "model_combinable",
                                          fallback=True):
             model_cfg = '+'.join(models)
-        self.process_statistics[oc.KEY_LANGUAGES] = model_cfg
+        elif len(models) > 1:
+            self.logger.warning("[%s] models are not combinable; using %s instead of %s",
+                                self.process_identifier, model_cfg, models)
         self.logger.info("[%s] mapped languages '%s' => '%s'",
                          self.process_identifier, languages, model_cfg)
         return model_cfg
 
-    def map_language_to_modelconfig(self, image_path) -> str:
-        """Determine Tesseract config from forehead
-        processed print metadata or file name suffix.
+    def prepare_page_modelconfigs(self):
+        """Validate and freeze candidate models before starting parallel workers."""
+        self.page_model_configs = {}
+        self.process_statistics.pop('page_model_configs', None)
+        self.process_statistics.pop(oc.KEY_LANGUAGES, None)
+        if not self.ocr_candidates:
+            raise oc.ODEMException("No OCR candidates for page model preparation")
+        prepared = {}
+        cache = {}
+        override = self.configuration.get(oc.CFG_SEC_OCR, oc.KEY_LANGUAGES, fallback=None)
+        for _, page_id in self.ocr_candidates:
+            languages = (override.split('+') if override is not None
+                         else self.page_languages.get(page_id)
+                         or self.process_statistics.get(oc.STATS_KEY_LANGS))
+            if not languages:
+                raise oc.ODEMModelMissingException(f"Page {page_id}: no language metadata")
+            key = tuple(languages)
+            if key not in cache:
+                try:
+                    cache[key] = self._resolve_models(languages)
+                except oc.ODEMModelMissingException as exc:
+                    raise oc.ODEMModelMissingException(f"Page {page_id}: {exc}") from exc
+            prepared[page_id] = cache[key]
+            self.logger.info("[%s] page %s languages %s => %s",
+                             self.process_identifier, page_id, languages, prepared[page_id])
+        self.page_model_configs = prepared
+        self.process_statistics['page_languages'] = dict(self.page_languages)
+        self.process_statistics['page_model_configs'] = dict(prepared)
+        unique_models = list(dict.fromkeys(prepared.values()))
+        self.process_statistics[oc.KEY_LANGUAGES] = (
+            unique_models[0] if len(unique_models) == 1 else unique_models)
 
-        Please note, that more than one config
-        can be required, each glued with a '+' sign.
-        (Therefore the splitting.)
+    def map_language_to_modelconfig(self, image_path, page_id=None) -> str:
+        """Use prepared page models, then explicit overrides and page metadata.
 
-        Resolving order
-        #1: inspect language flag
-        #2: inspect local filenames
-        #3: inspect metadata
+        Calls without page metadata retain the legacy image-only filename
+        and document-language behavior.
         """
 
+        if page_id is not None and self.page_model_configs:
+            if page_id not in self.page_model_configs:
+                raise oc.ODEMModelMissingException(f"Page {page_id}: no prepared model")
+            return self.page_model_configs[page_id]
+        if page_id is not None and page_id in self.page_languages:
+            override = self.configuration.get(oc.CFG_SEC_OCR, oc.KEY_LANGUAGES, fallback=None)
+            languages = (override.split('+') if override is not None
+                         else self.page_languages[page_id]
+                         or self.process_statistics.get(oc.STATS_KEY_LANGS))
+            return self._resolve_models(languages)
         file_lang_suffixes = oc.DEFAULT_LANG
         # inspect language arg
         if self.configuration.has_option(oc.CFG_SEC_OCR, oc.KEY_LANGUAGES):
@@ -301,10 +356,58 @@ class ODEMProcessImpl(oc.ODEMProcess):
                           self.process_identifier, local_img_dir)
         for img, urn in self.ocr_candidates:
             the_file = os.path.join(local_img_dir, img)
-            if not os.path.exists(the_file):
+            if self.image_sources:
+                image_name = Path(img).name
+                already_bound = Path(img).is_absolute() \
+                    and Path(img).parent.resolve() == Path(local_img_dir).resolve()
+                if (image_name != img and not already_bound) or image_name in ('.', '..'):
+                    raise oc.ODEMException(f"Page {urn}: unsafe local image name {img}")
+                if not os.path.isfile(the_file):
+                    source = self.image_sources.get((image_name, urn))
+                    if source is None:
+                        raise oc.ODEMException(f"Page {urn}: no image source for {img}")
+                    self._download_corpus_image(source, Path(the_file), urn)
+            elif not os.path.isfile(the_file):
                 raise oc.ODEMException(f"[{self.process_identifier}] missing {the_file}!")
             images_of_interest.append((the_file, urn))
         self.ocr_candidates = images_of_interest
+
+    def _download_corpus_image(self, source: str, destination: Path, page_id: str):
+        """Publish a missing corpus image only after a complete, valid download."""
+        url = urlsplit(source)
+        if url.scheme not in ('http', 'https') or not url.netloc:
+            raise oc.ODEMException(
+                f"Page {page_id}: missing {destination}; image source is not an HTTP(S) URL: {source}")
+        self.logger.info("[%s] page %s download %s to %s",
+                         self.process_identifier, page_id, source, destination)
+        temporary_path = None
+        try:
+            if not destination.parent.exists():
+                destination.parent.mkdir(parents=True, mode=0o775)
+                destination.parent.chmod(0o775)
+            with requests.get(source, stream=True, timeout=dfo.REQUESTS_DEFAULT_TIMEOUT) as response:
+                response.raise_for_status()
+                content_type = response.headers.get('Content-Type', '').split(';')[0].strip().lower()
+                if not content_type.startswith('image/'):
+                    raise oc.ODEMException(
+                        f"Page {page_id}: {source} returned non-image Content-Type {content_type!r}")
+                with tempfile.NamedTemporaryFile(
+                        dir=destination.parent, prefix='.odem-image-', suffix='.part',
+                        delete=False) as image_file:
+                    temporary_path = Path(image_file.name)
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        image_file.write(chunk)
+            with PIL.Image.open(temporary_path) as image:
+                image.verify()
+            temporary_path.chmod(0o664)
+            os.link(temporary_path, destination)
+        except (requests.RequestException, OSError, ValueError, SyntaxError,
+                PIL.Image.DecompressionBombError) as exc:
+            raise oc.ODEMException(
+                f"Page {page_id}: failed to download {source} to {destination}: {exc}") from exc
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
 
     def postprocess(self, ocr_results: typing.List[oc.OCRResult]):
         """Encapsulate after-OCR workflow"""
@@ -386,7 +489,12 @@ class ODEMProcessImpl(oc.ODEMProcess):
         if not self.ocr_files:
             return 0
         proc = df.MetsProcessor(self.mets_file_path)
-        n_linked_ocr, n_dropped = odem_mets.integrate_ocr_file(proc.root, self.ocr_files)
+        image_pages = None
+        if self.image_sources:
+            image_pages = {Path(image).stem: (page_id, Path(image).name)
+                           for image, page_id in self.ocr_candidates}
+        n_linked_ocr, n_dropped = odem_mets.integrate_ocr_file(
+            proc.root, self.ocr_files, image_pages=image_pages)
         if n_dropped > 0:
             self.logger.warning("[%s] failed to link %d ocr files",
                                 self.process_identifier, n_dropped)

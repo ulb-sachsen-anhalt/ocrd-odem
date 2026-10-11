@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import configparser
+import copy
 import logging
 import os
 import shutil
@@ -44,6 +45,9 @@ class OCRWorkflowRunner:
 
     def run(self):
         """Actual run wrapper"""
+        if self.odem_workflow.odem_process.page_languages \
+                and not self.odem_workflow.odem_process.page_model_configs:
+            self.odem_workflow.odem_process.prepare_page_modelconfigs()
         input_data = self.odem_workflow.get_inputs()
         self.logger.info("[%s] run %d images with %d executors (%s)",
                          self.process_identifier, len(input_data), self.n_executors,
@@ -157,7 +161,7 @@ class OCRDPageParallel(OCRWorkflow):
         (image_path, ident) = input_data
         os.chdir(self.odem_process.work_dir_root)
         file_name = os.path.basename(image_path)
-        file_id = file_name.split('.')[0]
+        file_id = Path(file_name).stem
         page_workdir = os.path.join(self.odem_process.work_dir_root, file_id)
         if os.path.exists(page_workdir):
             shutil.rmtree(page_workdir, ignore_errors=True)
@@ -169,7 +173,7 @@ class OCRDPageParallel(OCRWorkflow):
         os.chdir(page_workdir)
 
         # find model config for tesseract
-        model_config = self.odem_process.map_language_to_modelconfig(image_path)
+        model_config = self.odem_process.map_language_to_modelconfig(image_path, ident)
 
         stored = oc.UNSET
         mps = 0
@@ -356,9 +360,13 @@ class ODEMTesseract(OCRWorkflow):
     def get_inputs(self):
         images_4_ocr = self.odem_process.ocr_candidates
         n_total = len(images_4_ocr)
-        pipeline_cfg = self.read_pipeline_config()
-        input_data = [(img, i, n_total, self.logger, pipeline_cfg)
-                      for i, img in enumerate(self.odem_process.ocr_candidates, start=1)]
+        pipeline_cfg = self.read_pipeline_config(resolve_models=False)
+        input_data = []
+        for i, img in enumerate(images_4_ocr, start=1):
+            page_config = copy.deepcopy(pipeline_cfg)
+            model = self.odem_process.map_language_to_modelconfig(img[0], img[1])
+            self._set_pipeline_models(page_config, model)
+            input_data.append((img, i, n_total, self.logger, page_config))
         return input_data
 
     def run(self, input_data):
@@ -376,9 +384,8 @@ class ODEMTesseract(OCRWorkflow):
         a_result.images_mps = mps
         return a_result
 
-    def read_pipeline_config(self, path_config=None) -> configparser.ConfigParser:
-        """Read pipeline configuration and replace
-        model_configs with known language data"""
+    def read_pipeline_config(self, path_config=None, *, resolve_models=True) -> configparser.ConfigParser:
+        """Read the pipeline; optionally resolve legacy document-wide models."""
 
         if self.pipeline_configuration is None:
             if path_config is None:
@@ -392,9 +399,12 @@ class ODEMTesseract(OCRWorkflow):
             pipe_cfg.read(path_config)
             self.logger.debug("use config '%s'", path_config)
             for sect in pipe_cfg.sections():
-                if pipe_cfg.has_option(sect, "model_configs"):
+                if resolve_models and pipe_cfg.has_option(sect, "model_configs") \
+                        and not self.odem_process.page_languages:
                     lang_models = self.odem_process.process_statistics.get(oc.KEY_LANGUAGES)
-                    if ".traineddata" not in lang_models:
+                    if lang_models is None:
+                        lang_models = self.odem_process.resolve_language_modelconfig()
+                    elif not isinstance(lang_models, str) or ".traineddata" not in lang_models:
                         lang_models = self.odem_process.resolve_language_modelconfig(lang_models)
                     lang_models = lang_models.replace('.traineddata', '')
                     pipe_cfg.set(sect, 'model_configs', lang_models)
@@ -403,6 +413,14 @@ class ODEMTesseract(OCRWorkflow):
                     pipe_cfg.set(sect, odem_tess.STEP_MOVE_PATH_TARGET, move_target)
             self.pipeline_configuration = pipe_cfg
         return self.pipeline_configuration
+
+    @staticmethod
+    def _set_pipeline_models(pipe_cfg, model):
+        for section in pipe_cfg.sections():
+            if pipe_cfg.get(section, 'type', fallback=None) == 'StepTesseract':
+                pipe_cfg.set(section, 'model_configs', model.replace('.traineddata', ''))
+                if pipe_cfg.has_option(section, '-l'):
+                    pipe_cfg.remove_option(section, '-l')
 
     def process_outputs(self, the_outcomes: typing.List[oc.OCRResult]):
         """Additional processing to OCR results"""

@@ -81,6 +81,58 @@ python cli_mets_local.py <data_dir>/mets.xml -c resources/odem.record.local.ini
 
 The command additionally supports the `-e <int>` argument, which allows the script to run `<int>` instances synchronously. If not provided, the standard value is 1, leading to sequential execution.
 
+#### Per-page languages and corpora
+
+METS workflows resolve languages individually for each selected physical page:
+image `FILEID` -> physical page -> `structLink` -> logical section `DMDID`
+-> MODS `languageTerm[@type="code"]`. Physical-page language metadata takes
+precedence; otherwise each linked logical branch inherits from its nearest
+ancestor with language metadata. Multiple languages/branches are combined in
+metadata order without duplicates; redundant links to ancestors do not dilute
+more specific metadata. Unrelated MODS sections are not included.
+Broken references raise metadata errors rather than selecting a default language.
+
+An explicit `[ocr] language_model` override takes precedence over page metadata.
+Pages without language metadata use the document language; if neither exists,
+model preparation fails before OCR starts. Filename language suffixes remain
+available for image-only directory workflows. Both OCR-D and direct Tesseract
+receive page-specific models, validated against `model_mapping` and
+`ocrd_resources_volumes` before workers start. With `model_combinable = False`,
+only the first mapped model is used and a warning is logged.
+
+For a corpus whose logical root is `TYPE="document"` or `TYPE="collection"`
+without a primary `DMDID`, explicitly enable corpus intake:
+
+```ini
+[mets]
+corpus_identifier = urn:example:my-corpus
+```
+
+This identifier names the whole corpus; no constituent book is treated as its
+primary MODS record. Every selected corpus page must be linked to a print
+structure (directly or through a logical ancestor). Configure the image file
+group (`[mets] use_fgroup`, e.g. `GT-IMAGE`) and local image directory
+(`[ocr] image_subpath`, default `MAX`) as usual. Missing selected corpus images
+are downloaded automatically from their HTTP(S) `FLocat` URLs during local-image
+binding. Existing local files are preserved, and blacklisted pages are not
+downloaded. Failed HTTP requests, non-image responses, and corrupt images stop
+processing explicitly; partial downloads are removed so a subsequent run can retry.
+
+Corpus images are named from the physical page's `CONTENTIDS`, replacing `:`
+with `+` and `/fragment/page=` with `-fp-`, and appending the source image
+extension (default `.jpg`). For example, `urn:nbn:de:example/fragment/page=0229`
+becomes `urn+nbn+de+example-fp-0229.jpg`. This naming takes precedence over
+`use_file_id` in corpus mode. Missing, unsafe, or duplicate names raise metadata
+errors. Existing basename-only files are not reused as page-identified images.
+Remove document-wide identifier/export XPath
+settings that do not uniquely identify the corpus. Corpus intake does not disable schema
+or DDB validation; downstream PDF/export tooling must also support the corpus
+structure, or those optional stages should be disabled.
+
+Statistics retain the original page languages and selected models under
+`page_languages` and `page_model_configs`. The aggregate `language_model` is a
+string for a homogeneous run and a list of distinct configurations otherwise.
+
 ### Local Record Mode
 
 Assumes locally accessible directory containing a CSV-file `<data_dir>/input.csv` and local ODEM clone at `<local_dir>` which contains adopted configurations under `resources/odem.record.local.ini`.

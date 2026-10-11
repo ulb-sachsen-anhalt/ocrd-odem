@@ -1,9 +1,11 @@
 """Encapsulate Implementations concerning METS/MODS handling"""
 
 import configparser
+import re
 import typing
 
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import lxml.etree as ET
 import digiflow as df
@@ -61,8 +63,12 @@ class ODEMMetadataInspecteur:
         self.digital_object_identifier = ""
         self._data = input_data
         self._cfg: configparser.ConfigParser = cfg
-        self._reader: typing.Optional[df.MetsReader]
-        self._report: typing.Optional[df.DmdReport]
+        self._reader: typing.Optional[df.MetsReader] = None
+        self._report: typing.Optional[df.DmdReport] = None
+        self._root = ET.parse(self._data).getroot()
+        self._corpus_identifier = self._cfg.get('mets', 'corpus_identifier', fallback=None)
+        self.page_languages: typing.Dict[str, typing.Tuple[str, ...]] = {}
+        self.image_sources: typing.Dict[typing.Tuple[str, str], str] = {}
         self.image_pairs = []
         self.n_images_pages = 0
         self.n_images_ocrable = 0
@@ -84,6 +90,19 @@ class ODEMMetadataInspecteur:
         actual metadata from METS/MODS
         Stop if data corrupt, ill or bad
         """
+        if self._corpus_identifier is not None:
+            logical_root = self._root.find('.//mets:structMap[@TYPE="LOGICAL"]/mets:div', df.XMLNS)
+            if not self._corpus_identifier.strip() or logical_root is None \
+                    or logical_root.get('TYPE') not in ('document', 'collection') \
+                    or logical_root.get('DMDID'):
+                raise ODEMMetadataMetsException(
+                    "corpus_identifier requires a document/collection root without DMDID")
+            self.__inspect_metadata_images()
+            validate_corpus_pages(self._root, [page for _, page in self.image_pairs])
+            self.__metadata_export_name()
+            report = df.MetsReport()
+            report.logical_type = logical_root.get('TYPE')
+            return report
         self.__set_reader()
         if self._reader is None:
             raise ODEMMetadataMetsException("Invalid METS reader None")
@@ -127,6 +146,8 @@ class ODEMMetadataInspecteur:
     @property
     def identifiers(self):
         """Get *all* identifiers"""
+        if self._corpus_identifier is not None:
+            return {'corpus': self._corpus_identifier}
         if self._report is None:
             raise ODEMMetadataMetsException
         return self._report.identifiers
@@ -141,6 +162,9 @@ class ODEMMetadataInspecteur:
         """
 
         identifier = None
+        if self._corpus_identifier is not None:
+            self.digital_object_identifier = self._corpus_identifier.replace(':', '+')
+            return self.digital_object_identifier
         # call first to set the reader in place
         if self._report is None or self._report.identifiers is None:
             raise ODEMMetadataMetsException
@@ -170,6 +194,8 @@ class ODEMMetadataInspecteur:
     @property
     def languages(self):
         """Get language information"""
+        if self._corpus_identifier is not None:
+            return []
         if self._report is None:
             raise RuntimeError
         return self._report.languages
@@ -177,6 +203,9 @@ class ODEMMetadataInspecteur:
     @property
     def types(self):
         """Get type information"""
+        if self._corpus_identifier is not None:
+            logical_root = self._root.find('.//mets:structMap[@TYPE="LOGICAL"]/mets:div', df.XMLNS)
+            return (logical_root.get('TYPE'), None)
         if self._reader is None:
             raise ODEMMetadataMetsException
         log_type = self._reader.report.logical_type
@@ -200,7 +229,7 @@ class ODEMMetadataInspecteur:
         blacklist_lab = self._cfg.getlist('mets', 'blacklist_physical_container_labels')
         use_fgroup = self._cfg.get(oc.CFG_SEC_METS, oc.CFG_SEC_METS_FGROUP,
                                    fallback=oc.DEFAULT_FGROUP)
-        mets_root = ET.parse(self._data).getroot()
+        mets_root = self._root
         image_files = mets_root.findall(f'.//mets:fileGrp[@USE="{use_fgroup}"]/mets:file', df.XMLNS)
         n_images = len(image_files)
         if n_images < 1:
@@ -209,14 +238,40 @@ class ODEMMetadataInspecteur:
         # gather present images via generator
         use_id = self._cfg.getboolean(oc.CFG_SEC_FLOW, oc.CFG_SEC_FLOW_USE_FILEID,
                                       fallback=False)
-        pairs_img_id = fname_ident_pairs_from_metadata(mets_root, image_files, blacklist_log,
-                                                       blacklist_lab, use_file_id=use_id)
+        sources = {}
+        pairs_img_id = fname_ident_pairs_from_metadata(
+            mets_root, image_files, blacklist_log, blacklist_lab, use_file_id=use_id,
+            image_sources=sources)
+        if self._corpus_identifier is not None:
+            pages = {page.get('ID'): page for page in mets_root.findall(
+                './/mets:structMap[@TYPE="PHYSICAL"]//mets:div[@TYPE="page"]', df.XMLNS)}
+            renamed_pairs = []
+            destinations = set()
+            self.image_sources = {}
+            for name, page_id in pairs_img_id:
+                _, source = sources[(name, page_id)]
+                content_id = pages[page_id].get('CONTENTIDS', '')
+                name = content_id.replace(':', '+').replace('/fragment/page=', '-fp-')
+                if not name or not re.fullmatch(r'[A-Za-z0-9_+.-]+', name) or name in ('.', '..'):
+                    raise ODEMMetadataMetsException(
+                        f"Corpus page {page_id} has missing or unsafe CONTENTIDS {content_id!r}")
+                extension = Path(urlsplit(source).path).suffix.lower() or '.jpg'
+                name += extension
+                if name in destinations:
+                    raise ODEMMetadataMetsException(
+                        f"Corpus page {page_id}: CONTENTIDS image name {name} is not unique")
+                destinations.add(name)
+                renamed_pairs.append((name, page_id))
+                self.image_sources[(name, page_id)] = source
+            pairs_img_id = renamed_pairs
         n_images_ocrable = len(pairs_img_id)
         if n_images_ocrable < 1:
             the_msg = f"{self.process_identifier} contains no images for OCR (total: {n_images})!"
             raise ODEMNoImagesForOCRException(the_msg)
         # else, journey onwards with image name only
         self.image_pairs = pairs_img_id
+        self.page_languages = page_languages_from_metadata(
+            mets_root, [page for _, page in self.image_pairs])
         self.n_images_pages = n_images
         self.n_images_ocrable = len(self.image_pairs)
 
@@ -229,8 +284,8 @@ class ODEMMetadataInspecteur:
         export_name_xpr = self._cfg.get(oc.CFG_SEC_EXP,
                                   oc.CFG_SEC_EXP_OPT_NAME,
                                   fallback=None)
-        if export_name_xpr is not None and self._reader is not None:
-            export_names = self._reader.xpath(export_name_xpr)
+        if export_name_xpr is not None:
+            export_names = self._root.xpath(export_name_xpr, namespaces=df.XMLNS)
             if len(export_names) != 1:
                 the_msg = f"Invalid {export_names} for {export_name_xpr} " \
                           f"in {self.process_identifier}"
@@ -240,8 +295,79 @@ class ODEMMetadataInspecteur:
             self._cfg.set(oc.CFG_SEC_EXP, oc.CFG_SEC_EXP_OPT_NAME, export_names[0])
 
 
+def _metadata_page_links(mets_root):
+    logical = {node.get('ID'): node for node in mets_root.findall(
+        './/mets:structMap[@TYPE="LOGICAL"]//mets:div', df.XMLNS)}
+    linked = {}
+    for link in mets_root.findall('.//mets:structLink/mets:smLink', df.XMLNS):
+        page_id = link.get('{http://www.w3.org/1999/xlink}to')
+        logical_id = link.get('{http://www.w3.org/1999/xlink}from')
+        if logical_id not in logical:
+            raise ODEMMetadataMetsException(
+                f"Page {page_id} references missing logical section {logical_id}")
+        linked.setdefault(page_id, []).append(logical[logical_id])
+    return linked
+
+
+def page_languages_from_metadata(mets_root, page_ids):
+    """Resolve page languages from the nearest metadata on each linked branch."""
+    dmd_sections = {}
+    for section in mets_root.findall('.//mets:dmdSec', df.XMLNS):
+        section_id = section.get('ID')
+        if section_id in dmd_sections:
+            raise ODEMMetadataMetsException(f"Duplicate DMDID {section_id}")
+        dmd_sections[section_id] = section
+    physical = {node.get('ID'): node for node in mets_root.findall(
+        './/mets:structMap[@TYPE="PHYSICAL"]//mets:div', df.XMLNS)}
+    linked = _metadata_page_links(mets_root)
+
+    def own_languages(node, page_id):
+        languages = []
+        for dmd_id in node.get('DMDID', '').split():
+            if dmd_id not in dmd_sections:
+                raise ODEMMetadataMetsException(
+                    f"Page {page_id}, section {node.get('ID')}: missing DMDID {dmd_id}")
+            languages.extend(dmd_sections[dmd_id].xpath(
+                './mets:mdWrap/mets:xmlData/mods:mods/mods:language/'
+                'mods:languageTerm[@type="code"]/text()', namespaces=df.XMLNS))
+        return tuple(dict.fromkeys(lang.strip().lower() for lang in languages if lang.strip()))
+
+    result = {}
+    for page_id in page_ids:
+        if page_id not in physical or page_id not in linked:
+            raise ODEMMetadataMetsException(f"Page {page_id} not linked")
+        physical_languages = own_languages(physical[page_id], page_id)
+        languages = list(physical_languages)
+        branches = linked[page_id]
+        branches = [branch for branch in branches if not any(
+            branch in other.iterancestors() for other in branches if other is not branch)]
+        for branch in branches:
+            node = branch
+            branch_languages = ()
+            while node is not None and node.tag == '{http://www.loc.gov/METS/}div':
+                own = own_languages(node, page_id)
+                if not branch_languages and own:
+                    branch_languages = own
+                node = node.getparent()
+            if not physical_languages:
+                languages.extend(branch_languages)
+        result[page_id] = tuple(dict.fromkeys(languages))
+    return result
+
+
+def validate_corpus_pages(mets_root, page_ids):
+    """Require every selected corpus page to belong to a print structure."""
+    linked = _metadata_page_links(mets_root)
+    for page_id in page_ids:
+        branches = linked.get(page_id, [])
+        if not any(node.get('TYPE') in TYPE_PRINTS_LOGICAL
+                   for branch in branches for node in (branch, *branch.iterancestors())
+                   if node.tag == '{http://www.loc.gov/METS/}div'):
+            raise ODEMNoTypeForOCRException(f"Corpus page {page_id} has no print structure")
+
+
 def fname_ident_pairs_from_metadata(mets_root, images, blacklist_structs,
-                                    blacklist_page_labels, use_file_id):
+                                    blacklist_page_labels, use_file_id, image_sources=None):
     """Generate pairs of image label and URN
     that respect defined blacklisted physical
     and logical structures.
@@ -254,12 +380,12 @@ def fname_ident_pairs_from_metadata(mets_root, images, blacklist_structs,
     """
     the_pairs = []
     problems = []
-    phys_structs = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div/mets:fptr', df.XMLNS)
-    structmap_links = mets_root.findall('.//mets:structLink/mets:smLink', df.XMLNS)
-    log_structs = mets_root.findall('.//mets:structMap[@TYPE="LOGICAL"]//mets:div', df.XMLNS)
+    phys_structs = mets_root.findall('.//mets:structMap[@TYPE="PHYSICAL"]//mets:div/mets:fptr', df.XMLNS)
+    linked = _metadata_page_links(mets_root)
     for img_cnt in images:
         file_id = img_cnt.get('ID')
-        final_res_name = img_cnt[0].get(Q_XLINK_HREF).split('/')[-1]
+        source = img_cnt[0].get(Q_XLINK_HREF)
+        final_res_name = urlsplit(source).path.split('/')[-1]
         if use_file_id:
             final_res_name = file_id
         if "." not in final_res_name: # sanitize jpg ext
@@ -268,14 +394,18 @@ def fname_ident_pairs_from_metadata(mets_root, images, blacklist_structs,
         if phys_cnt is None:
             problems.append(f"File {file_id} not linked")
             continue
-        log_types = []
-        try:
-            log_types = _log_types_for_page(phys_cnt['ID'], structmap_links, log_structs)
-        except ODEMMetadataMetsException as ome:
-            problems.append(ome.args[0])
+        log_types = [section.get('TYPE') for section in linked.get(phys_cnt['ID'], [])]
+        if not log_types:
+            problems.append(f"Page {phys_cnt['ID']} not linked")
         if not is_in(blacklist_structs, log_types):
             if not is_in(blacklist_page_labels, phys_cnt['LABEL']):
                 the_pairs.append((final_res_name, phys_cnt['ID']))
+                if image_sources is not None:
+                    key = (final_res_name, phys_cnt['ID'])
+                    if key in image_sources:
+                        raise ODEMMetadataMetsException(
+                            f"Page {phys_cnt['ID']} has ambiguous image {final_res_name}")
+                    image_sources[key] = (file_id, source)
     # re-raise on error
     if len(problems) > 0:
         n_probs = len(problems)
@@ -338,7 +468,9 @@ def clear_filegroups(xml_file, removals):
     proc.write()
 
 
-def integrate_ocr_file(xml_tree, ocr_files: typing.List):
+def integrate_ocr_file(
+        xml_tree, ocr_files: typing.List,
+        image_pages: typing.Optional[typing.Dict[str, typing.Tuple[str, str]]] = None):
     """Enrich given OCR-Files
     Reference / link ALTO files as file pointer in METS/MODS
     fileGrp, if final transformed output contains content and a page element 
@@ -359,12 +491,18 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List):
         file_name = df.UNSET_LABEL
         try:
             file_name = Path(ocr_file).stem
+            page_id = None
+            image_name = f'{file_name}.jpg'
+            if image_pages is not None:
+                if file_name not in image_pages:
+                    raise ODEMMetadataMetsException(f"OCR file {ocr_file} has no corpus page")
+                page_id, image_name = image_pages[file_name]
             mproc = df.MetsProcessor(ocr_file)
             ns_map = _sanitize_namespaces(mproc.root)
             xpr_file_name = '//alto:sourceImageInformation/alto:fileName'
             assert mproc.root is not None
             src_info = mproc.root.xpath(xpr_file_name, namespaces=ns_map)[0]
-            src_info.text = f'{file_name}.jpg'
+            src_info.text = image_name
             page_elements = mproc.root.xpath('//alto:Page', namespaces=ns_map)
             if len(page_elements) == 0:
                 n_passed_ocr += 1
@@ -376,7 +514,7 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List):
             # (Das Element mets:file muss über sein Attribut ID mit
             # einem mets:fptr-Element im Element mets:structMap[@TYPE='PHYSICAL']
             # über dessen Attribut FILEID referenziert werden.
-            new_id = oc.FILEGROUP_FULLTEXT + '_' + file_name
+            new_id = oc.FILEGROUP_FULLTEXT + '_' + (page_id if page_id is not None else file_name)
             file_ocr = ET.Element(
                 tag_file, MIMETYPE="text/xml", ID=new_id)
             flocat_href = ET.Element(tag_flocat, LOCTYPE="URL")
@@ -384,9 +522,9 @@ def integrate_ocr_file(xml_tree, ocr_files: typing.List):
             file_ocr.append(flocat_href)
             file_grp_fulltext.append(file_ocr)
             first_page_el = page_elements[0]
-            first_page_el.attrib['ID'] = f'p{file_name}'
+            first_page_el.attrib['ID'] = f'p{page_id if page_id is not None else file_name}'
             mproc.write()
-            n_linked_ocr += _link_fulltext(new_id, xml_tree)
+            n_linked_ocr += _link_fulltext(new_id, xml_tree, page_id=page_id)
         except IndexError as idx_exc:
             note = f"{ocr_file}({file_name}):{idx_exc.args[0]}"
             raise ODEMMetadataMetsException(note) from idx_exc
@@ -402,7 +540,15 @@ def _sanitize_namespaces(tree):
     return ns_map
 
 
-def _link_fulltext(file_ident, xml_tree):
+def _link_fulltext(file_ident, xml_tree, page_id=None):
+    if page_id is not None:
+        pages = xml_tree.xpath(
+            './/mets:structMap[@TYPE="PHYSICAL"]//mets:div[@ID=$page_id]',
+            namespaces=df.XMLNS, page_id=page_id)
+        if len(pages) != 1:
+            raise ODEMMetadataMetsException(f"OCR file {file_ident}: invalid corpus page {page_id}")
+        ET.SubElement(pages[0], f"{{{df.XMLNS['mets']}}}fptr", {"FILEID": file_ident})
+        return 1
     file_name = file_ident.split('_')[-1]
     xp_files = f'.//mets:fileGrp[@USE="{oc.FILEGROUP_IMG}"]/mets:file'
     file_grp_max_files = xml_tree.findall(xp_files, df.XMLNS)
