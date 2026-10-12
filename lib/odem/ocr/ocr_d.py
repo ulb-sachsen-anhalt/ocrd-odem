@@ -1,6 +1,7 @@
 """Implementation of OCR-D related OCR generation functionalities"""
 
-import os
+import logging
+import shlex
 import shutil
 import subprocess
 import typing
@@ -57,15 +58,11 @@ def get_recognition_level(model_config: str, rtl_models: typing.List) -> str:
 
 @df.run_profiled
 def run_ocr_page(*args):
-    """wrap ocr container process
-    *Please note*
-    Trailing dot (".") is cruical, since it means "this directory"
-    and is mandatory since 2022
-    """
+    """run an OCR-D container with configured Docker runtime flags."""
 
-    ocr_dir = args[0]
+    ocr_dir = str(Path(args[0]).resolve())
     container_image = args[1]
-    container_memory_limit: str = args[2]
+    docker_args: str = args[2]
     container_timeout: int = args[3]
     container_name = args[4]
     container_user_id = args[5]
@@ -79,7 +76,6 @@ def run_ocr_page(*args):
 
     model_config = model_config.replace('.traineddata', '')
 
-    os.chdir(ocr_dir)
     # replace not allowed chars
     container_name = container_name.replace('+', '-')
 
@@ -87,16 +83,19 @@ def run_ocr_page(*args):
         'tesseract_level': tess_level,
         'model_config': model_config
     }
-    ocrd_process_list: typing.List = [f'"{p.format(**ocrd_process_args)}"' for p in ocrd_process_list]
-    ocrd_process_str: str = " ".join(ocrd_process_list)
-    cmd: str = f"docker run --rm -u {container_user_id}"
-    cmd += f" --name {container_name}"
-    if container_memory_limit is not None:
-        cmd += f" --memory {container_memory_limit}"
-        cmd += f" --memory-swap {container_memory_limit}"  # same value disables swap
-    cmd += f" -w /data -v {ocr_dir}:/data"
+    ocrd_process_list = [process.format(**ocrd_process_args) for process in ocrd_process_list]
+    cmd = ['docker', 'run', *shlex.split(docker_args), '-u', str(container_user_id),
+           '--name', container_name, '-w', '/data', '-v', f'{ocr_dir}:/data']
     for host_dir, cntr_dir in ocrd_resources_volumes.items():
-        cmd += f" -v {host_dir}:{cntr_dir}"
-    cmd += f" {container_image}"
-    cmd += f" ocrd process {ocrd_process_str}"
-    subprocess.run(cmd, shell=True, check=True, timeout=container_timeout)
+        cmd.extend(['-v', f'{host_dir}:{cntr_dir}'])
+    cmd.extend([container_image, 'ocrd', 'process', *ocrd_process_list])
+    try:
+        subprocess.run(cmd, shell=False, check=True, timeout=container_timeout, cwd=ocr_dir)
+    except subprocess.TimeoutExpired:
+        try:
+            subprocess.run(['docker', 'rm', '--force', container_name],
+                           shell=False, check=False, timeout=30)
+        except (OSError, subprocess.SubprocessError) as exc:
+            logging.getLogger(__name__).warning(
+                "Failed to remove timed-out container %s: %s", container_name, exc)
+        raise

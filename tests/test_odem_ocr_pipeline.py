@@ -592,6 +592,22 @@ def test_service_down(mock_requests):
     assert mock_requests.called == 1
 
 
+@unittest.mock.patch("requests.post")
+@unittest.mock.patch("requests.head")
+def test_estimator_uses_configured_headers_for_all_requests(mock_head, mock_post):
+    step = o3o_pop.StepEstimateOCR({
+        'service_url': 'http://localhost:8010/v2/check',
+        'request_header': '{"User-Agent": "my-agent"}',
+    })
+    mock_post.return_value.json.return_value = {"matches": []}
+    assert step.is_available()
+    assert step.request_data({"text": "example"}) == {"matches": []}
+    mock_head.assert_called_once_with(step.service_url, timeout=20,
+                                      headers={"User-Agent": "my-agent"})
+    mock_post.assert_called_once_with(step.service_url, {"text": "example"}, timeout=20,
+                                      headers={"User-Agent": "my-agent"})
+
+
 def test_step_estimateocr_textline_conversions():
     """Test functional behavior for valid ALTO-output"""
 

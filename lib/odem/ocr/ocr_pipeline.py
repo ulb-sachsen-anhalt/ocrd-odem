@@ -320,6 +320,7 @@ class StepEstimateOCR(StepI):
     def __init__(self, params: typing.Dict):
         super().__init__()
         self.service_url = params.get('service_url', DEFAULT_LANGTOOL_URL)
+        self.request_headers = oc.parse_request_headers(params.get('request_header', '{}'))
         self.lang = params.get('language', DEFAULT_LANGTOOL_LANG)
         self.rules = params.get('enabled_rules', DEFAULT_LANGTOOL_RULE)
         self.lines = []
@@ -335,7 +336,7 @@ class StepEstimateOCR(StepI):
         """Connection established ?"""
 
         try:
-            requests.head(self.service_url, timeout=20)
+            requests.head(self.service_url, timeout=20, headers=self.request_headers)
         except requests.ConnectionError:
             return False
         return True
@@ -367,7 +368,8 @@ class StepEstimateOCR(StepI):
     def request_data(self, params):
         """Get word errors for text from webservice"""
 
-        response = requests.post(self.service_url, params, timeout=20)
+        response = requests.post(self.service_url, params, timeout=20,
+                     headers=self.request_headers)
         if not response.ok:
             raise StepException(
                 f"'{self.service_url}' returned invalid '{response}!'")

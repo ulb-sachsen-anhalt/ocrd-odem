@@ -2,6 +2,7 @@
 
 import configparser
 import dataclasses
+import json
 import logging
 import logging.config
 import os
@@ -46,6 +47,7 @@ class ExportFormat(str, Enum):
 CFG_SEC_FLOW = 'workflow'
 CFG_SEC_FLOW_OPT_URL = "base_url"
 CFG_SEC_FLOW_OPT_URL_KWARGS = "base_url_requests_kwargs"
+CFG_SEC_FLOW_OPT_REQUEST_HEADER = "request_header"
 CFG_SEC_FLOW_OPT_REM_RES = 'remove_resources'
 CFG_SEC_FLOW_OPT_TEXTLINE = "create_textline_asset"
 CFG_SEC_FLOW_OPT_DELETE_DIRS = "delete_before_export"
@@ -212,6 +214,25 @@ class OCRResult:
         if new_path.exists():
             raise ODEMDataException(f"OCRResult {new_path} already exists!")
         return self.local_path.rename(new_path)
+
+
+def get_request_headers(configuration: configparser.ConfigParser) -> typing.Dict[str, str]:
+    """read shared HTTP headers from workflow configuration."""
+    raw_headers = configuration.get(CFG_SEC_FLOW, CFG_SEC_FLOW_OPT_REQUEST_HEADER,
+                                    fallback='{}')
+    return parse_request_headers(raw_headers)
+
+
+def parse_request_headers(raw_headers: str) -> typing.Dict[str, str]:
+    """parse a JSON object of HTTP headers."""
+    try:
+        headers = json.loads(raw_headers)
+    except (TypeError, ValueError) as exc:
+        raise ODEMException("workflow.request_header must be a JSON object of string headers") from exc
+    if not isinstance(headers, dict) or not all(
+            isinstance(name, str) and isinstance(value, str) for name, value in headers.items()):
+        raise ODEMException("workflow.request_header must be a JSON object of string headers")
+    return headers
 
 
 class ODEMProcess:

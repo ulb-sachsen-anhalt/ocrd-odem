@@ -256,6 +256,71 @@ def test_page_model_preflight_fails_explicitly(corpus_process, missing):
     assert process.page_model_configs == {}
 
 
+@pytest.mark.parametrize("missing", ["mapping", "resource"])
+def test_local_corpus_skips_pages_with_missing_models(corpus_process, missing, caplog):
+    process = corpus_process
+    process.local_mets_mode = True
+    process.inspect_metadata()
+    if missing == "mapping":
+        process.configuration.set("ocr", "model_mapping", "ger: ger.traineddata")
+    else:
+        (Path(process.work_dir_root) / "models" / "lat.traineddata").unlink()
+    process.prepare_page_modelconfigs()
+    process.set_local_images()
+    assert [page for _, page in process.ocr_candidates] == ["P1"]
+    assert process.page_model_configs == {"P1": "ger.traineddata"}
+    assert process.process_statistics["language_model"] == "ger.traineddata"
+    assert process.process_statistics["n_images_ocrable"] == 1
+    assert process.process_statistics["n_images_pages"] == 2
+    assert set(process.process_statistics["skipped_model_pages"]) == {"P2"}
+    assert "skip page P2" in caplog.text
+    assert process.page_languages["P2"] == ("lat",)
+
+
+def test_local_regular_record_still_fails_on_missing_model(corpus_process):
+    process = corpus_process
+    process.local_mets_mode = True
+    process.inspect_metadata()
+    process.configuration.remove_option("mets", "corpus_identifier")
+    process.page_languages["P2"] = ("unknown",)
+    with pytest.raises(odem.ODEMModelMissingException, match="Page P2.*unknown"):
+        process.prepare_page_modelconfigs()
+    assert len(process.ocr_candidates) == 2
+    assert process.page_model_configs == {}
+
+
+def test_local_corpus_with_no_supported_models_has_no_ocr_images(corpus_process):
+    process = corpus_process
+    process.local_mets_mode = True
+    process.inspect_metadata()
+    process.configuration.set("ocr", "model_mapping", "unknown: unknown.traineddata")
+    with pytest.raises(odem.ODEMNoImagesForOCRException, match="after model preflight"):
+        process.prepare_page_modelconfigs()
+    assert process.ocr_candidates == []
+    assert process.page_model_configs == {}
+    assert process.process_statistics["n_images_ocrable"] == 0
+    assert set(process.process_statistics["skipped_model_pages"]) == {"P1", "P2"}
+    assert "language_model" not in process.process_statistics
+
+
+def test_local_corpus_runner_only_processes_supported_pages(corpus_process, monkeypatch):
+    process = corpus_process
+    process.local_mets_mode = True
+    process.inspect_metadata()
+    process.page_languages["P2"] = ("unknown",)
+    workflow = ocr_workflow.OCRDPageParallel(process)
+
+    def supported_inputs():
+        assert [page for _, page in process.ocr_candidates] == ["P1"]
+        assert process.page_model_configs == {"P1": "ger.traineddata"}
+        return []
+
+    monkeypatch.setattr(workflow, "get_inputs", supported_inputs)
+    monkeypatch.setattr(workflow, "process_outputs", lambda results: None)
+    runner = ocr_workflow.OCRWorkflowRunner("corpus", 1, process.logger, workflow)
+    assert runner.run() == []
+
+
 def test_failed_repreparation_does_not_leave_stale_models(corpus_process):
     process = inspect_and_prepare(corpus_process)
     process.page_languages["P2"] = ("unknown",)
@@ -322,6 +387,19 @@ def test_image_only_tesseract_inputs_still_use_filename_languages(corpus_process
     assert workflow.pipeline_configuration["step_01"]["model_configs"] == "stale"
 
 
+def test_tesseract_pipeline_inherits_workflow_request_headers(corpus_process, tmp_path):
+    pipeline = tmp_path / "steps.ini"
+    pipeline.write_text('[step_01]\ntype = StepEstimateOCR\n'
+                        'request_header = {"User-Agent": "stale"}\n')
+    process = corpus_process
+    process.configuration.set("ocr", "ocr_pipeline_config", str(pipeline))
+    process.configuration.set("workflow", "request_header", '{"User-Agent": "my-agent"}')
+    workflow = ocr_workflow.ODEMTesseract(process)
+    config = workflow.read_pipeline_config(resolve_models=False)
+    step = ocr_pipeline.StepEstimateOCR(dict(config["step_01"]))
+    assert step.request_headers == {"User-Agent": "my-agent"}
+
+
 @pytest.mark.parametrize("parameter", ["model_configs", "-l", "both", "none"])
 def test_tesseract_pages_get_isolated_configs_and_runtime_commands(
         corpus_process, tmp_path, monkeypatch, parameter):
@@ -356,13 +434,21 @@ def test_tesseract_pages_get_isolated_configs_and_runtime_commands(
     ]
 
 
-def test_ocrd_pages_pass_individual_model_to_backend(corpus_process, monkeypatch):
+@pytest.mark.parametrize("docker_args", [None, "", "--rm --memory=2GiB --cpus=2 --gpus all"])
+def test_ocrd_pages_pass_individual_model_to_backend(corpus_process, monkeypatch, docker_args):
     process = inspect_and_prepare(corpus_process)
+    if docker_args is None:
+        process.configuration.remove_option("ocr", "docker_args")
+    else:
+        process.configuration.set("ocr", "docker_args", docker_args)
+    process.configuration.set("ocr", "docker_container_memory_limit", "99GiB")
     workflow = ocr_workflow.OCRDPageParallel(process)
     received = []
+    received_runtime_args = []
 
     def run_page(*args):
         received.append(args[7])
+        received_runtime_args.append(args[2])
         return ("test", 0)
 
     monkeypatch.setattr(ocr_d, "setup_workspace", lambda *args: None)
@@ -373,20 +459,21 @@ def test_ocrd_pages_pass_individual_model_to_backend(corpus_process, monkeypatch
     for candidate in workflow.get_inputs():
         workflow.run(candidate)
     assert received == ["ger.traineddata", "lat.traineddata"]
+    expected_args = '--rm' if docker_args is None else docker_args
+    assert received_runtime_args == [expected_args, expected_args]
 
 
 def test_ocrd_command_contains_per_page_model_and_rtl_level(tmp_path, monkeypatch):
     commands = []
-    monkeypatch.setattr(ocr_d.os, "chdir", lambda _: None)
     monkeypatch.setattr(ocr_d.subprocess, "run", lambda command, **kwargs: commands.append(command))
     for model in ("ger.traineddata", "lat.traineddata", "heb.traineddata"):
         ocr_d.run_ocr_page(
-            str(tmp_path), "ocrd/test", "1GiB", 60, "page", 1000,
+            str(tmp_path), "ocrd/test", "--rm --memory=1GiB --memory-swap=1GiB", 60, "page", 1000,
             ["tesserocr-recognize -P model {model_config} -P textequiv_level {tesseract_level}"],
             model, {}, ["heb.traineddata"])
-    assert "-P model ger -P textequiv_level word" in commands[0]
-    assert "-P model lat -P textequiv_level word" in commands[1]
-    assert "-P model heb -P textequiv_level glyph" in commands[2]
+    assert commands[0][-1] == "tesserocr-recognize -P model ger -P textequiv_level word"
+    assert commands[1][-1] == "tesserocr-recognize -P model lat -P textequiv_level word"
+    assert commands[2][-1] == "tesserocr-recognize -P model heb -P textequiv_level glyph"
 
 
 @pytest.fixture
@@ -453,6 +540,27 @@ def test_corpus_downloads_only_missing_images_and_keeps_local_files(
     corpus_process.set_local_images()
     assert corpus_process.ocr_candidates == original_candidates
     assert requested == ["/two.tif"]
+
+
+def test_corpus_download_uses_workflow_request_headers(
+        corpus_process, corpus_root, image_server, monkeypatch):
+    base_url, requested, _ = image_server
+    configure_remote_images(corpus_process, corpus_root, base_url)
+    corpus_process.configuration.set(
+        "workflow", "request_header", '{"User-Agent": "my-agent", "X-ODEM": "corpus"}')
+    images = Path(corpus_process.work_dir_root) / "MAX"
+    (images / "urn+test+p2-fp-0002.tif").unlink()
+    original_get = requests.get
+    sent_headers = []
+
+    def tracked_get(*args, **kwargs):
+        sent_headers.append(kwargs.get("headers"))
+        return original_get(*args, **kwargs)
+
+    monkeypatch.setattr(requests, "get", tracked_get)
+    inspect_and_prepare(corpus_process)
+    assert requested == ["/two.tif"]
+    assert sent_headers == [{"User-Agent": "my-agent", "X-ODEM": "corpus"}]
 
 
 @pytest.mark.parametrize("image_subpath", [None, "downloaded"])

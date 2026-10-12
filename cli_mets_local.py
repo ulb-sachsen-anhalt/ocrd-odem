@@ -99,6 +99,7 @@ if __name__ == "__main__":
         odem_process.logger.info("[%s] odem from %s, %d executors", local_ident, METS_FILE, EXECUTORS)
         odem_process.configuration = CFG
         odem_process.mets_file_path = METS_FILE
+        odem_process.local_mets_mode = True
         process_resource_monitor: odem_rm.ProcessResourceMonitor = odem_rm.ProcessResourceMonitor(
             odem_rm.from_configuration(CFG),
             LOGGER.error,

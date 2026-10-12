@@ -1,6 +1,7 @@
 """Specification for OCR-D related functionalities"""
 
 from pathlib import Path
+import subprocess
 
 import digiflow as df
 import lxml.etree as ET
@@ -43,6 +44,57 @@ def test_odem_recognition_level_custom(model_conf, rec_level):
 
     _custom_rtl = ['gt4ara', 'ulb-fas']
     assert o3o_ocrd.get_recognition_level(model_conf, _custom_rtl) == rec_level
+
+
+@pytest.mark.parametrize("runtime_args, expected", [
+    ('', []),
+    ('--rm --memory=2GiB --memory-swap=2GiB --cpus=2 --gpus all',
+     ['--rm', '--memory=2GiB', '--memory-swap=2GiB', '--cpus=2', '--gpus', 'all']),
+    ('--gpus \'"device=0,1"\' --label "title=OCR job"',
+     ['--gpus', '"device=0,1"', '--label', 'title=OCR job']),
+])
+def test_ocr_docker_runtime_arguments(tmp_path, monkeypatch, runtime_args, expected):
+    commands = []
+
+    def capture_run(command, **kwargs):
+        commands.append((command, kwargs))
+
+    monkeypatch.setattr(o3o_ocrd.subprocess, "run", capture_run)
+    workspace = tmp_path / "OCR workspace"
+    o3o_ocrd.run_ocr_page(
+        workspace, "ocrd/test", runtime_args, 60, "urn+page", 1000,
+        ['tesserocr-recognize -P model {model_config} -P textequiv_level {tesseract_level}'],
+        'ger.traineddata', {str(tmp_path / 'model directory'): '/models'}, [])
+    command, options = commands[0]
+    assert command[:2 + len(expected)] == ['docker', 'run', *expected]
+    assert command[2 + len(expected):2 + len(expected) + 4] == [
+        '-u', '1000', '--name', 'urn-page']
+    assert f'{workspace}:/data' in command
+    assert f'{tmp_path / "model directory"}:/models' in command
+    assert command[-4:] == ['ocrd/test', 'ocrd', 'process',
+                           'tesserocr-recognize -P model ger -P textequiv_level word']
+    assert options == {'shell': False, 'check': True, 'timeout': 60, 'cwd': str(workspace)}
+
+
+@pytest.mark.parametrize("cleanup_fails", [False, True])
+def test_ocr_docker_timeout_removes_container(tmp_path, monkeypatch, cleanup_fails):
+    commands = []
+    original_timeout = subprocess.TimeoutExpired('docker run', 60)
+
+    def timed_out_run(command, **kwargs):
+        commands.append((command, kwargs))
+        if len(commands) == 1:
+            raise original_timeout
+        if cleanup_fails:
+            raise OSError('Docker unavailable')
+
+    monkeypatch.setattr(o3o_ocrd.subprocess, "run", timed_out_run)
+    with pytest.raises(subprocess.TimeoutExpired) as error:
+        o3o_ocrd.run_ocr_page(tmp_path, 'ocrd/test', '--rm', 60, 'urn+page', 1000,
+                            ['recognize'], 'ger.traineddata', {}, [])
+    assert error.value is original_timeout
+    assert commands[1] == (['docker', 'rm', '--force', 'urn-page'],
+                           {'shell': False, 'check': False, 'timeout': 30})
 
 
 def test_create_workspace_mets(tmp_path):

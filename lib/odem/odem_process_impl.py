@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 import numpy as np
 import PIL.Image
 import requests
+from requests.structures import CaseInsensitiveDict
 import digiflow as df
 import digiflow.digiflow_export as dfx
 import digiflow.digiflow_io as dfo
@@ -70,6 +71,7 @@ class ODEMProcessImpl(oc.ODEMProcess):
         if record is not None and record.local_identifier is not None:
             self.process_identifier = record.local_identifier
         self.export_dir = None
+        self.local_mets_mode = False
         self.store: typing.Optional[df.LocalStore] = None
         self.__mets_file_path: typing.Optional[Path] = None
         self.ocr_files = []
@@ -106,6 +108,10 @@ class ODEMProcessImpl(oc.ODEMProcess):
                                                  fallback=oc.DEFAULT_FGROUP)
             req_kwargs[dfo.OAI_KWARG_FGROUP_IMG] = load_fgroup
             loader = df.OAILoader(base_url=oai_base_url, **req_kwargs)
+            headers = CaseInsensitiveDict(loader.request_kwargs.get('headers', {}))
+            headers.update(oc.get_request_headers(self.configuration))
+            if headers:
+                loader.request_kwargs['headers'] = dict(headers)
             loader.store = self.store
             use_file_id = self.configuration.getboolean(oc.CFG_SEC_FLOW,
                                                         oc.CFG_SEC_FLOW_USE_FILEID,
@@ -229,10 +235,14 @@ class ODEMProcessImpl(oc.ODEMProcess):
         self.page_model_configs = {}
         self.process_statistics.pop('page_model_configs', None)
         self.process_statistics.pop(oc.KEY_LANGUAGES, None)
+        self.process_statistics.pop('skipped_model_pages', None)
         if not self.ocr_candidates:
             raise oc.ODEMException("No OCR candidates for page model preparation")
         prepared = {}
         cache = {}
+        skipped = {}
+        skip_missing = self.local_mets_mode and self.configuration.has_option(
+            oc.CFG_SEC_METS, 'corpus_identifier')
         override = self.configuration.get(oc.CFG_SEC_OCR, oc.KEY_LANGUAGES, fallback=None)
         for _, page_id in self.ocr_candidates:
             languages = (override.split('+') if override is not None
@@ -245,10 +255,23 @@ class ODEMProcessImpl(oc.ODEMProcess):
                 try:
                     cache[key] = self._resolve_models(languages)
                 except oc.ODEMModelMissingException as exc:
+                    if skip_missing:
+                        skipped[page_id] = str(exc)
+                        self.logger.warning("[%s] skip page %s: %s",
+                                            self.process_identifier, page_id, exc)
+                        continue
                     raise oc.ODEMModelMissingException(f"Page {page_id}: {exc}") from exc
             prepared[page_id] = cache[key]
             self.logger.info("[%s] page %s languages %s => %s",
                              self.process_identifier, page_id, languages, prepared[page_id])
+        if skipped:
+            self.ocr_candidates = [(image, page_id) for image, page_id in self.ocr_candidates
+                                   if page_id not in skipped]
+            self.process_statistics['skipped_model_pages'] = skipped
+            self.process_statistics['n_images_ocrable'] = len(self.ocr_candidates)
+            if not self.ocr_candidates:
+                raise odem_mets.ODEMNoImagesForOCRException(
+                    f"{self.process_identifier} contains no images for OCR after model preflight")
         self.page_model_configs = prepared
         self.process_statistics['page_languages'] = dict(self.page_languages)
         self.process_statistics['page_model_configs'] = dict(prepared)
@@ -385,7 +408,8 @@ class ODEMProcessImpl(oc.ODEMProcess):
             if not destination.parent.exists():
                 destination.parent.mkdir(parents=True, mode=0o775)
                 destination.parent.chmod(0o775)
-            with requests.get(source, stream=True, timeout=dfo.REQUESTS_DEFAULT_TIMEOUT) as response:
+            with requests.get(source, stream=True, timeout=dfo.REQUESTS_DEFAULT_TIMEOUT,
+                              headers=oc.get_request_headers(self.configuration)) as response:
                 response.raise_for_status()
                 content_type = response.headers.get('Content-Type', '').split(';')[0].strip().lower()
                 if not content_type.startswith('image/'):

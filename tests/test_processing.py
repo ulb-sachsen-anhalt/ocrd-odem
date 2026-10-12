@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Specification ODEM API"""
 
+import logging
 import os
 import shutil
 import unittest
@@ -177,6 +178,29 @@ def test_load_mock_called(tmp_path_factory):
     # assert
     assert request_mock.call_count == 1
     assert os.path.exists(odem_proc.mets_file_path)
+
+
+@pytest.mark.parametrize("legacy_options", [None, 'timeout=7, headers={"user-agent": "legacy"}'])
+def test_oai_loader_uses_workflow_request_headers(tmp_path, legacy_options):
+    cfg = fixture_configuration()
+    cfg.set("workflow", "request_header", '{"User-Agent": "my-agent", "X-ODEM": "test"}')
+    if legacy_options is None:
+        cfg.remove_option("workflow", "base_url_requests_kwargs")
+    else:
+        cfg.set("workflow", "base_url_requests_kwargs", legacy_options)
+    process = odem.ODEMProcessImpl(
+        df_r.Record('oai:opendata.uni-halle.de:1981185920/44046'), cfg, tmp_path,
+        logger=logging.getLogger("test.request_headers"))
+    captured = []
+
+    def capture_load(loader, *args, **kwargs):
+        captured.append(loader.request_kwargs)
+
+    with unittest.mock.patch.object(df.OAILoader, "load", capture_load):
+        process.load()
+    assert captured[0]["headers"] == {"User-Agent": "my-agent", "X-ODEM": "test"}
+    if legacy_options is not None:
+        assert captured[0]["timeout"] == 7
 
 
 def test_odem_process_identifier_local_workdir(tmp_path):

@@ -195,9 +195,7 @@ class OCRDPageParallel(OCRWorkflow):
         profiling = ('n.a.', 0)
 
         container_name: str = f'{self.odem_process.process_identifier}_{os.path.basename(page_workdir)}'
-        container_memory_limit: str = self.config.get(oc.CFG_SEC_OCR,
-                                                      'docker_container_memory_limit',
-                                                      fallback=None)
+        docker_args = self.config.get(oc.CFG_SEC_OCR, 'docker_args', fallback='--rm')
         container_user = self.config.get(oc.CFG_SEC_OCR,
                                          'docker_container_user', fallback=os.getuid())
         container_timeout: int = self.config.getint(
@@ -220,7 +218,7 @@ class OCRDPageParallel(OCRWorkflow):
             profiling = odem_ocrd.run_ocr_page(
                 page_workdir,
                 base_image,
-                container_memory_limit,
+                docker_args,
                 container_timeout,
                 container_name,
                 container_user,
@@ -231,7 +229,7 @@ class OCRDPageParallel(OCRWorkflow):
             )
             # will be unset in case of magic mocking for test
             if profiling:
-                self.logger.info("[%s] '%s' in %s (%.1fMP, %dDPI, %.1fMB)",
+                self.logger.info("[%s] '%s' in %sseconds (%.1fMP, %dDPI, %.1fMB)",
                                  _ident, profiling[1], profiling[0], mps, dpi, filesize_mb)
             self.logger.info("[%s] run ocr creation in '%s'",
                              _ident, page_workdir)
@@ -399,6 +397,11 @@ class ODEMTesseract(OCRWorkflow):
             pipe_cfg.read(path_config)
             self.logger.debug("use config '%s'", path_config)
             for sect in pipe_cfg.sections():
+                if pipe_cfg.get(sect, 'type', fallback=None) == 'StepEstimateOCR':
+                    pipe_cfg.set(sect, oc.CFG_SEC_FLOW_OPT_REQUEST_HEADER,
+                                 self.config.get(oc.CFG_SEC_FLOW,
+                                                 oc.CFG_SEC_FLOW_OPT_REQUEST_HEADER,
+                                                 fallback='{}'))
                 if resolve_models and pipe_cfg.has_option(sect, "model_configs") \
                         and not self.odem_process.page_languages:
                     lang_models = self.odem_process.process_statistics.get(oc.KEY_LANGUAGES)

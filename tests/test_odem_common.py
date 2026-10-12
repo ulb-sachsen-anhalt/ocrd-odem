@@ -7,12 +7,35 @@ import pytest
 import digiflow.record as df_r
 
 from lib import odem
+import lib.odem.commons as oc
 
 from .conftest import PROJECT_ROOT_DIR, fixture_configuration
 
 
 # silence linter warning for custum converter
 # pylint: disable=no-member
+def test_workflow_request_headers_are_optional():
+    config = fixture_configuration()
+    config.remove_option("workflow", "request_header")
+    assert oc.get_request_headers(config) == {}
+
+
+def test_workflow_request_headers_use_json():
+    config = fixture_configuration()
+    config.set("workflow", "request_header", '{"User-Agent": "my-agent", "X-ODEM": "test"}')
+    assert oc.get_request_headers(config) == {"User-Agent": "my-agent", "X-ODEM": "test"}
+
+
+@pytest.mark.parametrize("value", [
+    '{"User-Agent". "my-agent"}', '[]', 'null', '{"User-Agent": 123}',
+])
+def test_invalid_workflow_request_headers_fail_explicitly(value):
+    config = fixture_configuration()
+    config.set("workflow", "request_header", value)
+    with pytest.raises(odem.ODEMException, match="request_header must be a JSON object"):
+        oc.get_request_headers(config)
+
+
 def test_merge_args_exchange_model_mappings():
     """Behavior when CLI args replace
     configured options"""
