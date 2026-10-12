@@ -115,7 +115,14 @@ if __name__ == "__main__":
         odem_process.set_local_images()
         ocr_workflow = odem.OCRWorkflow.create(proc_type, odem_process)
         the_runner = odem.OCRWorkflowRunner(local_ident, EXECUTORS, LOGGER, ocr_workflow)
-        ocr_results = process_resource_monitor.monit_vmem(the_runner.run)
+        if CFG.getboolean(odem.CFG_SEC_MONITOR, 'live', fallback=False):
+            LOGGER.info("[%s] live-monitoring of ocr workflow resources",
+                        local_ident)
+            ocr_results = process_resource_monitor.monit_vmem(the_runner.run)
+        else:
+            LOGGER.info("[%s] execute ocr workflow with poolsize %d",
+                        local_ident, EXECUTORS)
+            ocr_results = the_runner.run()
         odem_process.postprocess(ocr_results)
         time_delta = odem_process.statistics['timedelta']
         odem_process.logger.info("[%s] duration: %s/%s (%s)", odem_process.process_identifier,
